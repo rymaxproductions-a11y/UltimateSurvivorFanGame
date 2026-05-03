@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Survivor Guessing Game"
+version = "1.0.0"
+id = "artifacts/survivor-game"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19440
+
+[services.development]
+run = "pnpm --filter @workspace/survivor-game run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/survivor-game", "run", "build" ]
+publicDir = "artifacts/survivor-game/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19440"
+BASE_PATH = "/"

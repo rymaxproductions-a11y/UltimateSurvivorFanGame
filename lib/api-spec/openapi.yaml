@@ -3,20 +3,39 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Survivor Guessing Game API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: users
+    description: User management
+  - name: games
+    description: Game management
+  - name: contestants
+    description: Contestant management
+  - name: weeks
+    description: Week management
+  - name: questions
+    description: Question management
+  - name: choices
+    description: Question choice management
+  - name: answers
+    description: Player answers
+  - name: correct-answers
+    description: Admin correct answers
+  - name: survivor-picks
+    description: Survivor pick management
+  - name: leaderboard
+    description: Leaderboard
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +43,558 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /users/me:
+    get:
+      operationId: getMe
+      tags: [users]
+      summary: Get current user profile
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Unauthorized
+
+  /users/me/role:
+    patch:
+      operationId: updateMyRole
+      tags: [users]
+      summary: Update current user role (used during registration)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRoleBody"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+
+  /games:
+    get:
+      operationId: listGames
+      tags: [games]
+      summary: List all games
+      responses:
+        "200":
+          description: List of games
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Game"
+    post:
+      operationId: createGame
+      tags: [games]
+      summary: Create a new game (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGameBody"
+      responses:
+        "201":
+          description: Created game
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Game"
+
+  /games/{gameId}:
+    get:
+      operationId: getGame
+      tags: [games]
+      summary: Get a game by ID
+      parameters:
+        - name: gameId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Game
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Game"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateGame
+      tags: [games]
+      summary: Update a game (admin only)
+      parameters:
+        - name: gameId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateGameBody"
+      responses:
+        "200":
+          description: Updated game
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Game"
+
+  /games/{gameId}/contestants:
+    get:
+      operationId: listContestants
+      tags: [contestants]
+      summary: List contestants for a game
+      parameters:
+        - name: gameId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of contestants
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Contestant"
+    post:
+      operationId: createContestant
+      tags: [contestants]
+      summary: Add a contestant to a game (admin only)
+      parameters:
+        - name: gameId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateContestantBody"
+      responses:
+        "201":
+          description: Created contestant
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contestant"
+
+  /contestants/{contestantId}:
+    delete:
+      operationId: deleteContestant
+      tags: [contestants]
+      summary: Delete a contestant (admin only)
+      parameters:
+        - name: contestantId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /games/{gameId}/weeks:
+    get:
+      operationId: listWeeks
+      tags: [weeks]
+      summary: List weeks for a game
+      parameters:
+        - name: gameId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of weeks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Week"
+    post:
+      operationId: createWeek
+      tags: [weeks]
+      summary: Create a week (admin only)
+      parameters:
+        - name: gameId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWeekBody"
+      responses:
+        "201":
+          description: Created week
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Week"
+
+  /weeks/{weekId}:
+    get:
+      operationId: getWeek
+      tags: [weeks]
+      summary: Get a week by ID
+      parameters:
+        - name: weekId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Week
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Week"
+
+  /weeks/{weekId}/questions:
+    get:
+      operationId: listQuestions
+      tags: [questions]
+      summary: List questions for a week
+      parameters:
+        - name: weekId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of questions with choices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/QuestionWithChoices"
+    post:
+      operationId: createQuestion
+      tags: [questions]
+      summary: Create a question (admin only)
+      parameters:
+        - name: weekId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateQuestionBody"
+      responses:
+        "201":
+          description: Created question
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestionWithChoices"
+
+  /questions/{questionId}:
+    patch:
+      operationId: updateQuestion
+      tags: [questions]
+      summary: Update a question (admin only)
+      parameters:
+        - name: questionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateQuestionBody"
+      responses:
+        "200":
+          description: Updated question
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestionWithChoices"
+    delete:
+      operationId: deleteQuestion
+      tags: [questions]
+      summary: Delete a question (admin only)
+      parameters:
+        - name: questionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /questions/{questionId}/choices:
+    post:
+      operationId: createChoice
+      tags: [choices]
+      summary: Add a choice to a question (admin only)
+      parameters:
+        - name: questionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateChoiceBody"
+      responses:
+        "201":
+          description: Created choice
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Choice"
+
+  /choices/{choiceId}:
+    delete:
+      operationId: deleteChoice
+      tags: [choices]
+      summary: Delete a choice (admin only)
+      parameters:
+        - name: choiceId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /weeks/{weekId}/correct-answers:
+    get:
+      operationId: getCorrectAnswers
+      tags: [correct-answers]
+      summary: Get correct answers for a week (visible after week is locked)
+      parameters:
+        - name: weekId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Correct answers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CorrectAnswer"
+    post:
+      operationId: submitCorrectAnswers
+      tags: [correct-answers]
+      summary: Submit correct answers for a week (admin only, locks the week)
+      parameters:
+        - name: weekId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitCorrectAnswersBody"
+      responses:
+        "200":
+          description: Week scored and locked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Week"
+
+  /weeks/{weekId}/my-answers:
+    get:
+      operationId: getMyAnswers
+      tags: [answers]
+      summary: Get current player's answers for a week
+      parameters:
+        - name: weekId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Player answers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PlayerAnswer"
+    post:
+      operationId: saveMyAnswers
+      tags: [answers]
+      summary: Save current player's answers for a week
+      parameters:
+        - name: weekId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveAnswersBody"
+      responses:
+        "200":
+          description: Saved answers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PlayerAnswer"
+
+  /games/{gameId}/survivor-picks:
+    get:
+      operationId: getMySurvivorPicks
+      tags: [survivor-picks]
+      summary: Get current player's survivor picks for a game
+      parameters:
+        - name: gameId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Survivor picks
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SurvivorPicks"
+    post:
+      operationId: saveSurvivorPicks
+      tags: [survivor-picks]
+      summary: Save current player's survivor picks
+      parameters:
+        - name: gameId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveSurvivorPicksBody"
+      responses:
+        "200":
+          description: Saved survivor picks
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SurvivorPicks"
+
+  /games/{gameId}/survivor-winner:
+    post:
+      operationId: submitSurvivorWinner
+      tags: [survivor-picks]
+      summary: Submit the actual Survivor winner (admin only, finalizes game)
+      parameters:
+        - name: gameId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitSurvivorWinnerBody"
+      responses:
+        "200":
+          description: Winner submitted and game completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Game"
+
+  /games/{gameId}/leaderboard:
+    get:
+      operationId: getLeaderboard
+      tags: [leaderboard]
+      summary: Get leaderboard for a game
+      parameters:
+        - name: gameId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Leaderboard entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LeaderboardEntry"
+
+  /games/{gameId}/stats:
+    get:
+      operationId: getGameStats
+      tags: [games]
+      summary: Get game stats summary
+      parameters:
+        - name: gameId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Game stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameStats"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +605,394 @@ components:
       required:
         - status
 
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        clerkId:
+          type: string
+        username:
+          type: string
+        role:
+          type: string
+          enum: [admin, player]
+        createdAt:
+          type: string
+      required:
+        - id
+        - clerkId
+        - username
+        - role
+        - createdAt
+
+    UpdateRoleBody:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [admin, player]
+      required:
+        - role
+
+    Game:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        status:
+          type: string
+          enum: [setup, active, completed]
+        survivorWinnerContestantId:
+          type: ["integer", "null"]
+        currentWeekNumber:
+          type: integer
+        totalWeeks:
+          type: integer
+        createdAt:
+          type: string
+      required:
+        - id
+        - name
+        - status
+        - survivorWinnerContestantId
+        - currentWeekNumber
+        - totalWeeks
+        - createdAt
+
+    CreateGameBody:
+      type: object
+      properties:
+        name:
+          type: string
+        totalWeeks:
+          type: integer
+      required:
+        - name
+        - totalWeeks
+
+    UpdateGameBody:
+      type: object
+      properties:
+        name:
+          type: string
+        status:
+          type: string
+          enum: [setup, active, completed]
+
+    Contestant:
+      type: object
+      properties:
+        id:
+          type: integer
+        gameId:
+          type: integer
+        name:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - gameId
+        - name
+        - createdAt
+
+    CreateContestantBody:
+      type: object
+      properties:
+        name:
+          type: string
+      required:
+        - name
+
+    Week:
+      type: object
+      properties:
+        id:
+          type: integer
+        gameId:
+          type: integer
+        weekNumber:
+          type: integer
+        isLocked:
+          type: boolean
+        isOpen:
+          type: boolean
+        createdAt:
+          type: string
+      required:
+        - id
+        - gameId
+        - weekNumber
+        - isLocked
+        - isOpen
+        - createdAt
+
+    CreateWeekBody:
+      type: object
+      properties:
+        weekNumber:
+          type: integer
+      required:
+        - weekNumber
+
+    Choice:
+      type: object
+      properties:
+        id:
+          type: integer
+        questionId:
+          type: integer
+        choiceText:
+          type: string
+      required:
+        - id
+        - questionId
+        - choiceText
+
+    QuestionWithChoices:
+      type: object
+      properties:
+        id:
+          type: integer
+        weekId:
+          type: integer
+        text:
+          type: string
+        pointValue:
+          type: integer
+        choices:
+          type: array
+          items:
+            $ref: "#/components/schemas/Choice"
+      required:
+        - id
+        - weekId
+        - text
+        - pointValue
+        - choices
+
+    CreateQuestionBody:
+      type: object
+      properties:
+        text:
+          type: string
+        pointValue:
+          type: integer
+        choices:
+          type: array
+          items:
+            type: string
+      required:
+        - text
+        - pointValue
+
+    UpdateQuestionBody:
+      type: object
+      properties:
+        text:
+          type: string
+        pointValue:
+          type: integer
+
+    CreateChoiceBody:
+      type: object
+      properties:
+        choiceText:
+          type: string
+      required:
+        - choiceText
+
+    CorrectAnswer:
+      type: object
+      properties:
+        id:
+          type: integer
+        questionId:
+          type: integer
+        choiceId:
+          type: integer
+        choiceText:
+          type: string
+        questionText:
+          type: string
+        pointValue:
+          type: integer
+      required:
+        - id
+        - questionId
+        - choiceId
+        - choiceText
+        - questionText
+        - pointValue
+
+    SubmitCorrectAnswersBody:
+      type: object
+      properties:
+        answers:
+          type: array
+          items:
+            $ref: "#/components/schemas/CorrectAnswerInput"
+      required:
+        - answers
+
+    CorrectAnswerInput:
+      type: object
+      properties:
+        questionId:
+          type: integer
+        choiceId:
+          type: integer
+      required:
+        - questionId
+        - choiceId
+
+    PlayerAnswer:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        questionId:
+          type: integer
+        choiceId:
+          type: integer
+        choiceText:
+          type: string
+        isCorrect:
+          type: ["boolean", "null"]
+      required:
+        - id
+        - userId
+        - questionId
+        - choiceId
+        - choiceText
+        - isCorrect
+
+    SaveAnswersBody:
+      type: object
+      properties:
+        answers:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerAnswerInput"
+      required:
+        - answers
+
+    PlayerAnswerInput:
+      type: object
+      properties:
+        questionId:
+          type: integer
+        choiceId:
+          type: integer
+      required:
+        - questionId
+        - choiceId
+
+    SurvivorPicks:
+      type: object
+      properties:
+        id:
+          type: ["integer", "null"]
+        userId:
+          type: ["integer", "null"]
+        gameId:
+          type: integer
+        firstChoiceContestantId:
+          type: ["integer", "null"]
+        secondChoiceContestantId:
+          type: ["integer", "null"]
+        firstChoiceName:
+          type: ["string", "null"]
+        secondChoiceName:
+          type: ["string", "null"]
+        isLocked:
+          type: boolean
+      required:
+        - id
+        - userId
+        - gameId
+        - firstChoiceContestantId
+        - secondChoiceContestantId
+        - firstChoiceName
+        - secondChoiceName
+        - isLocked
+
+    SaveSurvivorPicksBody:
+      type: object
+      properties:
+        firstChoiceContestantId:
+          type: integer
+        secondChoiceContestantId:
+          type: integer
+      required:
+        - firstChoiceContestantId
+        - secondChoiceContestantId
+
+    SubmitSurvivorWinnerBody:
+      type: object
+      properties:
+        winnerContestantId:
+          type: integer
+      required:
+        - winnerContestantId
+
+    LeaderboardEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+        userId:
+          type: integer
+        username:
+          type: string
+        totalPoints:
+          type: integer
+        weeklyPoints:
+          type: array
+          items:
+            $ref: "#/components/schemas/WeeklyPoints"
+        survivorPickPoints:
+          type: integer
+      required:
+        - rank
+        - userId
+        - username
+        - totalPoints
+        - weeklyPoints
+        - survivorPickPoints
+
+    WeeklyPoints:
+      type: object
+      properties:
+        weekNumber:
+          type: integer
+        points:
+          type: integer
+      required:
+        - weekNumber
+        - points
+
+    GameStats:
+      type: object
+      properties:
+        totalPlayers:
+          type: integer
+        lockedWeeks:
+          type: integer
+        openWeeks:
+          type: integer
+        topPlayer:
+          type: ["string", "null"]
+        topPlayerPoints:
+          type: ["integer", "null"]
+      required:
+        - totalPlayers
+        - lockedWeeks
+        - openWeeks
+        - topPlayer
+        - topPlayerPoints
