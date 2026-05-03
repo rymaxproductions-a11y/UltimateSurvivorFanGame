@@ -11,6 +11,8 @@ export const gamesTable = pgTable("games", {
   survivorWinnerContestantId: integer("survivor_winner_contestant_id"),
   currentWeekNumber: integer("current_week_number").notNull().default(1),
   totalWeeks: integer("total_weeks").notNull().default(15),
+  firstPickPoints: integer("first_pick_points").notNull().default(20),
+  secondPickPoints: integer("second_pick_points").notNull().default(10),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

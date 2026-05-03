@@ -10,4 +10,6 @@ import type { UpdateGameBodyStatus } from "./updateGameBodyStatus";
 export interface UpdateGameBody {
   name?: string;
   status?: UpdateGameBodyStatus;
+  firstPickPoints?: number;
+  secondPickPoints?: number;
 }

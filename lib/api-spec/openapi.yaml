@@ -722,6 +722,10 @@ components:
           type: integer
         totalWeeks:
           type: integer
+        firstPickPoints:
+          type: integer
+        secondPickPoints:
+          type: integer
         createdAt:
           type: string
       required:
@@ -731,6 +735,8 @@ components:
         - survivorWinnerContestantId
         - currentWeekNumber
         - totalWeeks
+        - firstPickPoints
+        - secondPickPoints
         - createdAt
 
     CreateGameBody:
@@ -752,6 +758,10 @@ components:
         status:
           type: string
           enum: [setup, active, completed]
+        firstPickPoints:
+          type: integer
+        secondPickPoints:
+          type: integer
 
     Contestant:
       type: object

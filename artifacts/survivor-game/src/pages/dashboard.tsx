@@ -4,6 +4,7 @@ import { Show } from "@clerk/react";
 import {
   useGetMe,
   useListGames,
+  useGetGame,
   useListWeeks,
   useListQuestions,
   useGetMyAnswers,
@@ -141,6 +142,7 @@ function WeekTab({
 
 function GameView({ gameId }: { gameId: number }) {
   const { data: weeks } = useListWeeks(gameId);
+  const { data: game } = useGetGame(gameId);
   const { data: picks } = useGetMySurvivorPicks(gameId);
   const { data: leaderboard } = useGetLeaderboard(gameId);
 
@@ -153,18 +155,28 @@ function GameView({ gameId }: { gameId: number }) {
       <div className="lg:col-span-2 space-y-6">
         {picks && (picks.firstChoiceContestantId || picks.secondChoiceContestantId) && (
           <div className="bg-card border border-border rounded-xl p-4">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">My Survivor Picks</h3>
-            <div className="flex gap-4">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">My Season Predictions</h3>
+            <div className="space-y-3">
               {picks.firstChoiceName && (
-                <div className="flex-1 bg-primary/10 rounded-lg p-3 text-center">
-                  <div className="text-xs text-muted-foreground mb-1">1st Choice (2x pts)</div>
-                  <div className="font-bold text-primary">{picks.firstChoiceName}</div>
+                <div className="flex items-center justify-between border border-border rounded-lg px-4 py-3 bg-background">
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-0.5">Who will be the winner of this season?</div>
+                    <div className="font-bold text-primary">{picks.firstChoiceName}</div>
+                  </div>
+                  <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full whitespace-nowrap ml-3">
+                    {game?.firstPickPoints ?? 20} pts if correct
+                  </span>
                 </div>
               )}
               {picks.secondChoiceName && (
-                <div className="flex-1 bg-muted/40 rounded-lg p-3 text-center">
-                  <div className="text-xs text-muted-foreground mb-1">2nd Choice (1x pts)</div>
-                  <div className="font-bold text-foreground">{picks.secondChoiceName}</div>
+                <div className="flex items-center justify-between border border-border rounded-lg px-4 py-3 bg-background">
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-0.5">Who is your second choice to win?</div>
+                    <div className="font-bold text-foreground">{picks.secondChoiceName}</div>
+                  </div>
+                  <span className="text-xs font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-full whitespace-nowrap ml-3">
+                    {game?.secondPickPoints ?? 10} pts if correct
+                  </span>
                 </div>
               )}
             </div>

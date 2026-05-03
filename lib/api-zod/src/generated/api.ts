@@ -50,6 +50,8 @@ export const ListGamesResponseItem = zod.object({
   survivorWinnerContestantId: zod.number().nullable(),
   currentWeekNumber: zod.number(),
   totalWeeks: zod.number(),
+  firstPickPoints: zod.number(),
+  secondPickPoints: zod.number(),
   createdAt: zod.string(),
 });
 export const ListGamesResponse = zod.array(ListGamesResponseItem);
@@ -76,6 +78,8 @@ export const GetGameResponse = zod.object({
   survivorWinnerContestantId: zod.number().nullable(),
   currentWeekNumber: zod.number(),
   totalWeeks: zod.number(),
+  firstPickPoints: zod.number(),
+  secondPickPoints: zod.number(),
   createdAt: zod.string(),
 });
 
@@ -89,6 +93,8 @@ export const UpdateGameParams = zod.object({
 export const UpdateGameBody = zod.object({
   name: zod.string().optional(),
   status: zod.enum(["setup", "active", "completed"]).optional(),
+  firstPickPoints: zod.number().optional(),
+  secondPickPoints: zod.number().optional(),
 });
 
 export const UpdateGameResponse = zod.object({
@@ -98,6 +104,8 @@ export const UpdateGameResponse = zod.object({
   survivorWinnerContestantId: zod.number().nullable(),
   currentWeekNumber: zod.number(),
   totalWeeks: zod.number(),
+  firstPickPoints: zod.number(),
+  secondPickPoints: zod.number(),
   createdAt: zod.string(),
 });
 
@@ -443,6 +451,8 @@ export const SubmitSurvivorWinnerResponse = zod.object({
   survivorWinnerContestantId: zod.number().nullable(),
   currentWeekNumber: zod.number(),
   totalWeeks: zod.number(),
+  firstPickPoints: zod.number(),
+  secondPickPoints: zod.number(),
   createdAt: zod.string(),
 });
 

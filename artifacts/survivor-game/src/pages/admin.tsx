@@ -631,6 +631,74 @@ function WeeksSection({ gameId }: { gameId: number }) {
   );
 }
 
+function PickScoringSection({ gameId }: { gameId: number }) {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const { data: game } = useGetGame(gameId);
+  const updateGame = useUpdateGame();
+  const [firstPts, setFirstPts] = useState<number | null>(null);
+  const [secondPts, setSecondPts] = useState<number | null>(null);
+
+  const currentFirst = firstPts ?? game?.firstPickPoints ?? 20;
+  const currentSecond = secondPts ?? game?.secondPickPoints ?? 10;
+
+  function handleSave() {
+    updateGame.mutate(
+      { gameId, data: { firstPickPoints: currentFirst, secondPickPoints: currentSecond } },
+      {
+        onSuccess: () => {
+          qc.invalidateQueries({ queryKey: getListGamesQueryKey() });
+          toast({ title: "Pick scoring updated!" });
+        },
+        onError: () => toast({ title: "Failed to update scoring", variant: "destructive" }),
+      }
+    );
+  }
+
+  return (
+    <div className="bg-card border border-border rounded-xl p-6">
+      <h2 className="text-lg font-bold text-foreground mb-1" style={{ fontFamily: "'Oswald', sans-serif" }}>SURVIVOR PICK SCORING</h2>
+      <p className="text-xs text-muted-foreground mb-4">Points awarded when the actual winner is revealed at season end.</p>
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-semibold text-foreground mb-1">
+            "Who will be the winner?" — correct points
+          </label>
+          <input
+            data-testid="input-first-pick-points"
+            type="number"
+            min={0}
+            value={currentFirst}
+            onChange={(e) => setFirstPts(Number(e.target.value))}
+            className="w-full border border-border rounded-lg px-3 py-2 bg-background text-foreground"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-foreground mb-1">
+            "Who is your second choice?" — correct points
+          </label>
+          <input
+            data-testid="input-second-pick-points"
+            type="number"
+            min={0}
+            value={currentSecond}
+            onChange={(e) => setSecondPts(Number(e.target.value))}
+            className="w-full border border-border rounded-lg px-3 py-2 bg-background text-foreground"
+          />
+        </div>
+        <button
+          data-testid="button-save-pick-scoring"
+          onClick={handleSave}
+          disabled={updateGame.isPending}
+          className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 disabled:opacity-50 text-sm"
+        >
+          {updateGame.isPending ? "Saving..." : "Save Point Values"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function StatsBar({ gameId }: { gameId: number }) {
   const { data: stats } = useGetGameStats(gameId, {
     query: { queryKey: getGetGameStatsQueryKey(gameId) },
@@ -692,6 +760,12 @@ export default function Admin() {
             <GameSetupSection onGameCreated={handleGameSelected} selectedGameId={selectedGameId} />
             {selectedGameId && <ContestantsSection gameId={selectedGameId} />}
           </div>
+
+          {selectedGameId && (
+            <div className="grid lg:grid-cols-2 gap-6 mb-6">
+              <PickScoringSection gameId={selectedGameId} />
+            </div>
+          )}
 
           {selectedGameId && <WeeksSection gameId={selectedGameId} />}
         </div>

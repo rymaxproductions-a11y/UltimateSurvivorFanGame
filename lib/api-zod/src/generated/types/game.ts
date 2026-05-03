@@ -15,5 +15,7 @@ export interface Game {
   survivorWinnerContestantId: number | null;
   currentWeekNumber: number;
   totalWeeks: number;
+  firstPickPoints: number;
+  secondPickPoints: number;
   createdAt: string;
 }

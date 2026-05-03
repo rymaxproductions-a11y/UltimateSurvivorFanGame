@@ -57,6 +57,8 @@ export interface Game {
   survivorWinnerContestantId: number | null;
   currentWeekNumber: number;
   totalWeeks: number;
+  firstPickPoints: number;
+  secondPickPoints: number;
   createdAt: string;
 }
 
@@ -77,6 +79,8 @@ export const UpdateGameBodyStatus = {
 export interface UpdateGameBody {
   name?: string;
   status?: UpdateGameBodyStatus;
+  firstPickPoints?: number;
+  secondPickPoints?: number;
 }
 
 export interface Contestant {

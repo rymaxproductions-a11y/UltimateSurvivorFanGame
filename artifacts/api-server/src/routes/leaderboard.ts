@@ -53,11 +53,10 @@ router.get("/games/:gameId/leaderboard", async (req, res): Promise<void> => {
     if (game.survivorWinnerContestantId) {
       const userPick = survivorPicks.find(sp => sp.userId === user.id);
       if (userPick) {
-        const winnerPoints = 10;
         if (userPick.firstChoiceContestantId === game.survivorWinnerContestantId) {
-          survivorPickPoints = winnerPoints * 2;
+          survivorPickPoints = game.firstPickPoints;
         } else if (userPick.secondChoiceContestantId === game.survivorWinnerContestantId) {
-          survivorPickPoints = winnerPoints;
+          survivorPickPoints = game.secondPickPoints;
         }
       }
     }

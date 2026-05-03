@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useUser } from "@clerk/react";
 import { useGetMe, useUpdateMyRole, useListGames, useListContestants, useSaveSurvivorPicks, getGetMeQueryKey, getListContestantsQueryKey } from "@workspace/api-client-react";
@@ -27,6 +27,12 @@ export default function Onboarding() {
 
   const updateRole = useUpdateMyRole();
   const savePicks = useSaveSurvivorPicks();
+
+  useEffect(() => {
+    if (activeGames.length === 1 && !selectedGameId) {
+      setSelectedGameId(activeGames[0].id);
+    }
+  }, [activeGames.length]);
 
   async function handleRoleSelect(role: "admin" | "player") {
     setSelectedRole(role);
@@ -112,9 +118,9 @@ export default function Onboarding() {
 
         {step === "picks" && (
           <div className="bg-card border border-border rounded-2xl p-8">
-            <h2 className="text-xl font-semibold text-foreground mb-2">Make Your Survivor Picks</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-2">Season Predictions</h2>
             <p className="text-muted-foreground mb-6 text-sm">
-              Pick who you think will win the game. You earn bonus points if your pick wins!
+              Answer both questions now. These are locked in for the whole season and scored when the winner is revealed.
             </p>
 
             {activeGames.length === 0 ? (
@@ -130,67 +136,76 @@ export default function Onboarding() {
               </div>
             ) : (
               <div className="space-y-5">
-                <div>
-                  <label className="block text-sm font-semibold text-foreground mb-2">Select Game</label>
-                  <select
-                    data-testid="select-game"
-                    value={selectedGameId ?? ""}
-                    onChange={(e) => { setSelectedGameId(Number(e.target.value)); setFirstPickId(null); setSecondPickId(null); }}
-                    className="w-full border border-border rounded-lg px-3 py-2 bg-background text-foreground"
-                  >
-                    <option value="">Choose a game...</option>
-                    {activeGames.map((g) => (
-                      <option key={g.id} value={g.id}>{g.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {selectedGameId && contestants && (
-                  <>
-                    <div>
-                      <label className="block text-sm font-semibold text-foreground mb-2">
-                        First Choice <span className="text-primary">(2x points)</span>
-                      </label>
-                      <select
-                        data-testid="select-first-pick"
-                        value={firstPickId ?? ""}
-                        onChange={(e) => setFirstPickId(Number(e.target.value))}
-                        className="w-full border border-border rounded-lg px-3 py-2 bg-background text-foreground"
-                      >
-                        <option value="">Pick your winner...</option>
-                        {contestants.map((c) => (
-                          <option key={c.id} value={c.id} disabled={c.id === secondPickId}>{c.name}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-semibold text-foreground mb-2">
-                        Second Choice <span className="text-primary">(1x points)</span>
-                      </label>
-                      <select
-                        data-testid="select-second-pick"
-                        value={secondPickId ?? ""}
-                        onChange={(e) => setSecondPickId(Number(e.target.value))}
-                        className="w-full border border-border rounded-lg px-3 py-2 bg-background text-foreground"
-                      >
-                        <option value="">Pick your backup...</option>
-                        {contestants.map((c) => (
-                          <option key={c.id} value={c.id} disabled={c.id === firstPickId}>{c.name}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <button
-                      data-testid="button-submit-picks"
-                      onClick={handlePicksSubmit}
-                      disabled={savePicks.isPending || !firstPickId || !secondPickId}
-                      className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold text-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+                {activeGames.length > 1 && (
+                  <div>
+                    <label className="block text-sm font-semibold text-foreground mb-2">Select Game</label>
+                    <select
+                      data-testid="select-game"
+                      value={selectedGameId ?? ""}
+                      onChange={(e) => { setSelectedGameId(Number(e.target.value)); setFirstPickId(null); setSecondPickId(null); }}
+                      className="w-full border border-border rounded-lg px-3 py-2 bg-background text-foreground"
                     >
-                      {savePicks.isPending ? "Saving..." : "Lock In My Picks"}
-                    </button>
-                  </>
+                      <option value="">Choose a game...</option>
+                      {activeGames.map((g) => (
+                        <option key={g.id} value={g.id}>{g.name}</option>
+                      ))}
+                    </select>
+                  </div>
                 )}
+
+                {selectedGameId && contestants && (() => {
+                  const game = activeGames.find(g => g.id === selectedGameId);
+                  const firstPts = game?.firstPickPoints ?? 20;
+                  const secondPts = game?.secondPickPoints ?? 10;
+                  return (
+                    <>
+                      <div className="border border-border rounded-xl p-4 bg-background">
+                        <div className="flex items-center justify-between mb-3">
+                          <label className="font-semibold text-foreground text-sm">Who will be the winner of this season?</label>
+                          <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">{firstPts} pts</span>
+                        </div>
+                        <select
+                          data-testid="select-first-pick"
+                          value={firstPickId ?? ""}
+                          onChange={(e) => setFirstPickId(Number(e.target.value))}
+                          className="w-full border border-border rounded-lg px-3 py-2 bg-card text-foreground"
+                        >
+                          <option value="">Select a contestant...</option>
+                          {contestants.map((c) => (
+                            <option key={c.id} value={c.id} disabled={c.id === secondPickId}>{c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="border border-border rounded-xl p-4 bg-background">
+                        <div className="flex items-center justify-between mb-3">
+                          <label className="font-semibold text-foreground text-sm">Who is your second choice to win?</label>
+                          <span className="text-xs font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{secondPts} pts</span>
+                        </div>
+                        <select
+                          data-testid="select-second-pick"
+                          value={secondPickId ?? ""}
+                          onChange={(e) => setSecondPickId(Number(e.target.value))}
+                          className="w-full border border-border rounded-lg px-3 py-2 bg-card text-foreground"
+                        >
+                          <option value="">Select a contestant...</option>
+                          {contestants.map((c) => (
+                            <option key={c.id} value={c.id} disabled={c.id === firstPickId}>{c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <button
+                        data-testid="button-submit-picks"
+                        onClick={handlePicksSubmit}
+                        disabled={savePicks.isPending || !firstPickId || !secondPickId}
+                        className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold text-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+                      >
+                        {savePicks.isPending ? "Saving..." : "Submit My Predictions"}
+                      </button>
+                    </>
+                  );
+                })()}
               </div>
             )}
           </div>
