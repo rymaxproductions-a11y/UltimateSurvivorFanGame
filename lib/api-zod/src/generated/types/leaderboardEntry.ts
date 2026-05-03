@@ -11,6 +11,7 @@ export interface LeaderboardEntry {
   rank: number;
   userId: number;
   username: string;
+  displayName?: string | null;
   totalPoints: number;
   weeklyPoints: WeeklyPoints[];
   survivorPickPoints: number;

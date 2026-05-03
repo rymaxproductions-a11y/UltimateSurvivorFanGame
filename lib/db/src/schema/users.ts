@@ -8,6 +8,7 @@ export const usersTable = pgTable("users", {
   id: serial("id").primaryKey(),
   clerkId: text("clerk_id").notNull().unique(),
   username: text("username").notNull(),
+  displayName: text("display_name"),
   role: roleEnum("role").notNull().default("player"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

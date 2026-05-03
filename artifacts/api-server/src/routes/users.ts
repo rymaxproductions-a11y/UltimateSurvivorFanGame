@@ -2,7 +2,7 @@ import { Router, type IRouter } from "express";
 import { getAuth } from "@clerk/express";
 import { eq } from "drizzle-orm";
 import { db, usersTable } from "@workspace/db";
-import { GetMeResponse, UpdateMyRoleBody, UpdateMyRoleResponse } from "@workspace/api-zod";
+import { GetMeResponse, UpdateMyRoleBody, UpdateMyRoleResponse, UpdateMyProfileBody, UpdateMyProfileResponse } from "@workspace/api-zod";
 import { serialize } from "../lib/serialize";
 
 const router: IRouter = Router();
@@ -33,6 +33,26 @@ router.get("/users/me", requireAuth, async (req: any, res: any): Promise<void> =
   }
 
   res.json(GetMeResponse.parse(serialize(user)));
+});
+
+router.patch("/users/me", requireAuth, async (req: any, res: any): Promise<void> => {
+  const auth = getAuth(req);
+  const clerkId = auth!.userId!;
+
+  const parsed = UpdateMyProfileBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  let [user] = await db.select().from(usersTable).where(eq(usersTable.clerkId, clerkId));
+  if (!user) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+
+  [user] = await db.update(usersTable).set({ displayName: parsed.data.displayName.trim() }).where(eq(usersTable.clerkId, clerkId)).returning();
+  res.json(UpdateMyProfileResponse.parse(serialize(user)));
 });
 
 router.patch("/users/me/role", requireAuth, async (req: any, res: any): Promise<void> => {

@@ -31,6 +31,7 @@ export * from "./submitSurvivorWinnerBody";
 export * from "./survivorPicks";
 export * from "./updateGameBody";
 export * from "./updateGameBodyStatus";
+export * from "./updateProfileBody";
 export * from "./updateQuestionBody";
 export * from "./updateRoleBody";
 export * from "./updateRoleBodyRole";

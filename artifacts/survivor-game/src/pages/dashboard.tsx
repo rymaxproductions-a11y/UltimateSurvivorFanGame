@@ -3,6 +3,7 @@ import { useLocation, Redirect } from "wouter";
 import { Show } from "@clerk/react";
 import {
   useGetMe,
+  useUpdateMyProfile,
   useListGames,
   useGetGame,
   useListWeeks,
@@ -12,6 +13,7 @@ import {
   useSaveMyAnswers,
   useGetLeaderboard,
   useGetMySurvivorPicks,
+  getGetMeQueryKey,
   getGetMyAnswersQueryKey,
   getGetLeaderboardQueryKey,
   getListContestantsQueryKey,
@@ -247,7 +249,7 @@ function GameView({ gameId }: { gameId: number }) {
                   <span className={`text-sm font-black w-6 text-center ${entry.rank === 1 ? "text-primary" : "text-muted-foreground"}`}>
                     {entry.rank}
                   </span>
-                  <span className="font-semibold text-foreground">{entry.username}</span>
+                  <span className="font-semibold text-foreground">{entry.displayName ?? entry.username}</span>
                 </div>
                 <span className="font-black text-primary">{entry.totalPoints} pts</span>
               </div>
@@ -259,10 +261,71 @@ function GameView({ gameId }: { gameId: number }) {
   );
 }
 
+function SetNameModal({ onSaved }: { onSaved: () => void }) {
+  const [name, setName] = useState("");
+  const [error, setError] = useState("");
+  const updateProfile = useUpdateMyProfile();
+  const qc = useQueryClient();
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmed = name.trim();
+    if (!trimmed) { setError("Please enter your name."); return; }
+    updateProfile.mutate(
+      { data: { displayName: trimmed } },
+      {
+        onSuccess: () => {
+          qc.invalidateQueries({ queryKey: getGetMeQueryKey() });
+          onSaved();
+        },
+        onError: () => setError("Something went wrong. Please try again."),
+      }
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="bg-card border border-border rounded-2xl p-8 w-full max-w-sm mx-4 shadow-xl">
+        <h2 className="text-2xl font-bold text-foreground mb-1" style={{ fontFamily: "'Oswald', sans-serif" }}>
+          WELCOME TO THE GAME
+        </h2>
+        <p className="text-sm text-muted-foreground mb-6">
+          Enter your name so other players can find you on the leaderboard.
+        </p>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-foreground mb-1">Your Name</label>
+            <input
+              data-testid="input-display-name"
+              type="text"
+              value={name}
+              onChange={(e) => { setName(e.target.value); setError(""); }}
+              placeholder="e.g. Jeff Probst"
+              maxLength={50}
+              autoFocus
+              className="w-full border border-border rounded-lg px-3 py-2 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+            {error && <p className="text-xs text-destructive mt-1">{error}</p>}
+          </div>
+          <button
+            data-testid="button-save-display-name"
+            type="submit"
+            disabled={updateProfile.isPending}
+            className="w-full py-2.5 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 disabled:opacity-50 transition-colors"
+          >
+            {updateProfile.isPending ? "Saving..." : "Let's Play"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const [, navigate] = useLocation();
   const { data: me, isLoading: meLoading } = useGetMe();
   const { data: games } = useListGames();
+  const [nameSaved, setNameSaved] = useState(false);
 
   if (meLoading) {
     return (
@@ -278,10 +341,12 @@ export default function Dashboard() {
 
   const activeGames = (games ?? []).filter((g) => g.status === "active" || g.status === "completed");
   const game = activeGames[0];
+  const needsName = !me.displayName && !nameSaved;
 
   return (
     <Show when="signed-in" fallback={<Redirect to="/sign-in" />}>
       <div className="min-h-screen bg-background">
+        {needsName && <SetNameModal onSaved={() => setNameSaved(true)} />}
         <Nav />
         <div className="max-w-3xl mx-auto px-4 py-8">
           <div className="mb-8">

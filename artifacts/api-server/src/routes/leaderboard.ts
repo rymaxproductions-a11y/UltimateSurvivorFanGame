@@ -64,6 +64,7 @@ router.get("/games/:gameId/leaderboard", async (req, res): Promise<void> => {
     return {
       userId: user.id,
       username: user.username,
+      displayName: user.displayName ?? null,
       totalPoints: totalPoints + survivorPickPoints,
       weeklyPoints,
       survivorPickPoints,

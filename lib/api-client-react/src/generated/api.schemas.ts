@@ -21,8 +21,13 @@ export interface UserProfile {
   id: number;
   clerkId: string;
   username: string;
+  displayName?: string | null;
   role: UserProfileRole;
   createdAt: string;
+}
+
+export interface UpdateProfileBody {
+  displayName: string;
 }
 
 export type UpdateRoleBodyRole =
@@ -207,6 +212,7 @@ export interface LeaderboardEntry {
   rank: number;
   userId: number;
   username: string;
+  displayName?: string | null;
   totalPoints: number;
   weeklyPoints: WeeklyPoints[];
   survivorPickPoints: number;

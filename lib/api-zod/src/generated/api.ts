@@ -21,6 +21,23 @@ export const GetMeResponse = zod.object({
   id: zod.number(),
   clerkId: zod.string(),
   username: zod.string(),
+  displayName: zod.string().nullish(),
+  role: zod.enum(["admin", "player"]),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Update current user profile (display name)
+ */
+export const UpdateMyProfileBody = zod.object({
+  displayName: zod.string(),
+});
+
+export const UpdateMyProfileResponse = zod.object({
+  id: zod.number(),
+  clerkId: zod.string(),
+  username: zod.string(),
+  displayName: zod.string().nullish(),
   role: zod.enum(["admin", "player"]),
   createdAt: zod.string(),
 });
@@ -36,6 +53,7 @@ export const UpdateMyRoleResponse = zod.object({
   id: zod.number(),
   clerkId: zod.string(),
   username: zod.string(),
+  displayName: zod.string().nullish(),
   role: zod.enum(["admin", "player"]),
   createdAt: zod.string(),
 });
@@ -453,6 +471,7 @@ export const GetLeaderboardResponseItem = zod.object({
   rank: zod.number(),
   userId: zod.number(),
   username: zod.string(),
+  displayName: zod.string().nullish(),
   totalPoints: zod.number(),
   weeklyPoints: zod.array(
     zod.object({

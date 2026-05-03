@@ -11,6 +11,7 @@ export interface UserProfile {
   id: number;
   clerkId: string;
   username: string;
+  displayName?: string | null;
   role: UserProfileRole;
   createdAt: string;
 }
