@@ -28,6 +28,8 @@ export default function Onboarding() {
   const updateRole = useUpdateMyRole();
   const savePicks = useSaveSurvivorPicks();
 
+  const activeGames = games?.filter((g) => g.status === "active" || g.status === "setup") ?? [];
+
   useEffect(() => {
     if (activeGames.length === 1 && !selectedGameId) {
       setSelectedGameId(activeGames[0].id);
@@ -74,8 +76,6 @@ export default function Onboarding() {
       }
     );
   }
-
-  const activeGames = games?.filter((g) => g.status === "active" || g.status === "setup") ?? [];
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">

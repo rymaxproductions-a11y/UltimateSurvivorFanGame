@@ -32,7 +32,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Nav } from "@/components/nav";
-import { Trash2, Plus, ChevronDown, ChevronUp, DatabaseZap, Eraser } from "lucide-react";
+import { Trash2, Plus, ChevronDown, ChevronUp, DatabaseZap, Eraser, PlayCircle, CheckCircle, RotateCcw } from "lucide-react";
 
 function GameSetupSection({ onGameCreated, selectedGameId }: { onGameCreated: (id: number | null) => void; selectedGameId: number | null }) {
   const { toast } = useToast();
@@ -42,9 +42,24 @@ function GameSetupSection({ onGameCreated, selectedGameId }: { onGameCreated: (i
   const deleteGame = useDeleteGame();
   const seedGame = useSeedGame();
   const clearGame = useClearGame();
+  const updateGame = useUpdateGame();
   const [name, setName] = useState("");
   const [totalWeeks, setTotalWeeks] = useState(15);
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
+
+  function handleStatusChange(gameId: number, status: "setup" | "active" | "completed") {
+    updateGame.mutate(
+      { gameId, data: { status } },
+      {
+        onSuccess: () => {
+          qc.invalidateQueries({ queryKey: getListGamesQueryKey() });
+          const label = status === "active" ? "Game is now active — players can join!" : status === "completed" ? "Game marked as completed." : "Game reset to setup.";
+          toast({ title: label });
+        },
+        onError: () => toast({ title: "Failed to update game status", variant: "destructive" }),
+      }
+    );
+  }
 
   function handleCreate() {
     if (!name.trim()) { toast({ title: "Enter a game name", variant: "destructive" }); return; }
@@ -163,7 +178,43 @@ function GameSetupSection({ onGameCreated, selectedGameId }: { onGameCreated: (i
                   {selectedGameId === g.id ? "Selected" : "Manage"}
                 </button>
               </div>
-              <div className="flex gap-2 px-3 pb-3">
+              <div className="flex flex-wrap gap-2 px-3 pb-3">
+                {g.status === "setup" && (
+                  <button
+                    data-testid={`button-activate-game-${g.id}`}
+                    onClick={() => handleStatusChange(g.id, "active")}
+                    disabled={updateGame.isPending}
+                    title="Make this game live so players can join"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 border border-green-200 rounded-lg text-xs font-semibold hover:bg-green-100 disabled:opacity-50 transition-colors"
+                  >
+                    <PlayCircle className="w-3 h-3" />
+                    Activate Game
+                  </button>
+                )}
+                {g.status === "active" && (
+                  <button
+                    data-testid={`button-complete-game-${g.id}`}
+                    onClick={() => handleStatusChange(g.id, "completed")}
+                    disabled={updateGame.isPending}
+                    title="Mark this game as finished"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-muted text-muted-foreground border border-border rounded-lg text-xs font-semibold hover:bg-muted/80 disabled:opacity-50 transition-colors"
+                  >
+                    <CheckCircle className="w-3 h-3" />
+                    Mark Complete
+                  </button>
+                )}
+                {g.status !== "setup" && (
+                  <button
+                    data-testid={`button-reset-game-${g.id}`}
+                    onClick={() => handleStatusChange(g.id, "setup")}
+                    disabled={updateGame.isPending}
+                    title="Return game to setup mode"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-muted text-muted-foreground border border-border rounded-lg text-xs font-semibold hover:bg-muted/80 disabled:opacity-50 transition-colors"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    Reset to Setup
+                  </button>
+                )}
                 <button
                   data-testid={`button-seed-game-${g.id}`}
                   onClick={() => handleSeed(g.id)}
