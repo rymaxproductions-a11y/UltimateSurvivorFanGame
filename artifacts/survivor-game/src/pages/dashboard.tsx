@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useLocation, Redirect } from "wouter";
-import { Show } from "@clerk/react";
+import { Redirect } from "wouter";
+import { useAuth, Show } from "@clerk/react";
 import {
   useGetMe,
   useUpdateMyProfile,
@@ -261,7 +261,7 @@ function GameView({ gameId }: { gameId: number }) {
   );
 }
 
-function SetNameModal({ onSaved }: { onSaved: () => void }) {
+function SetNameModal({ onSaved, onSkip }: { onSaved: () => void; onSkip: () => void }) {
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const updateProfile = useUpdateMyProfile();
@@ -271,6 +271,7 @@ function SetNameModal({ onSaved }: { onSaved: () => void }) {
     e.preventDefault();
     const trimmed = name.trim();
     if (!trimmed) { setError("Please enter your name."); return; }
+    setError("");
     updateProfile.mutate(
       { data: { displayName: trimmed } },
       {
@@ -278,7 +279,7 @@ function SetNameModal({ onSaved }: { onSaved: () => void }) {
           qc.invalidateQueries({ queryKey: getGetMeQueryKey() });
           onSaved();
         },
-        onError: () => setError("Something went wrong. Please try again."),
+        onError: () => setError("Could not save your name. You can set it later from your profile."),
       }
     );
   }
@@ -315,6 +316,13 @@ function SetNameModal({ onSaved }: { onSaved: () => void }) {
           >
             {updateProfile.isPending ? "Saving..." : "Let's Play"}
           </button>
+          <button
+            type="button"
+            onClick={onSkip}
+            className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Skip for now
+          </button>
         </form>
       </div>
     </div>
@@ -322,12 +330,12 @@ function SetNameModal({ onSaved }: { onSaved: () => void }) {
 }
 
 export default function Dashboard() {
-  const [, navigate] = useLocation();
+  const { isSignedIn, isLoaded: authLoaded } = useAuth();
   const { data: me, isLoading: meLoading } = useGetMe();
   const { data: games } = useListGames();
   const [nameSaved, setNameSaved] = useState(false);
 
-  if (meLoading) {
+  if (!authLoaded || meLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-muted-foreground">Loading...</div>
@@ -335,7 +343,12 @@ export default function Dashboard() {
     );
   }
 
-  if (!me) return <Redirect to="/sign-in" />;
+  if (!isSignedIn) return <Redirect to="/sign-in" />;
+  if (!me) return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="text-muted-foreground">Loading your profile...</div>
+    </div>
+  );
   if (me.role === "admin") return <Redirect to="/admin" />;
   if (me.role !== "player") return <Redirect to="/onboarding" />;
 
@@ -346,7 +359,7 @@ export default function Dashboard() {
   return (
     <Show when="signed-in" fallback={<Redirect to="/sign-in" />}>
       <div className="min-h-screen bg-background">
-        {needsName && <SetNameModal onSaved={() => setNameSaved(true)} />}
+        {needsName && <SetNameModal onSaved={() => setNameSaved(true)} onSkip={() => setNameSaved(true)} />}
         <Nav />
         <div className="max-w-3xl mx-auto px-4 py-8">
           <div className="mb-8">
