@@ -154,6 +154,69 @@ paths:
               schema:
                 $ref: "#/components/schemas/Game"
 
+  /games/{gameId}/delete:
+    post:
+      operationId: deleteGame
+      tags: [games]
+      summary: Delete a game and all its data (admin only)
+      parameters:
+        - name: gameId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResult"
+        "404":
+          description: Not found
+
+  /games/{gameId}/seed:
+    post:
+      operationId: seedGame
+      tags: [games]
+      summary: Seed a game with sample contestants, weeks, and questions (admin only)
+      parameters:
+        - name: gameId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Seeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResult"
+        "404":
+          description: Not found
+
+  /games/{gameId}/clear:
+    post:
+      operationId: clearGame
+      tags: [games]
+      summary: Remove all contestants, weeks, questions, and answers from a game (admin only)
+      parameters:
+        - name: gameId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Cleared
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResult"
+        "404":
+          description: Not found
+
   /games/{gameId}/contestants:
     get:
       operationId: listContestants
@@ -634,6 +697,14 @@ components:
           enum: [admin, player]
       required:
         - role
+
+    DeleteResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required:
+        - success
 
     Game:
       type: object

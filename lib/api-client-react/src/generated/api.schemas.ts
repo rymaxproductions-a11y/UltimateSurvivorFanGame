@@ -37,6 +37,10 @@ export interface UpdateRoleBody {
   role: UpdateRoleBodyRole;
 }
 
+export interface DeleteResult {
+  success: boolean;
+}
+
 export type GameStatus = (typeof GameStatus)[keyof typeof GameStatus];
 
 export const GameStatus = {

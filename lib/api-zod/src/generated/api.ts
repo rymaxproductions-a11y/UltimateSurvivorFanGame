@@ -102,6 +102,39 @@ export const UpdateGameResponse = zod.object({
 });
 
 /**
+ * @summary Delete a game and all its data (admin only)
+ */
+export const DeleteGameParams = zod.object({
+  gameId: zod.coerce.number(),
+});
+
+export const DeleteGameResponse = zod.object({
+  success: zod.boolean(),
+});
+
+/**
+ * @summary Seed a game with sample contestants, weeks, and questions (admin only)
+ */
+export const SeedGameParams = zod.object({
+  gameId: zod.coerce.number(),
+});
+
+export const SeedGameResponse = zod.object({
+  success: zod.boolean(),
+});
+
+/**
+ * @summary Remove all contestants, weeks, questions, and answers from a game (admin only)
+ */
+export const ClearGameParams = zod.object({
+  gameId: zod.coerce.number(),
+});
+
+export const ClearGameResponse = zod.object({
+  success: zod.boolean(),
+});
+
+/**
  * @summary List contestants for a game
  */
 export const ListContestantsParams = zod.object({

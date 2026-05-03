@@ -25,6 +25,7 @@ import type {
   CreateGameBody,
   CreateQuestionBody,
   CreateWeekBody,
+  DeleteResult,
   Game,
   GameStats,
   HealthStatus,
@@ -589,6 +590,258 @@ export const useUpdateGame = <
   TContext
 > => {
   return useMutation(getUpdateGameMutationOptions(options));
+};
+
+/**
+ * @summary Delete a game and all its data (admin only)
+ */
+export const getDeleteGameUrl = (gameId: number) => {
+  return `/api/games/${gameId}/delete`;
+};
+
+export const deleteGame = async (
+  gameId: number,
+  options?: RequestInit,
+): Promise<DeleteResult> => {
+  return customFetch<DeleteResult>(getDeleteGameUrl(gameId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getDeleteGameMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteGame>>,
+    TError,
+    { gameId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteGame>>,
+  TError,
+  { gameId: number },
+  TContext
+> => {
+  const mutationKey = ["deleteGame"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteGame>>,
+    { gameId: number }
+  > = (props) => {
+    const { gameId } = props ?? {};
+
+    return deleteGame(gameId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteGameMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteGame>>
+>;
+
+export type DeleteGameMutationError = ErrorType<void>;
+
+/**
+ * @summary Delete a game and all its data (admin only)
+ */
+export const useDeleteGame = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteGame>>,
+    TError,
+    { gameId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteGame>>,
+  TError,
+  { gameId: number },
+  TContext
+> => {
+  return useMutation(getDeleteGameMutationOptions(options));
+};
+
+/**
+ * @summary Seed a game with sample contestants, weeks, and questions (admin only)
+ */
+export const getSeedGameUrl = (gameId: number) => {
+  return `/api/games/${gameId}/seed`;
+};
+
+export const seedGame = async (
+  gameId: number,
+  options?: RequestInit,
+): Promise<DeleteResult> => {
+  return customFetch<DeleteResult>(getSeedGameUrl(gameId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getSeedGameMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof seedGame>>,
+    TError,
+    { gameId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof seedGame>>,
+  TError,
+  { gameId: number },
+  TContext
+> => {
+  const mutationKey = ["seedGame"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof seedGame>>,
+    { gameId: number }
+  > = (props) => {
+    const { gameId } = props ?? {};
+
+    return seedGame(gameId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SeedGameMutationResult = NonNullable<
+  Awaited<ReturnType<typeof seedGame>>
+>;
+
+export type SeedGameMutationError = ErrorType<void>;
+
+/**
+ * @summary Seed a game with sample contestants, weeks, and questions (admin only)
+ */
+export const useSeedGame = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof seedGame>>,
+    TError,
+    { gameId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof seedGame>>,
+  TError,
+  { gameId: number },
+  TContext
+> => {
+  return useMutation(getSeedGameMutationOptions(options));
+};
+
+/**
+ * @summary Remove all contestants, weeks, questions, and answers from a game (admin only)
+ */
+export const getClearGameUrl = (gameId: number) => {
+  return `/api/games/${gameId}/clear`;
+};
+
+export const clearGame = async (
+  gameId: number,
+  options?: RequestInit,
+): Promise<DeleteResult> => {
+  return customFetch<DeleteResult>(getClearGameUrl(gameId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getClearGameMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof clearGame>>,
+    TError,
+    { gameId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof clearGame>>,
+  TError,
+  { gameId: number },
+  TContext
+> => {
+  const mutationKey = ["clearGame"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof clearGame>>,
+    { gameId: number }
+  > = (props) => {
+    const { gameId } = props ?? {};
+
+    return clearGame(gameId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ClearGameMutationResult = NonNullable<
+  Awaited<ReturnType<typeof clearGame>>
+>;
+
+export type ClearGameMutationError = ErrorType<void>;
+
+/**
+ * @summary Remove all contestants, weeks, questions, and answers from a game (admin only)
+ */
+export const useClearGame = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof clearGame>>,
+    TError,
+    { gameId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof clearGame>>,
+  TError,
+  { gameId: number },
+  TContext
+> => {
+  return useMutation(getClearGameMutationOptions(options));
 };
 
 /**

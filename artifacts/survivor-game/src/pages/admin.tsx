@@ -21,6 +21,9 @@ import {
   useGetCorrectAnswers,
   useSubmitSurvivorWinner,
   useGetGameStats,
+  useDeleteGame,
+  useSeedGame,
+  useClearGame,
   getListGamesQueryKey,
   getListContestantsQueryKey,
   getListWeeksQueryKey,
@@ -31,15 +34,19 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Nav } from "@/components/nav";
-import { Trash2, Plus, ChevronDown, ChevronUp } from "lucide-react";
+import { Trash2, Plus, ChevronDown, ChevronUp, DatabaseZap, Eraser } from "lucide-react";
 
-function GameSetupSection({ onGameCreated }: { onGameCreated: (id: number) => void }) {
+function GameSetupSection({ onGameCreated, selectedGameId }: { onGameCreated: (id: number | null) => void; selectedGameId: number | null }) {
   const { toast } = useToast();
   const qc = useQueryClient();
   const { data: games } = useListGames();
   const createGame = useCreateGame();
+  const deleteGame = useDeleteGame();
+  const seedGame = useSeedGame();
+  const clearGame = useClearGame();
   const [name, setName] = useState("");
   const [totalWeeks, setTotalWeeks] = useState(15);
+  const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
   function handleCreate() {
     if (!name.trim()) { toast({ title: "Enter a game name", variant: "destructive" }); return; }
@@ -53,6 +60,54 @@ function GameSetupSection({ onGameCreated }: { onGameCreated: (id: number) => vo
           onGameCreated(g.id);
         },
         onError: () => toast({ title: "Failed to create game", variant: "destructive" }),
+      }
+    );
+  }
+
+  function handleSeed(gameId: number) {
+    seedGame.mutate(
+      { gameId },
+      {
+        onSuccess: () => {
+          qc.invalidateQueries({ queryKey: getListContestantsQueryKey(gameId) });
+          qc.invalidateQueries({ queryKey: getListWeeksQueryKey(gameId) });
+          toast({ title: "Sample data seeded successfully!" });
+        },
+        onError: () => toast({ title: "Failed to seed sample data", variant: "destructive" }),
+      }
+    );
+  }
+
+  function handleClear(gameId: number) {
+    clearGame.mutate(
+      { gameId },
+      {
+        onSuccess: () => {
+          qc.invalidateQueries({ queryKey: getListGamesQueryKey() });
+          qc.invalidateQueries({ queryKey: getListContestantsQueryKey(gameId) });
+          qc.invalidateQueries({ queryKey: getListWeeksQueryKey(gameId) });
+          toast({ title: "All game data cleared." });
+        },
+        onError: () => toast({ title: "Failed to clear game data", variant: "destructive" }),
+      }
+    );
+  }
+
+  function handleDelete(gameId: number) {
+    if (confirmDelete !== gameId) {
+      setConfirmDelete(gameId);
+      return;
+    }
+    deleteGame.mutate(
+      { gameId },
+      {
+        onSuccess: () => {
+          qc.invalidateQueries({ queryKey: getListGamesQueryKey() });
+          if (selectedGameId === gameId) onGameCreated(null);
+          toast({ title: "Game deleted." });
+          setConfirmDelete(null);
+        },
+        onError: () => toast({ title: "Failed to delete game", variant: "destructive" }),
       }
     );
   }
@@ -89,23 +144,62 @@ function GameSetupSection({ onGameCreated }: { onGameCreated: (id: number) => vo
         </button>
       </div>
       {games && games.length > 0 && (
-        <div className="space-y-2">
+        <div className="space-y-3">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Existing Games</p>
           {games.map((g) => (
-            <div key={g.id} data-testid={`game-item-${g.id}`} className="flex items-center justify-between px-3 py-2 bg-muted/40 rounded-lg">
-              <span className="font-medium text-foreground">{g.name}</span>
-              <div className="flex items-center gap-3">
-                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                  g.status === "active" ? "bg-green-100 text-green-700" :
-                  g.status === "completed" ? "bg-muted text-muted-foreground" :
-                  "bg-amber-100 text-amber-700"
-                }`}>{g.status}</span>
+            <div key={g.id} data-testid={`game-item-${g.id}`} className="rounded-xl border border-border bg-muted/40 overflow-hidden">
+              <div className="flex items-center justify-between px-3 py-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-foreground">{g.name}</span>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                    g.status === "active" ? "bg-green-100 text-green-700" :
+                    g.status === "completed" ? "bg-muted text-muted-foreground" :
+                    "bg-amber-100 text-amber-700"
+                  }`}>{g.status}</span>
+                </div>
                 <button
                   data-testid={`button-select-game-${g.id}`}
                   onClick={() => onGameCreated(g.id)}
                   className="text-xs text-primary font-semibold hover:underline"
                 >
-                  Manage
+                  {selectedGameId === g.id ? "Selected" : "Manage"}
+                </button>
+              </div>
+              <div className="flex gap-2 px-3 pb-3">
+                <button
+                  data-testid={`button-seed-game-${g.id}`}
+                  onClick={() => handleSeed(g.id)}
+                  disabled={seedGame.isPending}
+                  title="Load sample contestants, weeks, and questions"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary border border-primary/20 rounded-lg text-xs font-semibold hover:bg-primary/20 disabled:opacity-50 transition-colors"
+                >
+                  <DatabaseZap className="w-3 h-3" />
+                  Seed Sample Data
+                </button>
+                <button
+                  data-testid={`button-clear-game-${g.id}`}
+                  onClick={() => handleClear(g.id)}
+                  disabled={clearGame.isPending}
+                  title="Remove all contestants, weeks, and questions — keeps the game"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg text-xs font-semibold hover:bg-amber-100 disabled:opacity-50 transition-colors"
+                >
+                  <Eraser className="w-3 h-3" />
+                  Clear All Data
+                </button>
+                <button
+                  data-testid={`button-delete-game-${g.id}`}
+                  onClick={() => handleDelete(g.id)}
+                  disabled={deleteGame.isPending}
+                  title="Permanently delete this game"
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50 ${
+                    confirmDelete === g.id
+                      ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 animate-pulse"
+                      : "bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20"
+                  }`}
+                  onBlur={() => setConfirmDelete(null)}
+                >
+                  <Trash2 className="w-3 h-3" />
+                  {confirmDelete === g.id ? "Confirm Delete" : "Delete Game"}
                 </button>
               </div>
             </div>
@@ -565,6 +659,10 @@ export default function Admin() {
   const { data: me, isLoading: meLoading } = useGetMe();
   const [selectedGameId, setSelectedGameId] = useState<number | null>(null);
 
+  function handleGameSelected(id: number | null) {
+    setSelectedGameId(id);
+  }
+
   if (meLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -591,7 +689,7 @@ export default function Admin() {
           {selectedGameId && <StatsBar gameId={selectedGameId} />}
 
           <div className="grid lg:grid-cols-2 gap-6 mb-6">
-            <GameSetupSection onGameCreated={setSelectedGameId} />
+            <GameSetupSection onGameCreated={handleGameSelected} selectedGameId={selectedGameId} />
             {selectedGameId && <ContestantsSection gameId={selectedGameId} />}
           </div>
 

@@ -15,6 +15,7 @@ export * from "./createContestantBody";
 export * from "./createGameBody";
 export * from "./createQuestionBody";
 export * from "./createWeekBody";
+export * from "./deleteResult";
 export * from "./game";
 export * from "./gameStats";
 export * from "./gameStatus";

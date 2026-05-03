@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
-import { db, gamesTable, weeksTable, survivorPicksTable, contestantsTable } from "@workspace/db";
+import { db, gamesTable, weeksTable, survivorPicksTable, contestantsTable, questionsTable, choicesTable } from "@workspace/db";
 import {
   ListGamesResponse,
   CreateGameBody,
@@ -11,6 +11,9 @@ import {
   UpdateGameResponse,
   GetGameStatsParams,
   GetGameStatsResponse,
+  DeleteGameParams,
+  SeedGameParams,
+  ClearGameParams,
 } from "@workspace/api-zod";
 import { requireAuth } from "./users";
 import { serialize } from "../lib/serialize";
@@ -74,6 +77,117 @@ router.patch("/games/:gameId", requireAuth, async (req: any, res: any): Promise<
   }
 
   res.json(UpdateGameResponse.parse(serialize(game)));
+});
+
+router.post("/games/:gameId/delete", requireAuth, async (req: any, res: any): Promise<void> => {
+  const params = DeleteGameParams.safeParse(req.params);
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+  const [game] = await db.select().from(gamesTable).where(eq(gamesTable.id, params.data.gameId));
+  if (!game) { res.status(404).json({ error: "Game not found" }); return; }
+  await db.delete(gamesTable).where(eq(gamesTable.id, params.data.gameId));
+  res.json({ success: true });
+});
+
+router.post("/games/:gameId/clear", requireAuth, async (req: any, res: any): Promise<void> => {
+  const params = ClearGameParams.safeParse(req.params);
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+  const gameId = params.data.gameId;
+  const [game] = await db.select().from(gamesTable).where(eq(gamesTable.id, gameId));
+  if (!game) { res.status(404).json({ error: "Game not found" }); return; }
+  await db.delete(survivorPicksTable).where(eq(survivorPicksTable.gameId, gameId));
+  await db.delete(contestantsTable).where(eq(contestantsTable.gameId, gameId));
+  await db.delete(weeksTable).where(eq(weeksTable.gameId, gameId));
+  await db.update(gamesTable).set({ status: "setup", currentWeekNumber: 1, survivorWinnerContestantId: null } as any).where(eq(gamesTable.id, gameId));
+  res.json({ success: true });
+});
+
+router.post("/games/:gameId/seed", requireAuth, async (req: any, res: any): Promise<void> => {
+  const params = SeedGameParams.safeParse(req.params);
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+  const gameId = params.data.gameId;
+  const [game] = await db.select().from(gamesTable).where(eq(gamesTable.id, gameId));
+  if (!game) { res.status(404).json({ error: "Game not found" }); return; }
+
+  const survivorNames = [
+    "Rachel LaMont", "Sam Phalen", "Teeny Chirichillo", "Andy Rueda", "Sol Yi",
+    "Tiyana Hallums", "Kishan Patel", "Sierra Wright", "Gabe Ortis", "Kyle Ostwald",
+    "Sue Smey", "Jon Lovett", "Aysha Lester", "Rome Cooney", "Caroline Vidmar",
+    "Anika Dhar", "TK Foster", "Genevieve Mushalik",
+  ];
+  const inserted = await db.insert(contestantsTable).values(survivorNames.map(name => ({ gameId, name }))).returning();
+
+  const sampleWeeks = [
+    {
+      weekNumber: 1,
+      questions: [
+        {
+          text: "Who will win the first immunity challenge?",
+          pointValue: 2,
+          choices: inserted.slice(0, 5).map(c => c.name),
+        },
+        {
+          text: "Who will be voted out first?",
+          pointValue: 3,
+          choices: inserted.slice(0, 6).map(c => c.name),
+        },
+        {
+          text: "Which tribe will win the first reward challenge?",
+          pointValue: 1,
+          choices: ["Lavo", "Tuku", "Siga"],
+        },
+      ],
+    },
+    {
+      weekNumber: 2,
+      questions: [
+        {
+          text: "Who will find a hidden immunity idol this week?",
+          pointValue: 3,
+          choices: inserted.slice(0, 6).map(c => c.name).concat(["No one"]),
+        },
+        {
+          text: "Who will win individual immunity?",
+          pointValue: 2,
+          choices: inserted.slice(0, 5).map(c => c.name),
+        },
+        {
+          text: "How many votes will the eliminated player receive?",
+          pointValue: 1,
+          choices: ["3", "4", "5", "6+"],
+        },
+      ],
+    },
+    {
+      weekNumber: 3,
+      questions: [
+        {
+          text: "Will there be a tribe swap or merge this episode?",
+          pointValue: 2,
+          choices: ["Yes", "No"],
+        },
+        {
+          text: "Who will be voted out this week?",
+          pointValue: 3,
+          choices: inserted.slice(0, 7).map(c => c.name),
+        },
+        {
+          text: "Who will win the reward challenge?",
+          pointValue: 1,
+          choices: inserted.slice(0, 5).map(c => c.name),
+        },
+      ],
+    },
+  ];
+
+  for (const wk of sampleWeeks) {
+    const [week] = await db.insert(weeksTable).values({ gameId, weekNumber: wk.weekNumber, isOpen: true }).returning();
+    for (const q of wk.questions) {
+      const [question] = await db.insert(questionsTable).values({ weekId: week.id, text: q.text, pointValue: q.pointValue }).returning();
+      await db.insert(choicesTable).values(q.choices.map(ct => ({ questionId: question.id, choiceText: ct })));
+    }
+  }
+
+  res.json({ success: true });
 });
 
 router.get("/games/:gameId/stats", async (req, res): Promise<void> => {
