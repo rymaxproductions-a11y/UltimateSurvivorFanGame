@@ -487,7 +487,18 @@ function WeeksSection({ gameId }: { gameId: number }) {
   const [winnerId, setWinnerId] = useState<number | null>(null);
 
   const sortedWeeks = (weeks ?? []).sort((a, b) => a.weekNumber - b.weekNumber);
-  const nextWeekNumber = sortedWeeks.length > 0 ? sortedWeeks[sortedWeeks.length - 1].weekNumber + 1 : 1;
+
+  // Deduplicate by weekNumber, keeping the best status (locked > open > neither)
+  const weekByNumber = new Map<number, typeof sortedWeeks[0]>();
+  for (const w of sortedWeeks) {
+    const existing = weekByNumber.get(w.weekNumber);
+    if (!existing || (w.isLocked && !existing.isLocked) || (w.isOpen && !existing.isOpen && !existing.isLocked)) {
+      weekByNumber.set(w.weekNumber, w);
+    }
+  }
+  const dedupedWeeks = Array.from(weekByNumber.values()).sort((a, b) => a.weekNumber - b.weekNumber);
+
+  const nextWeekNumber = dedupedWeeks.length > 0 ? dedupedWeeks[dedupedWeeks.length - 1].weekNumber + 1 : 1;
 
   function handleAddWeek() {
     createWeek.mutate(
@@ -529,10 +540,10 @@ function WeeksSection({ gameId }: { gameId: number }) {
       </div>
 
       <div className="space-y-3">
-        {sortedWeeks.map((w) => (
+        {dedupedWeeks.map((w) => (
           <WeekSection key={w.id} gameId={gameId} week={w} contestants={contestants ?? []} />
         ))}
-        {sortedWeeks.length === 0 && (
+        {dedupedWeeks.length === 0 && (
           <p className="text-sm text-muted-foreground text-center py-6">No weeks yet. Add Week 1 to get started.</p>
         )}
       </div>
