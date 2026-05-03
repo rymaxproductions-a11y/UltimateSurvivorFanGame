@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and, inArray } from "drizzle-orm";
-import { db, playerAnswersTable, questionsTable, choicesTable, correctAnswersTable, weeksTable, gamesTable, usersTable, survivorPicksTable, contestantsTable } from "@workspace/db";
+import { db, playerAnswersTable, questionsTable, correctAnswersTable, weeksTable, gamesTable, usersTable, survivorPicksTable, contestantsTable } from "@workspace/db";
 import { serialize } from "../lib/serialize";
 import {
   GetMyAnswersParams,
@@ -21,7 +21,6 @@ import {
   SubmitSurvivorWinnerBody,
 } from "@workspace/api-zod";
 import { requireAuth } from "./users";
-import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
 
@@ -44,12 +43,12 @@ router.get("/weeks/:weekId/my-answers", requireAuth, async (req: any, res: any):
     id: playerAnswersTable.id,
     userId: playerAnswersTable.userId,
     questionId: playerAnswersTable.questionId,
-    choiceId: playerAnswersTable.choiceId,
-    choiceText: choicesTable.choiceText,
+    contestantId: playerAnswersTable.contestantId,
+    contestantName: contestantsTable.name,
     isCorrect: playerAnswersTable.isCorrect,
   })
     .from(playerAnswersTable)
-    .innerJoin(choicesTable, eq(playerAnswersTable.choiceId, choicesTable.id))
+    .innerJoin(contestantsTable, eq(playerAnswersTable.contestantId, contestantsTable.id))
     .innerJoin(questionsTable, eq(playerAnswersTable.questionId, questionsTable.id))
     .where(and(
       eq(playerAnswersTable.userId, user.id),
@@ -92,13 +91,13 @@ router.post("/weeks/:weekId/my-answers", requireAuth, async (req: any, res: any)
 
     if (existing.length > 0) {
       await db.update(playerAnswersTable)
-        .set({ choiceId: answer.choiceId })
+        .set({ contestantId: answer.contestantId })
         .where(and(eq(playerAnswersTable.userId, user.id), eq(playerAnswersTable.questionId, answer.questionId)));
     } else {
       await db.insert(playerAnswersTable).values({
         userId: user.id,
         questionId: answer.questionId,
-        choiceId: answer.choiceId,
+        contestantId: answer.contestantId,
       });
     }
   }
@@ -107,12 +106,12 @@ router.post("/weeks/:weekId/my-answers", requireAuth, async (req: any, res: any)
     id: playerAnswersTable.id,
     userId: playerAnswersTable.userId,
     questionId: playerAnswersTable.questionId,
-    choiceId: playerAnswersTable.choiceId,
-    choiceText: choicesTable.choiceText,
+    contestantId: playerAnswersTable.contestantId,
+    contestantName: contestantsTable.name,
     isCorrect: playerAnswersTable.isCorrect,
   })
     .from(playerAnswersTable)
-    .innerJoin(choicesTable, eq(playerAnswersTable.choiceId, choicesTable.id))
+    .innerJoin(contestantsTable, eq(playerAnswersTable.contestantId, contestantsTable.id))
     .innerJoin(questionsTable, eq(playerAnswersTable.questionId, questionsTable.id))
     .where(and(
       eq(playerAnswersTable.userId, user.id),
@@ -138,13 +137,13 @@ router.get("/weeks/:weekId/correct-answers", async (req, res): Promise<void> => 
   const correctAnswers = await db.select({
     id: correctAnswersTable.id,
     questionId: correctAnswersTable.questionId,
-    choiceId: correctAnswersTable.choiceId,
-    choiceText: choicesTable.choiceText,
+    contestantId: correctAnswersTable.contestantId,
+    contestantName: contestantsTable.name,
     questionText: questionsTable.text,
     pointValue: questionsTable.pointValue,
   })
     .from(correctAnswersTable)
-    .innerJoin(choicesTable, eq(correctAnswersTable.choiceId, choicesTable.id))
+    .innerJoin(contestantsTable, eq(correctAnswersTable.contestantId, contestantsTable.id))
     .innerJoin(questionsTable, eq(correctAnswersTable.questionId, questionsTable.id))
     .where(eq(questionsTable.weekId, params.data.weekId));
 
@@ -177,7 +176,7 @@ router.post("/weeks/:weekId/correct-answers", requireAuth, async (req: any, res:
     await db.insert(correctAnswersTable).values(
       parsed.data.answers.map((a: any) => ({
         questionId: a.questionId,
-        choiceId: a.choiceId,
+        contestantId: a.contestantId,
       }))
     );
   }
@@ -188,7 +187,7 @@ router.post("/weeks/:weekId/correct-answers", requireAuth, async (req: any, res:
 
     for (const pa of playerAnswers) {
       await db.update(playerAnswersTable)
-        .set({ isCorrect: pa.choiceId === answer.choiceId })
+        .set({ isCorrect: pa.contestantId === answer.contestantId })
         .where(eq(playerAnswersTable.id, pa.id));
     }
   }

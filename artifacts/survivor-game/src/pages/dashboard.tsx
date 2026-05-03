@@ -7,12 +7,14 @@ import {
   useGetGame,
   useListWeeks,
   useListQuestions,
+  useListContestants,
   useGetMyAnswers,
   useSaveMyAnswers,
   useGetLeaderboard,
   useGetMySurvivorPicks,
   getGetMyAnswersQueryKey,
   getGetLeaderboardQueryKey,
+  getListContestantsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -21,11 +23,13 @@ import { Nav } from "@/components/nav";
 function WeekTab({
   weekId,
   weekNumber,
+  gameId,
   isOpen,
   isLocked,
 }: {
   weekId: number;
   weekNumber: number;
+  gameId: number;
   isOpen: boolean;
   isLocked: boolean;
 }) {
@@ -33,24 +37,27 @@ function WeekTab({
   const qc = useQueryClient();
   const { data: questions, isLoading: qLoading } = useListQuestions(weekId);
   const { data: myAnswers } = useGetMyAnswers(weekId);
+  const { data: contestants } = useListContestants(gameId, {
+    query: { queryKey: getListContestantsQueryKey(gameId) },
+  });
   const saveAnswers = useSaveMyAnswers();
 
   const [selections, setSelections] = useState<Record<number, number>>({});
 
   function getAnswerForQuestion(questionId: number): number | undefined {
     const saved = myAnswers?.find((a) => a.questionId === questionId);
-    return selections[questionId] ?? saved?.choiceId ?? undefined;
+    return selections[questionId] ?? saved?.contestantId ?? undefined;
   }
 
-  function handleSelect(questionId: number, choiceId: number) {
+  function handleSelect(questionId: number, contestantId: number) {
     if (!isOpen || isLocked) return;
-    setSelections((prev) => ({ ...prev, [questionId]: choiceId }));
+    setSelections((prev) => ({ ...prev, [questionId]: contestantId }));
   }
 
   function handleSave() {
     const answersToSave = Object.entries(selections).map(([qId, cId]) => ({
       questionId: Number(qId),
-      choiceId: Number(cId),
+      contestantId: Number(cId),
     }));
     if (answersToSave.length === 0) {
       toast({ title: "No new selections to save" });
@@ -113,14 +120,14 @@ function WeekTab({
               disabled={!isOpen || isLocked}
               className="w-full border border-border rounded-lg px-3 py-2 bg-background text-foreground disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <option value="">Select your answer...</option>
-              {q.choices.map((c) => (
-                <option key={c.id} value={c.id}>{c.choiceText}</option>
+              <option value="">Select a contestant...</option>
+              {(contestants ?? []).map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
             {isLocked && savedAnswer && (
               <div className={`mt-2 text-sm font-medium ${isCorrect ? "text-green-600" : "text-red-600"}`}>
-                {isCorrect ? "Correct! +" + q.pointValue + " pts" : "Incorrect"}
+                {isCorrect ? "Correct! +" + q.pointValue + " pts" : `Incorrect — you picked ${savedAnswer.contestantName}`}
               </div>
             )}
           </div>
@@ -143,115 +150,106 @@ function WeekTab({
 function GameView({ gameId }: { gameId: number }) {
   const { data: weeks } = useListWeeks(gameId);
   const { data: game } = useGetGame(gameId);
-  const { data: picks } = useGetMySurvivorPicks(gameId);
-  const { data: leaderboard } = useGetLeaderboard(gameId);
+  const { data: leaderboard } = useGetLeaderboard(gameId, {
+    query: { queryKey: getGetLeaderboardQueryKey(gameId) },
+  });
+  const { data: myPicks } = useGetMySurvivorPicks(gameId);
+  const [activeWeek, setActiveWeek] = useState<number | null>(null);
 
-  const visibleWeeks = (weeks ?? []).filter((w) => w.isOpen || w.isLocked).sort((a, b) => a.weekNumber - b.weekNumber);
-  const [activeWeekId, setActiveWeekId] = useState<number | null>(null);
-  const displayWeekId = activeWeekId ?? visibleWeeks[visibleWeeks.length - 1]?.id ?? null;
+  const sortedWeeks = (weeks ?? []).sort((a, b) => a.weekNumber - b.weekNumber);
+  const openWeeks = sortedWeeks.filter((w) => w.isOpen || w.isLocked);
+  const currentWeekId = activeWeek ?? openWeeks[openWeeks.length - 1]?.id ?? null;
+
+  const firstPts = game?.firstPickPoints ?? 20;
+  const secondPts = game?.secondPickPoints ?? 10;
 
   return (
-    <div className="grid lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2 space-y-6">
-        {picks && (picks.firstChoiceContestantId || picks.secondChoiceContestantId) && (
-          <div className="bg-card border border-border rounded-xl p-4">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">My Season Predictions</h3>
-            <div className="space-y-3">
-              {picks.firstChoiceName && (
-                <div className="flex items-center justify-between border border-border rounded-lg px-4 py-3 bg-background">
-                  <div>
-                    <div className="text-xs text-muted-foreground mb-0.5">Who will be the winner of this season?</div>
-                    <div className="font-bold text-primary">{picks.firstChoiceName}</div>
-                  </div>
-                  <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full whitespace-nowrap ml-3">
-                    {game?.firstPickPoints ?? 20} pts if correct
-                  </span>
-                </div>
-              )}
-              {picks.secondChoiceName && (
-                <div className="flex items-center justify-between border border-border rounded-lg px-4 py-3 bg-background">
-                  <div>
-                    <div className="text-xs text-muted-foreground mb-0.5">Who is your second choice to win?</div>
-                    <div className="font-bold text-foreground">{picks.secondChoiceName}</div>
-                  </div>
-                  <span className="text-xs font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-full whitespace-nowrap ml-3">
-                    {game?.secondPickPoints ?? 10} pts if correct
-                  </span>
-                </div>
-              )}
-            </div>
+    <div>
+      {myPicks && (myPicks.firstChoiceContestantId || myPicks.secondChoiceContestantId) && (
+        <div className="mb-6 bg-card border border-border rounded-xl p-4">
+          <h3 className="text-sm font-bold text-foreground mb-3" style={{ fontFamily: "'Oswald', sans-serif" }}>YOUR SEASON PREDICTIONS</h3>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {myPicks.firstChoiceContestantId && (
+              <div className="bg-primary/5 border border-primary/20 rounded-lg px-3 py-2">
+                <div className="text-xs text-muted-foreground mb-0.5">Who will be the winner?</div>
+                <div className="font-semibold text-foreground">{myPicks.firstChoiceName}</div>
+                <div className="text-xs text-primary font-bold mt-0.5">{firstPts} pts if correct</div>
+              </div>
+            )}
+            {myPicks.secondChoiceContestantId && (
+              <div className="bg-muted/40 border border-border rounded-lg px-3 py-2">
+                <div className="text-xs text-muted-foreground mb-0.5">Who is your second choice to win?</div>
+                <div className="font-semibold text-foreground">{myPicks.secondChoiceName}</div>
+                <div className="text-xs text-primary font-bold mt-0.5">{secondPts} pts if correct</div>
+              </div>
+            )}
           </div>
-        )}
+        </div>
+      )}
 
-        <div className="bg-card border border-border rounded-xl overflow-hidden">
-          <div className="flex border-b border-border overflow-x-auto">
-            {visibleWeeks.map((w) => (
+      {openWeeks.length === 0 ? (
+        <div className="py-12 text-center text-muted-foreground">No open weeks yet — check back soon.</div>
+      ) : (
+        <>
+          <div className="flex gap-2 mb-6 flex-wrap">
+            {openWeeks.map((w) => (
               <button
                 key={w.id}
-                data-testid={`tab-week-${w.weekNumber}`}
-                onClick={() => setActiveWeekId(w.id)}
-                className={`flex-shrink-0 px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${
-                  displayWeekId === w.id
-                    ? "border-primary text-primary"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
+                onClick={() => setActiveWeek(w.id)}
+                className={`px-4 py-2 rounded-xl font-semibold text-sm transition-colors ${
+                  currentWeekId === w.id
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-card border border-border text-foreground hover:bg-muted/40"
                 }`}
               >
                 Week {w.weekNumber}
-                {w.isLocked && <span className="ml-1 text-xs text-muted-foreground">(scored)</span>}
+                {w.isLocked && <span className="ml-1.5 text-xs opacity-70">Scored</span>}
               </button>
             ))}
           </div>
-          <div className="p-6">
-            {displayWeekId && (() => {
-              const week = visibleWeeks.find((w) => w.id === displayWeekId);
-              if (!week) return null;
-              return (
-                <WeekTab
-                  weekId={week.id}
-                  weekNumber={week.weekNumber}
-                  isOpen={week.isOpen}
-                  isLocked={week.isLocked}
-                />
-              );
-            })()}
-            {visibleWeeks.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">No open weeks yet. Check back soon!</div>
-            )}
-          </div>
-        </div>
-      </div>
+          {currentWeekId && (() => {
+            const week = openWeeks.find((w) => w.id === currentWeekId)!;
+            return (
+              <WeekTab
+                weekId={week.id}
+                weekNumber={week.weekNumber}
+                gameId={gameId}
+                isOpen={week.isOpen}
+                isLocked={week.isLocked}
+              />
+            );
+          })()}
+        </>
+      )}
 
-      <div className="space-y-4">
-        <div className="bg-card border border-border rounded-xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-border">
-            <h3 className="font-bold text-foreground" style={{ fontFamily: "'Oswald', sans-serif" }}>LEADERBOARD</h3>
-          </div>
-          <div className="divide-y divide-border">
-            {(leaderboard ?? []).slice(0, 10).map((entry) => (
-              <div key={entry.userId} data-testid={`leaderboard-row-${entry.userId}`} className="flex items-center gap-3 px-4 py-3">
-                <span className={`text-sm font-black w-6 text-center ${entry.rank === 1 ? "text-primary" : "text-muted-foreground"}`}>
-                  #{entry.rank}
-                </span>
-                <span className="flex-1 text-sm font-semibold text-foreground">{entry.username}</span>
-                <span className="text-sm font-bold text-primary">{entry.totalPoints}</span>
+      {leaderboard && leaderboard.length > 0 && (
+        <div className="mt-8">
+          <h3 className="text-lg font-bold text-foreground mb-4" style={{ fontFamily: "'Oswald', sans-serif" }}>LEADERBOARD</h3>
+          <div className="space-y-2">
+            {leaderboard.slice(0, 10).map((entry) => (
+              <div key={entry.userId} className="flex items-center justify-between bg-card border border-border rounded-xl px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <span className={`text-sm font-black w-6 text-center ${entry.rank === 1 ? "text-primary" : "text-muted-foreground"}`}>
+                    {entry.rank}
+                  </span>
+                  <span className="font-semibold text-foreground">{entry.username}</span>
+                </div>
+                <span className="font-black text-primary">{entry.totalPoints} pts</span>
               </div>
             ))}
-            {(!leaderboard || leaderboard.length === 0) && (
-              <div className="px-4 py-6 text-center text-sm text-muted-foreground">No scores yet</div>
-            )}
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
 
 export default function Dashboard() {
-  const [, setLocation] = useLocation();
+  const [, navigate] = useLocation();
   const { data: me, isLoading: meLoading } = useGetMe();
-  const { data: games, isLoading: gamesLoading } = useListGames();
+  const { data: games } = useListGames();
 
-  if (meLoading || gamesLoading) {
+  if (meLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-muted-foreground">Loading...</div>
@@ -260,36 +258,29 @@ export default function Dashboard() {
   }
 
   if (!me) return <Redirect to="/sign-in" />;
-  if (!me.role) return <Redirect to="/onboarding" />;
   if (me.role === "admin") return <Redirect to="/admin" />;
+  if (me.role !== "player") return <Redirect to="/onboarding" />;
 
-  const activeGame = games?.find((g) => g.status === "active") ?? games?.[0];
+  const activeGames = (games ?? []).filter((g) => g.status === "active" || g.status === "completed");
+  const game = activeGames[0];
 
   return (
     <Show when="signed-in" fallback={<Redirect to="/sign-in" />}>
       <div className="min-h-screen bg-background">
         <Nav />
-        <div className="max-w-6xl mx-auto px-4 py-8">
-          <div className="mb-8 flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground" style={{ fontFamily: "'Oswald', sans-serif" }}>
-                {activeGame ? activeGame.name.toUpperCase() : "PLAYER DASHBOARD"}
-              </h1>
-              {activeGame && (
-                <p className="text-muted-foreground text-sm mt-1">
-                  Week {activeGame.currentWeekNumber} of {activeGame.totalWeeks}
-                </p>
-              )}
-            </div>
+        <div className="max-w-3xl mx-auto px-4 py-8">
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold text-foreground" style={{ fontFamily: "'Oswald', sans-serif" }}>
+              MY DASHBOARD
+            </h1>
+            {game && (
+              <p className="text-muted-foreground mt-1 text-sm">{game.name}</p>
+            )}
           </div>
-
-          {activeGame ? (
-            <GameView gameId={activeGame.id} />
+          {!game ? (
+            <div className="py-12 text-center text-muted-foreground">No active games right now.</div>
           ) : (
-            <div className="text-center py-16 bg-card border border-border rounded-2xl">
-              <h2 className="text-xl font-semibold text-foreground mb-2">No Active Game</h2>
-              <p className="text-muted-foreground">Waiting for an admin to start a game. Check back soon!</p>
-            </div>
+            <GameView gameId={game.id} />
           )}
         </div>
       </div>

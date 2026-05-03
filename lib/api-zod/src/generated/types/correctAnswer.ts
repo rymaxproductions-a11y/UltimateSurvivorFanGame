@@ -9,8 +9,8 @@
 export interface CorrectAnswer {
   id: number;
   questionId: number;
-  choiceId: number;
-  choiceText: string;
+  contestantId: number;
+  contestantName: string;
   questionText: string;
   pointValue: number;
 }

@@ -231,13 +231,6 @@ export const ListQuestionsResponseItem = zod.object({
   weekId: zod.number(),
   text: zod.string(),
   pointValue: zod.number(),
-  choices: zod.array(
-    zod.object({
-      id: zod.number(),
-      questionId: zod.number(),
-      choiceText: zod.string(),
-    }),
-  ),
 });
 export const ListQuestionsResponse = zod.array(ListQuestionsResponseItem);
 
@@ -271,13 +264,6 @@ export const UpdateQuestionResponse = zod.object({
   weekId: zod.number(),
   text: zod.string(),
   pointValue: zod.number(),
-  choices: zod.array(
-    zod.object({
-      id: zod.number(),
-      questionId: zod.number(),
-      choiceText: zod.string(),
-    }),
-  ),
 });
 
 /**
@@ -315,8 +301,8 @@ export const GetCorrectAnswersParams = zod.object({
 export const GetCorrectAnswersResponseItem = zod.object({
   id: zod.number(),
   questionId: zod.number(),
-  choiceId: zod.number(),
-  choiceText: zod.string(),
+  contestantId: zod.number(),
+  contestantName: zod.string(),
   questionText: zod.string(),
   pointValue: zod.number(),
 });
@@ -335,7 +321,7 @@ export const SubmitCorrectAnswersBody = zod.object({
   answers: zod.array(
     zod.object({
       questionId: zod.number(),
-      choiceId: zod.number(),
+      contestantId: zod.number(),
     }),
   ),
 });
@@ -360,8 +346,8 @@ export const GetMyAnswersResponseItem = zod.object({
   id: zod.number(),
   userId: zod.number(),
   questionId: zod.number(),
-  choiceId: zod.number(),
-  choiceText: zod.string(),
+  contestantId: zod.number(),
+  contestantName: zod.string(),
   isCorrect: zod.boolean().nullable(),
 });
 export const GetMyAnswersResponse = zod.array(GetMyAnswersResponseItem);
@@ -377,7 +363,7 @@ export const SaveMyAnswersBody = zod.object({
   answers: zod.array(
     zod.object({
       questionId: zod.number(),
-      choiceId: zod.number(),
+      contestantId: zod.number(),
     }),
   ),
 });
@@ -386,8 +372,8 @@ export const SaveMyAnswersResponseItem = zod.object({
   id: zod.number(),
   userId: zod.number(),
   questionId: zod.number(),
-  choiceId: zod.number(),
-  choiceText: zod.string(),
+  contestantId: zod.number(),
+  contestantName: zod.string(),
   isCorrect: zod.boolean().nullable(),
 });
 export const SaveMyAnswersResponse = zod.array(SaveMyAnswersResponseItem);

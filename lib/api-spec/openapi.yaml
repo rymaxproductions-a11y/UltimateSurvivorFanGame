@@ -844,16 +844,11 @@ components:
           type: string
         pointValue:
           type: integer
-        choices:
-          type: array
-          items:
-            $ref: "#/components/schemas/Choice"
       required:
         - id
         - weekId
         - text
         - pointValue
-        - choices
 
     CreateQuestionBody:
       type: object
@@ -893,9 +888,9 @@ components:
           type: integer
         questionId:
           type: integer
-        choiceId:
+        contestantId:
           type: integer
-        choiceText:
+        contestantName:
           type: string
         questionText:
           type: string
@@ -904,8 +899,8 @@ components:
       required:
         - id
         - questionId
-        - choiceId
-        - choiceText
+        - contestantId
+        - contestantName
         - questionText
         - pointValue
 
@@ -924,11 +919,11 @@ components:
       properties:
         questionId:
           type: integer
-        choiceId:
+        contestantId:
           type: integer
       required:
         - questionId
-        - choiceId
+        - contestantId
 
     PlayerAnswer:
       type: object
@@ -939,9 +934,9 @@ components:
           type: integer
         questionId:
           type: integer
-        choiceId:
+        contestantId:
           type: integer
-        choiceText:
+        contestantName:
           type: string
         isCorrect:
           type: ["boolean", "null"]
@@ -949,8 +944,8 @@ components:
         - id
         - userId
         - questionId
-        - choiceId
-        - choiceText
+        - contestantId
+        - contestantName
         - isCorrect
 
     SaveAnswersBody:
@@ -968,11 +963,11 @@ components:
       properties:
         questionId:
           type: integer
-        choiceId:
+        contestantId:
           type: integer
       required:
         - questionId
-        - choiceId
+        - contestantId
 
     SurvivorPicks:
       type: object

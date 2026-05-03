@@ -10,8 +10,8 @@ export interface PlayerAnswer {
   id: number;
   userId: number;
   questionId: number;
-  choiceId: number;
-  choiceText: string;
+  contestantId: number;
+  contestantName: string;
   /** @nullable */
   isCorrect: boolean | null;
 }

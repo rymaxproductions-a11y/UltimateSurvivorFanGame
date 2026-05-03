@@ -15,8 +15,6 @@ import {
   useListQuestions,
   useCreateQuestion,
   useDeleteQuestion,
-  useCreateChoice,
-  useDeleteChoice,
   useSubmitCorrectAnswers,
   useGetCorrectAnswers,
   useSubmitSurvivorWinner,
@@ -289,9 +287,6 @@ function QuestionCard({ question, weekId, weekLocked }: { question: any; weekId:
   const { toast } = useToast();
   const qc = useQueryClient();
   const deleteQuestion = useDeleteQuestion();
-  const createChoice = useCreateChoice();
-  const deleteChoice = useDeleteChoice();
-  const [newChoice, setNewChoice] = useState("");
 
   function handleDeleteQuestion() {
     deleteQuestion.mutate(
@@ -303,33 +298,9 @@ function QuestionCard({ question, weekId, weekLocked }: { question: any; weekId:
     );
   }
 
-  function handleAddChoice() {
-    if (!newChoice.trim()) return;
-    createChoice.mutate(
-      { questionId: question.id, data: { choiceText: newChoice.trim() } },
-      {
-        onSuccess: () => {
-          qc.invalidateQueries({ queryKey: getListQuestionsQueryKey(weekId) });
-          setNewChoice("");
-        },
-        onError: () => toast({ title: "Failed to add choice", variant: "destructive" }),
-      }
-    );
-  }
-
-  function handleDeleteChoice(choiceId: number) {
-    deleteChoice.mutate(
-      { choiceId },
-      {
-        onSuccess: () => qc.invalidateQueries({ queryKey: getListQuestionsQueryKey(weekId) }),
-        onError: () => toast({ title: "Failed to delete choice", variant: "destructive" }),
-      }
-    );
-  }
-
   return (
     <div data-testid={`question-card-${question.id}`} className="border border-border rounded-xl p-4 bg-background">
-      <div className="flex items-start justify-between mb-3">
+      <div className="flex items-start justify-between">
         <div>
           <p className="font-semibold text-foreground">{question.text}</p>
           <span className="text-xs text-primary font-bold">{question.pointValue} pt{question.pointValue !== 1 ? "s" : ""}</span>
@@ -344,46 +315,11 @@ function QuestionCard({ question, weekId, weekLocked }: { question: any; weekId:
           </button>
         )}
       </div>
-      <div className="space-y-1 mb-3">
-        {question.choices.map((c: any) => (
-          <div key={c.id} className="flex items-center justify-between px-3 py-1.5 bg-muted/40 rounded-lg text-sm">
-            <span className="text-foreground">{c.choiceText}</span>
-            {!weekLocked && (
-              <button
-                data-testid={`button-delete-choice-${c.id}`}
-                onClick={() => handleDeleteChoice(c.id)}
-                className="text-muted-foreground hover:text-destructive"
-              >
-                <Trash2 className="w-3 h-3" />
-              </button>
-            )}
-          </div>
-        ))}
-      </div>
-      {!weekLocked && (
-        <div className="flex gap-2">
-          <input
-            data-testid={`input-new-choice-${question.id}`}
-            value={newChoice}
-            onChange={(e) => setNewChoice(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleAddChoice()}
-            placeholder="Add choice..."
-            className="flex-1 border border-border rounded-lg px-3 py-1.5 bg-background text-foreground text-sm"
-          />
-          <button
-            data-testid={`button-add-choice-${question.id}`}
-            onClick={handleAddChoice}
-            className="px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-sm font-semibold hover:bg-primary/90"
-          >
-            <Plus className="w-3 h-3" />
-          </button>
-        </div>
-      )}
     </div>
   );
 }
 
-function WeekSection({ gameId, week }: { gameId: number; week: any }) {
+function WeekSection({ gameId, week, contestants }: { gameId: number; week: any; contestants: any[] }) {
   const { toast } = useToast();
   const qc = useQueryClient();
   const [expanded, setExpanded] = useState(false);
@@ -403,7 +339,7 @@ function WeekSection({ gameId, week }: { gameId: number; week: any }) {
   function handleAddQuestion() {
     if (!questionText.trim()) return;
     createQuestion.mutate(
-      { weekId: week.id, data: { text: questionText.trim(), pointValue, choices: [] } },
+      { weekId: week.id, data: { text: questionText.trim(), pointValue } },
       {
         onSuccess: () => {
           qc.invalidateQueries({ queryKey: getListQuestionsQueryKey(week.id) });
@@ -418,7 +354,7 @@ function WeekSection({ gameId, week }: { gameId: number; week: any }) {
   function handleSubmitAnswers() {
     const entries = Object.entries(correctAnswers).map(([qId, cId]) => ({
       questionId: Number(qId),
-      choiceId: Number(cId),
+      contestantId: Number(cId),
     }));
     if (entries.length === 0) {
       toast({ title: "Select correct answers for all questions", variant: "destructive" });
@@ -510,13 +446,13 @@ function WeekSection({ gameId, week }: { gameId: number; week: any }) {
                       <span className="text-sm text-foreground flex-1 truncate">{q.text}</span>
                       <select
                         data-testid={`select-correct-answer-${q.id}`}
-                        value={correctAnswers[q.id] ?? existing?.choiceId ?? ""}
+                        value={correctAnswers[q.id] ?? existing?.contestantId ?? ""}
                         onChange={(e) => setCorrectAnswers((prev) => ({ ...prev, [q.id]: Number(e.target.value) }))}
                         className="border border-border rounded-lg px-2 py-1.5 bg-background text-foreground text-sm"
                       >
-                        <option value="">Correct answer...</option>
-                        {q.choices.map((c: any) => (
-                          <option key={c.id} value={c.id}>{c.choiceText}</option>
+                        <option value="">Select contestant...</option>
+                        {contestants.map((c: any) => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
                         ))}
                       </select>
                     </div>
@@ -594,7 +530,7 @@ function WeeksSection({ gameId }: { gameId: number }) {
 
       <div className="space-y-3">
         {sortedWeeks.map((w) => (
-          <WeekSection key={w.id} gameId={gameId} week={w} />
+          <WeekSection key={w.id} gameId={gameId} week={w} contestants={contestants ?? []} />
         ))}
         {sortedWeeks.length === 0 && (
           <p className="text-sm text-muted-foreground text-center py-6">No weeks yet. Add Week 1 to get started.</p>

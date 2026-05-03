@@ -8,5 +8,5 @@
 
 export interface PlayerAnswerInput {
   questionId: number;
-  choiceId: number;
+  contestantId: number;
 }

@@ -5,12 +5,10 @@
  * Survivor Guessing Game API
  * OpenAPI spec version: 0.1.0
  */
-import type { Choice } from "./choice";
 
 export interface QuestionWithChoices {
   id: number;
   weekId: number;
   text: string;
   pointValue: number;
-  choices: Choice[];
 }

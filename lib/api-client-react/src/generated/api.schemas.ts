@@ -118,7 +118,6 @@ export interface QuestionWithChoices {
   weekId: number;
   text: string;
   pointValue: number;
-  choices: Choice[];
 }
 
 export interface CreateQuestionBody {
@@ -139,15 +138,15 @@ export interface CreateChoiceBody {
 export interface CorrectAnswer {
   id: number;
   questionId: number;
-  choiceId: number;
-  choiceText: string;
+  contestantId: number;
+  contestantName: string;
   questionText: string;
   pointValue: number;
 }
 
 export interface CorrectAnswerInput {
   questionId: number;
-  choiceId: number;
+  contestantId: number;
 }
 
 export interface SubmitCorrectAnswersBody {
@@ -158,15 +157,15 @@ export interface PlayerAnswer {
   id: number;
   userId: number;
   questionId: number;
-  choiceId: number;
-  choiceText: string;
+  contestantId: number;
+  contestantName: string;
   /** @nullable */
   isCorrect: boolean | null;
 }
 
 export interface PlayerAnswerInput {
   questionId: number;
-  choiceId: number;
+  contestantId: number;
 }
 
 export interface SaveAnswersBody {
