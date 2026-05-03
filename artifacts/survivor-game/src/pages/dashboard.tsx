@@ -157,8 +157,26 @@ function GameView({ gameId }: { gameId: number }) {
   const [activeWeek, setActiveWeek] = useState<number | null>(null);
 
   const sortedWeeks = (weeks ?? []).sort((a, b) => a.weekNumber - b.weekNumber);
-  const openWeeks = sortedWeeks.filter((w) => w.isOpen || w.isLocked);
-  const currentWeekId = activeWeek ?? openWeeks[openWeeks.length - 1]?.id ?? null;
+
+  // Deduplicate by weekNumber, keeping the best status (locked > open > neither)
+  const weekByNumber = new Map<number, typeof sortedWeeks[0]>();
+  for (const w of sortedWeeks) {
+    const existing = weekByNumber.get(w.weekNumber);
+    if (!existing || (w.isLocked && !existing.isLocked) || (w.isOpen && !existing.isOpen && !existing.isLocked)) {
+      weekByNumber.set(w.weekNumber, w);
+    }
+  }
+  const dedupedWeeks = Array.from(weekByNumber.values()).sort((a, b) => a.weekNumber - b.weekNumber);
+
+  // Current active week: the first open + not-yet-locked week (lowest number)
+  const currentActiveWeek = dedupedWeeks.find((w) => w.isOpen && !w.isLocked) ?? null;
+
+  // Visible tabs: all locked weeks (score review) + current active week only
+  const visibleWeeks = dedupedWeeks.filter((w) => w.isLocked || w === currentActiveWeek);
+
+  // Active tab selection — fall back to current active or last locked if stored id is gone
+  const defaultWeek = currentActiveWeek ?? visibleWeeks[visibleWeeks.length - 1] ?? null;
+  const activeWeekEntry = (activeWeek ? visibleWeeks.find((w) => w.id === activeWeek) : null) ?? defaultWeek;
 
   const firstPts = game?.firstPickPoints ?? 20;
   const secondPts = game?.secondPickPoints ?? 10;
@@ -187,17 +205,17 @@ function GameView({ gameId }: { gameId: number }) {
         </div>
       )}
 
-      {openWeeks.length === 0 ? (
+      {visibleWeeks.length === 0 ? (
         <div className="py-12 text-center text-muted-foreground">No open weeks yet — check back soon.</div>
       ) : (
         <>
           <div className="flex gap-2 mb-6 flex-wrap">
-            {openWeeks.map((w) => (
+            {visibleWeeks.map((w) => (
               <button
                 key={w.id}
                 onClick={() => setActiveWeek(w.id)}
                 className={`px-4 py-2 rounded-xl font-semibold text-sm transition-colors ${
-                  currentWeekId === w.id
+                  activeWeekEntry?.id === w.id
                     ? "bg-primary text-primary-foreground"
                     : "bg-card border border-border text-foreground hover:bg-muted/40"
                 }`}
@@ -207,18 +225,15 @@ function GameView({ gameId }: { gameId: number }) {
               </button>
             ))}
           </div>
-          {currentWeekId && (() => {
-            const week = openWeeks.find((w) => w.id === currentWeekId)!;
-            return (
-              <WeekTab
-                weekId={week.id}
-                weekNumber={week.weekNumber}
-                gameId={gameId}
-                isOpen={week.isOpen}
-                isLocked={week.isLocked}
-              />
-            );
-          })()}
+          {activeWeekEntry && (
+            <WeekTab
+              weekId={activeWeekEntry.id}
+              weekNumber={activeWeekEntry.weekNumber}
+              gameId={gameId}
+              isOpen={activeWeekEntry.isOpen}
+              isLocked={activeWeekEntry.isLocked}
+            />
+          )}
         </>
       )}
 

@@ -180,10 +180,9 @@ router.post("/games/:gameId/seed", requireAuth, async (req: any, res: any): Prom
   ];
 
   for (const wk of sampleWeeks) {
-    const [week] = await db.insert(weeksTable).values({ gameId, weekNumber: wk.weekNumber, isOpen: true }).returning();
+    const [week] = await db.insert(weeksTable).values({ gameId, weekNumber: wk.weekNumber, isOpen: wk.weekNumber === 1 }).returning();
     for (const q of wk.questions) {
-      const [question] = await db.insert(questionsTable).values({ weekId: week.id, text: q.text, pointValue: q.pointValue }).returning();
-      await db.insert(choicesTable).values(q.choices.map(ct => ({ questionId: question.id, choiceText: ct })));
+      await db.insert(questionsTable).values({ weekId: week.id, text: q.text, pointValue: q.pointValue });
     }
   }
 
