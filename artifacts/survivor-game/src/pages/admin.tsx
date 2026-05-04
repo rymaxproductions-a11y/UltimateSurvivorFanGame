@@ -44,7 +44,6 @@ function GameSetupSection({ onGameCreated, selectedGameId }: { onGameCreated: (i
   const clearGame = useClearGame();
   const updateGame = useUpdateGame();
   const [name, setName] = useState("");
-  const [totalWeeks, setTotalWeeks] = useState(15);
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
   function handleStatusChange(gameId: number, status: "setup" | "active" | "completed") {
@@ -64,7 +63,7 @@ function GameSetupSection({ onGameCreated, selectedGameId }: { onGameCreated: (i
   function handleCreate() {
     if (!name.trim()) { toast({ title: "Enter a game name", variant: "destructive" }); return; }
     createGame.mutate(
-      { data: { name: name.trim(), totalWeeks } },
+      { data: { name: name.trim(), totalWeeks: 15 } },
       {
         onSuccess: (g) => {
           qc.invalidateQueries({ queryKey: getListGamesQueryKey() });
@@ -135,16 +134,6 @@ function GameSetupSection({ onGameCreated, selectedGameId }: { onGameCreated: (i
           onChange={(e) => setName(e.target.value)}
           placeholder="Game name (e.g. Survivor S47)"
           className="flex-1 border border-border rounded-lg px-3 py-2 bg-background text-foreground"
-        />
-        <input
-          data-testid="input-total-weeks"
-          type="number"
-          min={1}
-          max={20}
-          value={totalWeeks}
-          onChange={(e) => setTotalWeeks(Number(e.target.value))}
-          className="w-24 border border-border rounded-lg px-3 py-2 bg-background text-foreground"
-          title="Total weeks"
         />
         <button
           data-testid="button-create-game"
