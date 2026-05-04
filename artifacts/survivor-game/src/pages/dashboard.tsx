@@ -279,6 +279,8 @@ function GameView({ gameId }: { gameId: number }) {
 
   const firstPts = game?.firstPickPoints ?? 20;
   const secondPts = game?.secondPickPoints ?? 10;
+  const firstTopThreePts = game?.firstPickTopThreePoints ?? 5;
+  const secondTopThreePts = game?.secondPickTopThreePoints ?? 3;
 
   return (
     <div>
@@ -293,14 +295,14 @@ function GameView({ gameId }: { gameId: number }) {
               <div className="bg-primary/5 border border-primary/20 rounded-lg px-3 py-2">
                 <div className="text-xs text-muted-foreground mb-0.5">Who will be the winner?</div>
                 <div className="font-semibold text-foreground">{myPicks.firstChoiceName}</div>
-                <div className="text-xs text-primary font-bold mt-0.5">{firstPts} pts if correct</div>
+                <div className="text-xs text-primary font-bold mt-0.5">{firstPts} pts if winner &middot; {firstTopThreePts} pts if Final 3</div>
               </div>
             )}
             {myPicks?.secondChoiceContestantId && (
               <div className="bg-muted/40 border border-border rounded-lg px-3 py-2">
                 <div className="text-xs text-muted-foreground mb-0.5">Who is your second choice to win?</div>
                 <div className="font-semibold text-foreground">{myPicks.secondChoiceName}</div>
-                <div className="text-xs text-primary font-bold mt-0.5">{secondPts} pts if correct</div>
+                <div className="text-xs text-primary font-bold mt-0.5">{secondPts} pts if winner &middot; {secondTopThreePts} pts if Final 3</div>
               </div>
             )}
           </div>

@@ -12,4 +12,6 @@ export interface UpdateGameBody {
   status?: UpdateGameBodyStatus;
   firstPickPoints?: number;
   secondPickPoints?: number;
+  firstPickTopThreePoints?: number;
+  secondPickTopThreePoints?: number;
 }

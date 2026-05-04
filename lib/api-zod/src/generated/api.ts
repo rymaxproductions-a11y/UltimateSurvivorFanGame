@@ -66,10 +66,15 @@ export const ListGamesResponseItem = zod.object({
   name: zod.string(),
   status: zod.enum(["setup", "active", "completed"]),
   survivorWinnerContestantId: zod.number().nullable(),
+  finalThreeContestantId1: zod.number().nullable(),
+  finalThreeContestantId2: zod.number().nullable(),
+  finalThreeContestantId3: zod.number().nullable(),
   currentWeekNumber: zod.number(),
   totalWeeks: zod.number(),
   firstPickPoints: zod.number(),
   secondPickPoints: zod.number(),
+  firstPickTopThreePoints: zod.number(),
+  secondPickTopThreePoints: zod.number(),
   createdAt: zod.string(),
 });
 export const ListGamesResponse = zod.array(ListGamesResponseItem);
@@ -94,10 +99,15 @@ export const GetGameResponse = zod.object({
   name: zod.string(),
   status: zod.enum(["setup", "active", "completed"]),
   survivorWinnerContestantId: zod.number().nullable(),
+  finalThreeContestantId1: zod.number().nullable(),
+  finalThreeContestantId2: zod.number().nullable(),
+  finalThreeContestantId3: zod.number().nullable(),
   currentWeekNumber: zod.number(),
   totalWeeks: zod.number(),
   firstPickPoints: zod.number(),
   secondPickPoints: zod.number(),
+  firstPickTopThreePoints: zod.number(),
+  secondPickTopThreePoints: zod.number(),
   createdAt: zod.string(),
 });
 
@@ -113,6 +123,8 @@ export const UpdateGameBody = zod.object({
   status: zod.enum(["setup", "active", "completed"]).optional(),
   firstPickPoints: zod.number().optional(),
   secondPickPoints: zod.number().optional(),
+  firstPickTopThreePoints: zod.number().optional(),
+  secondPickTopThreePoints: zod.number().optional(),
 });
 
 export const UpdateGameResponse = zod.object({
@@ -120,10 +132,15 @@ export const UpdateGameResponse = zod.object({
   name: zod.string(),
   status: zod.enum(["setup", "active", "completed"]),
   survivorWinnerContestantId: zod.number().nullable(),
+  finalThreeContestantId1: zod.number().nullable(),
+  finalThreeContestantId2: zod.number().nullable(),
+  finalThreeContestantId3: zod.number().nullable(),
   currentWeekNumber: zod.number(),
   totalWeeks: zod.number(),
   firstPickPoints: zod.number(),
   secondPickPoints: zod.number(),
+  firstPickTopThreePoints: zod.number(),
+  secondPickTopThreePoints: zod.number(),
   createdAt: zod.string(),
 });
 
@@ -444,8 +461,15 @@ export const SubmitSurvivorWinnerParams = zod.object({
   gameId: zod.coerce.number(),
 });
 
+export const submitSurvivorWinnerBodyFinalThreeContestantIdsMin = 3;
+export const submitSurvivorWinnerBodyFinalThreeContestantIdsMax = 3;
+
 export const SubmitSurvivorWinnerBody = zod.object({
   winnerContestantId: zod.number(),
+  finalThreeContestantIds: zod
+    .array(zod.number())
+    .min(submitSurvivorWinnerBodyFinalThreeContestantIdsMin)
+    .max(submitSurvivorWinnerBodyFinalThreeContestantIdsMax),
 });
 
 export const SubmitSurvivorWinnerResponse = zod.object({
@@ -453,10 +477,15 @@ export const SubmitSurvivorWinnerResponse = zod.object({
   name: zod.string(),
   status: zod.enum(["setup", "active", "completed"]),
   survivorWinnerContestantId: zod.number().nullable(),
+  finalThreeContestantId1: zod.number().nullable(),
+  finalThreeContestantId2: zod.number().nullable(),
+  finalThreeContestantId3: zod.number().nullable(),
   currentWeekNumber: zod.number(),
   totalWeeks: zod.number(),
   firstPickPoints: zod.number(),
   secondPickPoints: zod.number(),
+  firstPickTopThreePoints: zod.number(),
+  secondPickTopThreePoints: zod.number(),
   createdAt: zod.string(),
 });
 

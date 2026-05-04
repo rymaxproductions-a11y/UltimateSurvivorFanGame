@@ -748,6 +748,12 @@ components:
           enum: [setup, active, completed]
         survivorWinnerContestantId:
           type: ["integer", "null"]
+        finalThreeContestantId1:
+          type: ["integer", "null"]
+        finalThreeContestantId2:
+          type: ["integer", "null"]
+        finalThreeContestantId3:
+          type: ["integer", "null"]
         currentWeekNumber:
           type: integer
         totalWeeks:
@@ -756,6 +762,10 @@ components:
           type: integer
         secondPickPoints:
           type: integer
+        firstPickTopThreePoints:
+          type: integer
+        secondPickTopThreePoints:
+          type: integer
         createdAt:
           type: string
       required:
@@ -763,10 +773,15 @@ components:
         - name
         - status
         - survivorWinnerContestantId
+        - finalThreeContestantId1
+        - finalThreeContestantId2
+        - finalThreeContestantId3
         - currentWeekNumber
         - totalWeeks
         - firstPickPoints
         - secondPickPoints
+        - firstPickTopThreePoints
+        - secondPickTopThreePoints
         - createdAt
 
     CreateGameBody:
@@ -791,6 +806,10 @@ components:
         firstPickPoints:
           type: integer
         secondPickPoints:
+          type: integer
+        firstPickTopThreePoints:
+          type: integer
+        secondPickTopThreePoints:
           type: integer
 
     Contestant:
@@ -1044,8 +1063,15 @@ components:
       properties:
         winnerContestantId:
           type: integer
+        finalThreeContestantIds:
+          type: array
+          items:
+            type: integer
+          minItems: 3
+          maxItems: 3
       required:
         - winnerContestantId
+        - finalThreeContestantIds
 
     LeaderboardEntry:
       type: object

@@ -60,10 +60,18 @@ export interface Game {
   status: GameStatus;
   /** @nullable */
   survivorWinnerContestantId: number | null;
+  /** @nullable */
+  finalThreeContestantId1: number | null;
+  /** @nullable */
+  finalThreeContestantId2: number | null;
+  /** @nullable */
+  finalThreeContestantId3: number | null;
   currentWeekNumber: number;
   totalWeeks: number;
   firstPickPoints: number;
   secondPickPoints: number;
+  firstPickTopThreePoints: number;
+  secondPickTopThreePoints: number;
   createdAt: string;
 }
 
@@ -86,6 +94,8 @@ export interface UpdateGameBody {
   status?: UpdateGameBodyStatus;
   firstPickPoints?: number;
   secondPickPoints?: number;
+  firstPickTopThreePoints?: number;
+  secondPickTopThreePoints?: number;
 }
 
 export interface Contestant {
@@ -201,6 +211,11 @@ export interface SaveSurvivorPicksBody {
 
 export interface SubmitSurvivorWinnerBody {
   winnerContestantId: number;
+  /**
+   * @minItems 3
+   * @maxItems 3
+   */
+  finalThreeContestantIds: number[];
 }
 
 export interface WeeklyPoints {

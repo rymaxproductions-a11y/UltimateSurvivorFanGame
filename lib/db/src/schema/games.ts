@@ -9,10 +9,15 @@ export const gamesTable = pgTable("games", {
   name: text("name").notNull(),
   status: gameStatusEnum("status").notNull().default("setup"),
   survivorWinnerContestantId: integer("survivor_winner_contestant_id"),
+  finalThreeContestantId1: integer("final_three_contestant_id_1"),
+  finalThreeContestantId2: integer("final_three_contestant_id_2"),
+  finalThreeContestantId3: integer("final_three_contestant_id_3"),
   currentWeekNumber: integer("current_week_number").notNull().default(1),
   totalWeeks: integer("total_weeks").notNull().default(15),
   firstPickPoints: integer("first_pick_points").notNull().default(20),
   secondPickPoints: integer("second_pick_points").notNull().default(10),
+  firstPickTopThreePoints: integer("first_pick_top_three_points").notNull().default(5),
+  secondPickTopThreePoints: integer("second_pick_top_three_points").notNull().default(3),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

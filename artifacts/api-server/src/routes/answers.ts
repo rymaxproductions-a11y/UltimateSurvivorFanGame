@@ -336,6 +336,12 @@ router.post("/games/:gameId/survivor-winner", requireAuth, async (req: any, res:
   }
 
   const winnerId = parsed.data.winnerContestantId;
+  const [f1, f2, f3] = parsed.data.finalThreeContestantIds;
+
+  if (!parsed.data.finalThreeContestantIds.includes(winnerId)) {
+    res.status(400).json({ error: "Winner must be one of the Final 3 contestants" });
+    return;
+  }
 
   const allPicks = await db.select().from(survivorPicksTable)
     .where(eq(survivorPicksTable.gameId, params.data.gameId));
@@ -345,7 +351,13 @@ router.post("/games/:gameId/survivor-winner", requireAuth, async (req: any, res:
   }
 
   const [game] = await db.update(gamesTable)
-    .set({ survivorWinnerContestantId: winnerId, status: "completed" })
+    .set({
+      survivorWinnerContestantId: winnerId,
+      finalThreeContestantId1: f1,
+      finalThreeContestantId2: f2,
+      finalThreeContestantId3: f3,
+      status: "completed",
+    })
     .where(eq(gamesTable.id, params.data.gameId))
     .returning();
 

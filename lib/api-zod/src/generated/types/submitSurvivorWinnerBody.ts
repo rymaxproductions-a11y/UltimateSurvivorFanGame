@@ -8,4 +8,9 @@
 
 export interface SubmitSurvivorWinnerBody {
   winnerContestantId: number;
+  /**
+   * @minItems 3
+   * @maxItems 3
+   */
+  finalThreeContestantIds: number[];
 }

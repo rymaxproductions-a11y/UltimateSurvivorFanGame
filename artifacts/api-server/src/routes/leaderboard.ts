@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { eq, and, sum } from "drizzle-orm";
-import { db, usersTable, playerAnswersTable, questionsTable, weeksTable, survivorPicksTable, gamesTable, contestantsTable, correctAnswersTable } from "@workspace/db";
+import { eq, and } from "drizzle-orm";
+import { db, usersTable, playerAnswersTable, questionsTable, weeksTable, survivorPicksTable, gamesTable, correctAnswersTable } from "@workspace/db";
 import { GetLeaderboardParams, GetLeaderboardResponse } from "@workspace/api-zod";
 import { serialize } from "../lib/serialize";
 
@@ -29,6 +29,12 @@ router.get("/games/:gameId/leaderboard", async (req, res): Promise<void> => {
 
   const survivorPicks = await db.select().from(survivorPicksTable).where(eq(survivorPicksTable.gameId, gameId));
 
+  const finalThreeIds = [
+    game.finalThreeContestantId1,
+    game.finalThreeContestantId2,
+    game.finalThreeContestantId3,
+  ].filter((id): id is number => id !== null && id !== undefined);
+
   const entries = await Promise.all(allUsers.map(async (user) => {
     const weeklyPoints: { weekNumber: number; points: number }[] = [];
 
@@ -53,10 +59,17 @@ router.get("/games/:gameId/leaderboard", async (req, res): Promise<void> => {
     if (game.survivorWinnerContestantId) {
       const userPick = survivorPicks.find(sp => sp.userId === user.id);
       if (userPick) {
+        // Score first pick
         if (userPick.firstChoiceContestantId === game.survivorWinnerContestantId) {
-          survivorPickPoints = game.firstPickPoints;
-        } else if (userPick.secondChoiceContestantId === game.survivorWinnerContestantId) {
-          survivorPickPoints = game.secondPickPoints;
+          survivorPickPoints += game.firstPickPoints;
+        } else if (finalThreeIds.includes(userPick.firstChoiceContestantId ?? -1)) {
+          survivorPickPoints += game.firstPickTopThreePoints;
+        }
+        // Score second pick
+        if (userPick.secondChoiceContestantId === game.survivorWinnerContestantId) {
+          survivorPickPoints += game.secondPickPoints;
+        } else if (finalThreeIds.includes(userPick.secondChoiceContestantId ?? -1)) {
+          survivorPickPoints += game.secondPickTopThreePoints;
         }
       }
     }

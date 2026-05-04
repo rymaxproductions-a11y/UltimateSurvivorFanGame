@@ -535,7 +535,20 @@ function WeeksSection({ gameId }: { gameId: number }) {
   const createWeek = useCreateWeek();
   const submitWinner = useSubmitSurvivorWinner();
   const updateGame = useUpdateGame();
+  const [finalThree, setFinalThree] = useState<[number | null, number | null, number | null]>([null, null, null]);
   const [winnerId, setWinnerId] = useState<number | null>(null);
+
+  function setFinalThreeSlot(slot: 0 | 1 | 2, value: number | null) {
+    setFinalThree((prev) => {
+      const next: [number | null, number | null, number | null] = [...prev] as any;
+      next[slot] = value;
+      // If winner was one of the now-removed slots, clear it
+      if (winnerId && !next.includes(winnerId)) setWinnerId(null);
+      return next;
+    });
+  }
+
+  const finalThreeContestants = (contestants ?? []).filter((c) => finalThree.includes(c.id));
 
   const sortedWeeks = (weeks ?? []).sort((a, b) => a.weekNumber - b.weekNumber);
 
@@ -562,13 +575,15 @@ function WeeksSection({ gameId }: { gameId: number }) {
   }
 
   function handleSubmitWinner() {
-    if (!winnerId) { toast({ title: "Select the winner", variant: "destructive" }); return; }
+    const f3 = finalThree.filter((id): id is number => id !== null);
+    if (f3.length !== 3) { toast({ title: "Select all 3 finalists before submitting", variant: "destructive" }); return; }
+    if (!winnerId) { toast({ title: "Select the winner from the Final 3", variant: "destructive" }); return; }
     submitWinner.mutate(
-      { gameId, data: { winnerContestantId: winnerId } },
+      { gameId, data: { winnerContestantId: winnerId, finalThreeContestantIds: f3 } },
       {
         onSuccess: () => {
           qc.invalidateQueries({ queryKey: getListGamesQueryKey() });
-          toast({ title: "Survivor winner submitted! Game complete." });
+          toast({ title: "Final 3 and winner submitted! Game complete." });
         },
         onError: () => toast({ title: "Failed to submit winner", variant: "destructive" }),
       }
@@ -601,26 +616,48 @@ function WeeksSection({ gameId }: { gameId: number }) {
 
       {game?.status !== "completed" && contestants && contestants.length > 0 && (
         <div className="mt-6 pt-6 border-t border-border">
-          <h3 className="text-sm font-bold text-foreground mb-3">Submit Survivor Winner (Completes Game)</h3>
+          <h3 className="text-sm font-bold text-foreground mb-1">Submit Final 3 + Winner (Completes Game)</h3>
+          <p className="text-xs text-muted-foreground mb-3">Select the three finalists, then pick which one won.</p>
+
+          <div className="space-y-2 mb-3">
+            {([0, 1, 2] as const).map((slot) => (
+              <select
+                key={slot}
+                data-testid={`select-finalist-${slot + 1}`}
+                value={finalThree[slot] ?? ""}
+                onChange={(e) => setFinalThreeSlot(slot, e.target.value ? Number(e.target.value) : null)}
+                className="w-full border border-border rounded-lg px-3 py-2 bg-background text-foreground text-sm"
+              >
+                <option value="">Finalist {slot + 1}...</option>
+                {(contestants ?? [])
+                  .filter((c) => !finalThree.some((id, i) => i !== slot && id === c.id))
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+              </select>
+            ))}
+          </div>
+
           <div className="flex gap-3">
             <select
               data-testid="select-winner"
               value={winnerId ?? ""}
               onChange={(e) => setWinnerId(Number(e.target.value))}
-              className="flex-1 border border-border rounded-lg px-3 py-2 bg-background text-foreground"
+              disabled={finalThreeContestants.length < 3}
+              className="flex-1 border border-border rounded-lg px-3 py-2 bg-background text-foreground disabled:opacity-50"
             >
-              <option value="">Select the Survivor winner...</option>
-              {contestants.map((c) => (
+              <option value="">Winner from Final 3...</option>
+              {finalThreeContestants.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
             <button
               data-testid="button-submit-winner"
               onClick={handleSubmitWinner}
-              disabled={submitWinner.isPending || !winnerId}
+              disabled={submitWinner.isPending || !winnerId || finalThreeContestants.length < 3}
               className="px-4 py-2 bg-destructive text-destructive-foreground rounded-lg font-semibold text-sm hover:bg-destructive/90 disabled:opacity-50"
             >
-              Submit Winner
+              {submitWinner.isPending ? "Submitting..." : "Submit"}
             </button>
           </div>
         </div>
@@ -636,13 +673,17 @@ function PickScoringSection({ gameId }: { gameId: number }) {
   const updateGame = useUpdateGame();
   const [firstPts, setFirstPts] = useState<number | null>(null);
   const [secondPts, setSecondPts] = useState<number | null>(null);
+  const [firstTopThreePts, setFirstTopThreePts] = useState<number | null>(null);
+  const [secondTopThreePts, setSecondTopThreePts] = useState<number | null>(null);
 
   const currentFirst = firstPts ?? game?.firstPickPoints ?? 20;
   const currentSecond = secondPts ?? game?.secondPickPoints ?? 10;
+  const currentFirstTopThree = firstTopThreePts ?? game?.firstPickTopThreePoints ?? 5;
+  const currentSecondTopThree = secondTopThreePts ?? game?.secondPickTopThreePoints ?? 3;
 
   function handleSave() {
     updateGame.mutate(
-      { gameId, data: { firstPickPoints: currentFirst, secondPickPoints: currentSecond } },
+      { gameId, data: { firstPickPoints: currentFirst, secondPickPoints: currentSecond, firstPickTopThreePoints: currentFirstTopThree, secondPickTopThreePoints: currentSecondTopThree } },
       {
         onSuccess: () => {
           qc.invalidateQueries({ queryKey: getListGamesQueryKey() });
@@ -656,12 +697,12 @@ function PickScoringSection({ gameId }: { gameId: number }) {
   return (
     <div className="bg-card border border-border rounded-xl p-6">
       <h2 className="text-lg font-bold text-foreground mb-1" style={{ fontFamily: "'Oswald', sans-serif" }}>SURVIVOR PICK SCORING</h2>
-      <p className="text-xs text-muted-foreground mb-4">Points awarded when the actual winner is revealed at season end.</p>
-      <div className="space-y-4">
+      <p className="text-xs text-muted-foreground mb-4">Points awarded when the Final 3 and winner are revealed at season end.</p>
+
+      <p className="text-xs font-semibold text-foreground uppercase tracking-wide mb-2">If pick correctly chose the WINNER</p>
+      <div className="grid grid-cols-2 gap-3 mb-4">
         <div>
-          <label className="block text-sm font-semibold text-foreground mb-1">
-            "Who will be the winner?" — correct points
-          </label>
+          <label className="block text-xs text-muted-foreground mb-1">1st choice — winner pts</label>
           <input
             data-testid="input-first-pick-points"
             type="number"
@@ -672,9 +713,7 @@ function PickScoringSection({ gameId }: { gameId: number }) {
           />
         </div>
         <div>
-          <label className="block text-sm font-semibold text-foreground mb-1">
-            "Who is your second choice?" — correct points
-          </label>
+          <label className="block text-xs text-muted-foreground mb-1">2nd choice — winner pts</label>
           <input
             data-testid="input-second-pick-points"
             type="number"
@@ -684,15 +723,42 @@ function PickScoringSection({ gameId }: { gameId: number }) {
             className="w-full border border-border rounded-lg px-3 py-2 bg-background text-foreground"
           />
         </div>
-        <button
-          data-testid="button-save-pick-scoring"
-          onClick={handleSave}
-          disabled={updateGame.isPending}
-          className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 disabled:opacity-50 text-sm"
-        >
-          {updateGame.isPending ? "Saving..." : "Save Point Values"}
-        </button>
       </div>
+
+      <p className="text-xs font-semibold text-foreground uppercase tracking-wide mb-2">If pick is in Final 3 (but did NOT win)</p>
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <div>
+          <label className="block text-xs text-muted-foreground mb-1">1st choice — top 3 pts</label>
+          <input
+            data-testid="input-first-pick-top-three-points"
+            type="number"
+            min={0}
+            value={currentFirstTopThree}
+            onChange={(e) => setFirstTopThreePts(Number(e.target.value))}
+            className="w-full border border-border rounded-lg px-3 py-2 bg-background text-foreground"
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-muted-foreground mb-1">2nd choice — top 3 pts</label>
+          <input
+            data-testid="input-second-pick-top-three-points"
+            type="number"
+            min={0}
+            value={currentSecondTopThree}
+            onChange={(e) => setSecondTopThreePts(Number(e.target.value))}
+            className="w-full border border-border rounded-lg px-3 py-2 bg-background text-foreground"
+          />
+        </div>
+      </div>
+
+      <button
+        data-testid="button-save-pick-scoring"
+        onClick={handleSave}
+        disabled={updateGame.isPending}
+        className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 disabled:opacity-50 text-sm"
+      >
+        {updateGame.isPending ? "Saving..." : "Save Point Values"}
+      </button>
     </div>
   );
 }

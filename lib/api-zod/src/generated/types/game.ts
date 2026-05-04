@@ -13,9 +13,17 @@ export interface Game {
   status: GameStatus;
   /** @nullable */
   survivorWinnerContestantId: number | null;
+  /** @nullable */
+  finalThreeContestantId1: number | null;
+  /** @nullable */
+  finalThreeContestantId2: number | null;
+  /** @nullable */
+  finalThreeContestantId3: number | null;
   currentWeekNumber: number;
   totalWeeks: number;
   firstPickPoints: number;
   secondPickPoints: number;
+  firstPickTopThreePoints: number;
+  secondPickTopThreePoints: number;
   createdAt: string;
 }

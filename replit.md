@@ -71,7 +71,7 @@ Tables: `users`, `games`, `contestants`, `weeks`, `questions`, `choices`, `corre
 - Enum: `role` (admin | player), `game_status` (setup | active | completed)
 - Weeks: `is_open` / `is_locked` flags drive the game flow
 - Scoring: `player_answers.is_correct` set when admin submits correct answers
-- Survivor bonus: 2x points for first-choice winner, 1x for second-choice
+- Survivor scoring: `firstPickPoints`/`secondPickPoints` for picking the winner; `firstPickTopThreePoints`/`secondPickTopThreePoints` for pick landing in Final 3 but not winning. Both picks scored independently.
 
 ## Game Flow
 
@@ -79,7 +79,7 @@ Tables: `users`, `games`, `contestants`, `weeks`, `questions`, `choices`, `corre
 2. Players register → choose role → make Survivor picks (first/second winner choice)
 3. Players answer open week questions from dropdown choices, save
 4. Admin submits correct answers → week locks, scoring auto-calculated, next week opens
-5. Repeat for 15 weeks. Admin submits survivor winner → game completed
+5. Repeat for 15 weeks. Admin selects Final 3 (3 finalists) + winner from those 3 → game completed, scoring applied
 6. Players can only interact with open (unlocked) weeks
 
 ## Auth
