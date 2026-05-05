@@ -255,6 +255,13 @@ export const GetWeekResponse = zod.object({
 });
 
 /**
+ * @summary Delete a week and all its questions/answers (admin only)
+ */
+export const DeleteWeekParams = zod.object({
+  weekId: zod.coerce.number(),
+});
+
+/**
  * @summary Open a week for player answers (admin only)
  */
 export const OpenWeekParams = zod.object({
@@ -262,6 +269,22 @@ export const OpenWeekParams = zod.object({
 });
 
 export const OpenWeekResponse = zod.object({
+  id: zod.number(),
+  gameId: zod.number(),
+  weekNumber: zod.number(),
+  isLocked: zod.boolean(),
+  isOpen: zod.boolean(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Revert an open week back to not open (admin only)
+ */
+export const CloseWeekParams = zod.object({
+  weekId: zod.coerce.number(),
+});
+
+export const CloseWeekResponse = zod.object({
   id: zod.number(),
   gameId: zod.number(),
   weekNumber: zod.number(),

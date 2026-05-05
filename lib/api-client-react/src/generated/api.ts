@@ -1439,6 +1439,90 @@ export function useGetWeek<
 }
 
 /**
+ * @summary Delete a week and all its questions/answers (admin only)
+ */
+export const getDeleteWeekUrl = (weekId: number) => {
+  return `/api/weeks/${weekId}`;
+};
+
+export const deleteWeek = async (
+  weekId: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteWeekUrl(weekId), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteWeekMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteWeek>>,
+    TError,
+    { weekId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteWeek>>,
+  TError,
+  { weekId: number },
+  TContext
+> => {
+  const mutationKey = ["deleteWeek"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteWeek>>,
+    { weekId: number }
+  > = (props) => {
+    const { weekId } = props ?? {};
+
+    return deleteWeek(weekId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteWeekMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteWeek>>
+>;
+
+export type DeleteWeekMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Delete a week and all its questions/answers (admin only)
+ */
+export const useDeleteWeek = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteWeek>>,
+    TError,
+    { weekId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteWeek>>,
+  TError,
+  { weekId: number },
+  TContext
+> => {
+  return useMutation(getDeleteWeekMutationOptions(options));
+};
+
+/**
  * @summary Open a week for player answers (admin only)
  */
 export const getOpenWeekUrl = (weekId: number) => {
@@ -1520,6 +1604,90 @@ export const useOpenWeek = <
   TContext
 > => {
   return useMutation(getOpenWeekMutationOptions(options));
+};
+
+/**
+ * @summary Revert an open week back to not open (admin only)
+ */
+export const getCloseWeekUrl = (weekId: number) => {
+  return `/api/weeks/${weekId}/close`;
+};
+
+export const closeWeek = async (
+  weekId: number,
+  options?: RequestInit,
+): Promise<Week> => {
+  return customFetch<Week>(getCloseWeekUrl(weekId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getCloseWeekMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof closeWeek>>,
+    TError,
+    { weekId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof closeWeek>>,
+  TError,
+  { weekId: number },
+  TContext
+> => {
+  const mutationKey = ["closeWeek"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof closeWeek>>,
+    { weekId: number }
+  > = (props) => {
+    const { weekId } = props ?? {};
+
+    return closeWeek(weekId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CloseWeekMutationResult = NonNullable<
+  Awaited<ReturnType<typeof closeWeek>>
+>;
+
+export type CloseWeekMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Revert an open week back to not open (admin only)
+ */
+export const useCloseWeek = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof closeWeek>>,
+    TError,
+    { weekId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof closeWeek>>,
+  TError,
+  { weekId: number },
+  TContext
+> => {
+  return useMutation(getCloseWeekMutationOptions(options));
 };
 
 /**

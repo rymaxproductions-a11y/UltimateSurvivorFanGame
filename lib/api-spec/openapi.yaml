@@ -357,6 +357,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Week"
+    delete:
+      operationId: deleteWeek
+      tags: [weeks]
+      summary: Delete a week and all its questions/answers (admin only)
+      parameters:
+        - name: weekId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Week deleted
 
   /weeks/{weekId}/open:
     post:
@@ -372,6 +385,25 @@ paths:
       responses:
         "200":
           description: Week opened
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Week"
+
+  /weeks/{weekId}/close:
+    post:
+      operationId: closeWeek
+      tags: [weeks]
+      summary: Revert an open week back to not open (admin only)
+      parameters:
+        - name: weekId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Week closed
           content:
             application/json:
               schema:

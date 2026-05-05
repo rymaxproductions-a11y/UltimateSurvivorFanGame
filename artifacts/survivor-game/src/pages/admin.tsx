@@ -18,6 +18,8 @@ import {
   useSubmitCorrectAnswers,
   useGetCorrectAnswers,
   useOpenWeek,
+  useCloseWeek,
+  useDeleteWeek,
   useSubmitSurvivorWinner,
   useGetGameStats,
   useDeleteGame,
@@ -377,6 +379,8 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
   const createQuestion = useCreateQuestion();
   const submitAnswers = useSubmitCorrectAnswers();
   const openWeek = useOpenWeek();
+  const closeWeek = useCloseWeek();
+  const deleteWeek = useDeleteWeek();
 
   function handleOpenWeek() {
     openWeek.mutate(
@@ -387,6 +391,33 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
           toast({ title: `Week ${week.weekNumber} is now open for answers!` });
         },
         onError: () => toast({ title: "Failed to open week", variant: "destructive" }),
+      }
+    );
+  }
+
+  function handleCloseWeek() {
+    closeWeek.mutate(
+      { weekId: week.id },
+      {
+        onSuccess: () => {
+          qc.invalidateQueries({ queryKey: getListWeeksQueryKey(gameId) });
+          toast({ title: `Week ${week.weekNumber} reverted to Not Open.` });
+        },
+        onError: () => toast({ title: "Failed to close week", variant: "destructive" }),
+      }
+    );
+  }
+
+  function handleDeleteWeek() {
+    if (!confirm(`Delete Week ${week.weekNumber} and all its questions? This cannot be undone.`)) return;
+    deleteWeek.mutate(
+      { weekId: week.id },
+      {
+        onSuccess: () => {
+          qc.invalidateQueries({ queryKey: getListWeeksQueryKey(gameId) });
+          toast({ title: `Week ${week.weekNumber} deleted.` });
+        },
+        onError: () => toast({ title: "Failed to delete week", variant: "destructive" }),
       }
     );
   }
@@ -451,15 +482,36 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
 
       {expanded && (
         <div className="px-5 py-4 bg-background border-t border-border space-y-4">
-          {!week.isOpen && !week.isLocked && (
-            <button
-              data-testid={`button-open-week-${week.weekNumber}`}
-              onClick={handleOpenWeek}
-              disabled={openWeek.isPending}
-              className="w-full py-2.5 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 disabled:opacity-50 text-sm"
-            >
-              {openWeek.isPending ? "Opening..." : `Open Week ${week.weekNumber} for Players`}
-            </button>
+          {!week.isLocked && (
+            <div className="flex gap-2">
+              {!week.isOpen ? (
+                <button
+                  data-testid={`button-open-week-${week.weekNumber}`}
+                  onClick={handleOpenWeek}
+                  disabled={openWeek.isPending}
+                  className="flex-1 py-2.5 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 disabled:opacity-50 text-sm"
+                >
+                  {openWeek.isPending ? "Opening..." : `Open Week ${week.weekNumber} for Players`}
+                </button>
+              ) : (
+                <button
+                  data-testid={`button-close-week-${week.weekNumber}`}
+                  onClick={handleCloseWeek}
+                  disabled={closeWeek.isPending}
+                  className="flex-1 py-2.5 bg-amber-500 text-white rounded-lg font-bold hover:bg-amber-600 disabled:opacity-50 text-sm"
+                >
+                  {closeWeek.isPending ? "Reverting..." : `Revert Week ${week.weekNumber} to Not Open`}
+                </button>
+              )}
+              <button
+                data-testid={`button-delete-week-${week.weekNumber}`}
+                onClick={handleDeleteWeek}
+                disabled={deleteWeek.isPending}
+                className="px-4 py-2.5 bg-destructive text-destructive-foreground rounded-lg font-bold hover:bg-destructive/90 disabled:opacity-50 text-sm"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
           )}
           {!week.isLocked && (
             <div className="flex gap-3">

@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
-import { db, weeksTable, gamesTable } from "@workspace/db";
+import { db, weeksTable, gamesTable, questionsTable, playerAnswersTable, correctAnswersTable } from "@workspace/db";
 import {
   ListWeeksParams,
   ListWeeksResponse,
@@ -75,6 +75,45 @@ router.post("/weeks/:weekId/open", requireAuth, async (req: any, res: any): Prom
   }
 
   res.json(serialize(week));
+});
+
+router.post("/weeks/:weekId/close", requireAuth, async (req: any, res: any): Promise<void> => {
+  const params = GetWeekParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const [week] = await db.update(weeksTable)
+    .set({ isOpen: false })
+    .where(and(eq(weeksTable.id, params.data.weekId), eq(weeksTable.isLocked, false)))
+    .returning();
+
+  if (!week) {
+    res.status(404).json({ error: "Week not found or already locked" });
+    return;
+  }
+
+  res.json(serialize(week));
+});
+
+router.delete("/weeks/:weekId", requireAuth, async (req: any, res: any): Promise<void> => {
+  const params = GetWeekParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  // Get all questions for this week, then delete answers, correct answers, questions, and the week
+  const questions = await db.select().from(questionsTable).where(eq(questionsTable.weekId, params.data.weekId));
+  for (const q of questions) {
+    await db.delete(playerAnswersTable).where(eq(playerAnswersTable.questionId, q.id));
+    await db.delete(correctAnswersTable).where(eq(correctAnswersTable.questionId, q.id));
+  }
+  await db.delete(questionsTable).where(eq(questionsTable.weekId, params.data.weekId));
+  await db.delete(weeksTable).where(eq(weeksTable.id, params.data.weekId));
+
+  res.status(204).send();
 });
 
 router.get("/weeks/:weekId", async (req, res): Promise<void> => {
