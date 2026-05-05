@@ -38,7 +38,7 @@ const clerkAppearance = {
   options: {
     logoPlacement: "inside" as const,
     logoLinkUrl: basePath || "/",
-    logoImageUrl: `${window.location.origin}${basePath}/logo.svg`,
+    logoImageUrl: `${window.location.origin}${basePath}/survivor-logo.png`,
   },
   variables: {
     colorPrimary: "hsl(35 90% 50%)",
@@ -130,43 +130,30 @@ function HomeRedirect() {
 }
 
 function LandingPage() {
-  const [, setLocation] = useLocation();
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <header className="border-b border-border px-8 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <img src={`${basePath}/survivor-logo.png`} alt="Survivor" className="h-12" />
+    <div className="min-h-screen bg-background flex flex-col md:flex-row">
+      {/* Branding side */}
+      <div className="flex flex-col items-center justify-center px-8 py-12 md:flex-1 text-center">
+        <img src={`${basePath}/survivor-logo.png`} alt="Survivor" className="h-28 mb-8" />
+        <div className="inline-block bg-primary/10 text-primary font-semibold text-sm px-4 py-1 rounded-full mb-4 uppercase tracking-widest">
+          Season Active
         </div>
-        <div className="flex gap-3">
-          <button
-            data-testid="button-signin"
-            onClick={() => setLocation("/sign-in")}
-            className="px-4 py-2 border border-border rounded-lg text-foreground hover:bg-muted font-medium transition-colors"
-          >
-            Sign In
-          </button>
-        </div>
-      </header>
-      <main className="flex-1 flex flex-col items-center justify-center px-8 text-center">
-        <div className="max-w-2xl">
-          <div className="inline-block bg-primary/10 text-primary font-semibold text-sm px-4 py-1 rounded-full mb-6 uppercase tracking-widest">
-            Season Active
-          </div>
-          <h1 className="text-5xl md:text-7xl font-bold text-foreground mb-6" style={{ fontFamily: "'Oswald', sans-serif" }}>
-            ULTIMATE SURVIVOR<br /><span className="text-primary">FAN GAME</span>
-          </h1>
-          <p className="text-lg text-muted-foreground mb-10 max-w-lg mx-auto">
-            Predict weekly outcomes, pick your winner, and climb the leaderboard. One game. Fifteen weeks. Who will you back to the end?
-          </p>
-          <button
-            data-testid="button-play"
-            onClick={() => setLocation("/sign-up")}
-            className="px-8 py-4 bg-primary text-primary-foreground rounded-xl text-lg font-bold hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl"
-          >
-            Play Now
-          </button>
-        </div>
-      </main>
+        <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-4" style={{ fontFamily: "'Oswald', sans-serif" }}>
+          ULTIMATE SURVIVOR<br /><span className="text-primary">FAN GAME</span>
+        </h1>
+        <p className="text-base text-muted-foreground max-w-sm mx-auto">
+          Predict weekly outcomes, pick your winner, and climb the leaderboard. Who will you back to the end?
+        </p>
+      </div>
+
+      {/* Sign-in side */}
+      <div className="flex flex-col items-center justify-center px-8 py-12 md:flex-1 bg-card border-t md:border-t-0 md:border-l border-border">
+        <SignIn
+          routing="hash"
+          signUpUrl={`${basePath}/sign-up`}
+          fallbackRedirectUrl={`${basePath}/dashboard`}
+        />
+      </div>
     </div>
   );
 }
