@@ -255,6 +255,22 @@ export const GetWeekResponse = zod.object({
 });
 
 /**
+ * @summary Open a week for player answers (admin only)
+ */
+export const OpenWeekParams = zod.object({
+  weekId: zod.coerce.number(),
+});
+
+export const OpenWeekResponse = zod.object({
+  id: zod.number(),
+  gameId: zod.number(),
+  weekNumber: zod.number(),
+  isLocked: zod.boolean(),
+  isOpen: zod.boolean(),
+  createdAt: zod.string(),
+});
+
+/**
  * @summary List questions for a week
  */
 export const ListQuestionsParams = zod.object({

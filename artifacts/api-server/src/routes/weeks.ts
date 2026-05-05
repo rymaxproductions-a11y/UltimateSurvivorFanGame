@@ -57,6 +57,26 @@ router.post("/games/:gameId/weeks", requireAuth, async (req: any, res: any): Pro
   res.status(201).json(serialize(week));
 });
 
+router.post("/weeks/:weekId/open", requireAuth, async (req: any, res: any): Promise<void> => {
+  const params = GetWeekParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const [week] = await db.update(weeksTable)
+    .set({ isOpen: true })
+    .where(and(eq(weeksTable.id, params.data.weekId), eq(weeksTable.isLocked, false)))
+    .returning();
+
+  if (!week) {
+    res.status(404).json({ error: "Week not found or already locked" });
+    return;
+  }
+
+  res.json(serialize(week));
+});
+
 router.get("/weeks/:weekId", async (req, res): Promise<void> => {
   const params = GetWeekParams.safeParse(req.params);
   if (!params.success) {

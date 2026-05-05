@@ -1439,6 +1439,90 @@ export function useGetWeek<
 }
 
 /**
+ * @summary Open a week for player answers (admin only)
+ */
+export const getOpenWeekUrl = (weekId: number) => {
+  return `/api/weeks/${weekId}/open`;
+};
+
+export const openWeek = async (
+  weekId: number,
+  options?: RequestInit,
+): Promise<Week> => {
+  return customFetch<Week>(getOpenWeekUrl(weekId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getOpenWeekMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof openWeek>>,
+    TError,
+    { weekId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof openWeek>>,
+  TError,
+  { weekId: number },
+  TContext
+> => {
+  const mutationKey = ["openWeek"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof openWeek>>,
+    { weekId: number }
+  > = (props) => {
+    const { weekId } = props ?? {};
+
+    return openWeek(weekId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type OpenWeekMutationResult = NonNullable<
+  Awaited<ReturnType<typeof openWeek>>
+>;
+
+export type OpenWeekMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Open a week for player answers (admin only)
+ */
+export const useOpenWeek = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof openWeek>>,
+    TError,
+    { weekId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof openWeek>>,
+  TError,
+  { weekId: number },
+  TContext
+> => {
+  return useMutation(getOpenWeekMutationOptions(options));
+};
+
+/**
  * @summary List questions for a week
  */
 export const getListQuestionsUrl = (weekId: number) => {

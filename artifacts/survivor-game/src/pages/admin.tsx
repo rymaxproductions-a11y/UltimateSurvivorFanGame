@@ -17,6 +17,7 @@ import {
   useDeleteQuestion,
   useSubmitCorrectAnswers,
   useGetCorrectAnswers,
+  useOpenWeek,
   useSubmitSurvivorWinner,
   useGetGameStats,
   useDeleteGame,
@@ -375,6 +376,20 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
   });
   const createQuestion = useCreateQuestion();
   const submitAnswers = useSubmitCorrectAnswers();
+  const openWeek = useOpenWeek();
+
+  function handleOpenWeek() {
+    openWeek.mutate(
+      { weekId: week.id },
+      {
+        onSuccess: () => {
+          qc.invalidateQueries({ queryKey: getListWeeksQueryKey(gameId) });
+          toast({ title: `Week ${week.weekNumber} is now open for answers!` });
+        },
+        onError: () => toast({ title: "Failed to open week", variant: "destructive" }),
+      }
+    );
+  }
 
   function handleAddQuestion() {
     if (!questionText.trim()) return;
@@ -436,6 +451,16 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
 
       {expanded && (
         <div className="px-5 py-4 bg-background border-t border-border space-y-4">
+          {!week.isOpen && !week.isLocked && (
+            <button
+              data-testid={`button-open-week-${week.weekNumber}`}
+              onClick={handleOpenWeek}
+              disabled={openWeek.isPending}
+              className="w-full py-2.5 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 disabled:opacity-50 text-sm"
+            >
+              {openWeek.isPending ? "Opening..." : `Open Week ${week.weekNumber} for Players`}
+            </button>
+          )}
           {!week.isLocked && (
             <div className="flex gap-3">
               <input

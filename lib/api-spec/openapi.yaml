@@ -358,6 +358,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/Week"
 
+  /weeks/{weekId}/open:
+    post:
+      operationId: openWeek
+      tags: [weeks]
+      summary: Open a week for player answers (admin only)
+      parameters:
+        - name: weekId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Week opened
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Week"
+
   /weeks/{weekId}/questions:
     get:
       operationId: listQuestions
