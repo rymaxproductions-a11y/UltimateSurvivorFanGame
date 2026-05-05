@@ -53,10 +53,10 @@ const clerkAppearance = {
     borderRadius: "0.5rem",
   },
   elements: {
-    rootBox: "w-full flex justify-center",
-    cardBox: "bg-white w-full overflow-hidden sm:rounded-2xl sm:shadow-lg sm:border sm:border-border sm:max-w-[440px]",
-    card: "!shadow-none !border-0 !bg-transparent !rounded-none",
-    footer: "!shadow-none !border-0 !bg-transparent !rounded-none",
+    rootBox: { width: "100%", maxWidth: "100vw", minWidth: "0", display: "flex", justifyContent: "center" },
+    cardBox: { width: "100%", maxWidth: "100vw", minWidth: "0", boxSizing: "border-box", backgroundColor: "white", overflow: "hidden", borderRadius: "0", boxShadow: "none", border: "none" },
+    card: { width: "100%", maxWidth: "100vw", minWidth: "0", boxSizing: "border-box", boxShadow: "none", border: "none", backgroundColor: "transparent", borderRadius: "0" },
+    footer: { boxShadow: "none", border: "none", backgroundColor: "transparent", borderRadius: "0" },
     headerTitle: "text-foreground font-bold",
     headerSubtitle: "text-muted-foreground",
     socialButtonsBlockButtonText: "text-foreground",
@@ -142,7 +142,7 @@ function LandingPage() {
         <div className="inline-block bg-primary/10 text-primary font-semibold text-sm px-4 py-1 rounded-full mb-3 uppercase tracking-widest">
           Season Active
         </div>
-        <h1 className="text-5xl font-bold text-foreground mb-2" style={{ fontFamily: "'Oswald', sans-serif" }}>
+        <h1 className="text-4xl font-bold text-foreground mb-2 w-full" style={{ fontFamily: "'Oswald', sans-serif", overflowWrap: "break-word", wordBreak: "break-word" }}>
           ULTIMATE SURVIVOR<br /><span className="text-primary">FAN GAME</span>
         </h1>
         <p className="text-base text-muted-foreground">
