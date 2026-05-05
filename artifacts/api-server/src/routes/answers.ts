@@ -85,21 +85,23 @@ router.post("/weeks/:weekId/my-answers", requireAuth, async (req: any, res: any)
     return;
   }
 
-  for (const answer of parsed.data.answers) {
-    const existing = await db.select().from(playerAnswersTable)
-      .where(and(eq(playerAnswersTable.userId, user.id), eq(playerAnswersTable.questionId, answer.questionId)));
+  const existingAnswers = await db.select().from(playerAnswersTable)
+    .where(and(eq(playerAnswersTable.userId, user.id), inArray(
+      playerAnswersTable.questionId,
+      parsed.data.answers.map((answer) => answer.questionId)
+    )));
 
-    if (existing.length > 0) {
-      await db.update(playerAnswersTable)
-        .set({ contestantId: answer.contestantId })
-        .where(and(eq(playerAnswersTable.userId, user.id), eq(playerAnswersTable.questionId, answer.questionId)));
-    } else {
-      await db.insert(playerAnswersTable).values({
-        userId: user.id,
-        questionId: answer.questionId,
-        contestantId: answer.contestantId,
-      });
-    }
+  if (existingAnswers.length > 0) {
+    res.status(400).json({ error: "Answers are already locked in" });
+    return;
+  }
+
+  for (const answer of parsed.data.answers) {
+    await db.insert(playerAnswersTable).values({
+      userId: user.id,
+      questionId: answer.questionId,
+      contestantId: answer.contestantId,
+    });
   }
 
   const savedAnswers = await db.select({

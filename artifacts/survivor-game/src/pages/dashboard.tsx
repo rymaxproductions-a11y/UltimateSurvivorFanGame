@@ -47,6 +47,7 @@ function EpisodeTab({
   const saveAnswers = useSaveMyAnswers();
 
   const [selections, setSelections] = useState<Record<number, number>>({});
+  const lockedAnswers = !!myAnswers && myAnswers.length > 0;
 
   function getAnswerForQuestion(questionId: number): number | undefined {
     const saved = myAnswers?.find((a) => a.questionId === questionId);
@@ -73,7 +74,7 @@ function EpisodeTab({
         onSuccess: () => {
           qc.invalidateQueries({ queryKey: getGetMyAnswersQueryKey(episodeId) });
           setSelections({});
-          toast({ title: "Answers saved!" });
+          toast({ title: "Answers locked in!" });
         },
         onError: () => toast({ title: "Failed to save answers", variant: "destructive" }),
       }
@@ -137,15 +138,20 @@ function EpisodeTab({
           </div>
         );
       })}
-      {isOpen && !isLocked && (
+      {isOpen && !isLocked && !lockedAnswers && (
         <button
           data-testid="button-save-answers"
           onClick={handleSave}
           disabled={saveAnswers.isPending}
           className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-colors disabled:opacity-50"
         >
-          {saveAnswers.isPending ? "Saving..." : "Save My Answers"}
+          {saveAnswers.isPending ? "Saving..." : "Submit Answers — you cannot change this later"}
         </button>
+      )}
+      {lockedAnswers && !isLocked && (
+        <div className="text-sm text-muted-foreground text-center">
+          Your answers are locked in and cannot be changed.
+        </div>
       )}
     </div>
   );
