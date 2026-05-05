@@ -58,8 +58,8 @@ export function Nav() {
           <Link key={link.href} href={link.href}>
             <span
               data-testid={`mobile-${link.testId}`}
-              className={`flex flex-col items-center justify-center py-2 px-6 text-xs font-bold cursor-pointer transition-colors ${
-                location === link.href ? "text-primary" : "text-muted-foreground"
+              className={`flex flex-col items-center justify-center py-3 px-6 text-sm font-extrabold cursor-pointer transition-colors ${
+                location === link.href ? "text-primary" : "text-foreground"
               }`}
             >
               <span className={`w-1.5 h-1.5 rounded-full mb-1 ${location === link.href ? "bg-primary" : "bg-transparent"}`} />
