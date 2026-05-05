@@ -28,6 +28,19 @@ pnpm monorepo using TypeScript. Each package manages its own dependencies.
 | `artifacts/survivor-game` | `/` | `$PORT` (Vite dev) |
 | `artifacts/api-server` | `/api` | 8080 |
 
+## Object Storage
+
+Replit-managed bucket for contestant headshots and other uploaded assets.
+
+- Server lib: `artifacts/api-server/src/lib/objectStorage.ts` + `objectAcl.ts` (copied from object-storage skill template).
+- Server routes: `artifacts/api-server/src/routes/storage.ts` mounts:
+  - `POST /api/storage/uploads/request-url` — returns presigned upload URL (auth-guarded with `requireAuth`).
+  - `GET /api/storage/objects/*path` — serves uploaded private objects (no ACL check; treated as public game assets).
+  - `GET /api/storage/public-objects/*path` — serves public assets.
+- Frontend lib: `lib/object-storage-web` exports `useUpload()` hook (Uppy-based).
+- Image URL pattern: `<img src={`/api/storage${contestant.headshotPath}`} />`. `headshotPath` already starts with `/objects/...`.
+- Required env: `DEFAULT_OBJECT_STORAGE_BUCKET_ID`, `PRIVATE_OBJECT_DIR`, `PUBLIC_OBJECT_SEARCH_PATHS`.
+
 ## Key Commands
 
 - `pnpm run typecheck` — full typecheck across all packages
@@ -57,9 +70,10 @@ artifacts/
   survivor-game/  React + Vite frontend
     src/pages/
       dashboard.tsx   Player dashboard (weekly questions, leaderboard sidebar, picks)
-      admin.tsx       Admin control center (game/contestant/week/question management)
+      admin.tsx       Admin control center (game/contestant/week/question management, headshot uploads)
       onboarding.tsx  Role selection + survivor picks after registration
       leaderboard.tsx Full leaderboard with weekly breakdown
+      contestants.tsx Player-facing contestants page (grid of headshots + names)
     src/components/
       nav.tsx         Top navigation bar (authenticated)
 ```

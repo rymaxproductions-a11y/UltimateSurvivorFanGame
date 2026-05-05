@@ -188,6 +188,7 @@ export const ListContestantsResponseItem = zod.object({
   id: zod.number(),
   gameId: zod.number(),
   name: zod.string(),
+  headshotPath: zod.string().nullable(),
   createdAt: zod.string(),
 });
 export const ListContestantsResponse = zod.array(ListContestantsResponseItem);
@@ -204,10 +205,55 @@ export const CreateContestantBody = zod.object({
 });
 
 /**
+ * @summary Update a contestant — currently used to set/clear the headshot photo (admin only)
+ */
+export const UpdateContestantParams = zod.object({
+  contestantId: zod.coerce.number(),
+});
+
+export const UpdateContestantBody = zod.object({
+  name: zod.string().optional(),
+  headshotPath: zod.string().nullish(),
+});
+
+export const UpdateContestantResponse = zod.object({
+  id: zod.number(),
+  gameId: zod.number(),
+  name: zod.string(),
+  headshotPath: zod.string().nullable(),
+  createdAt: zod.string(),
+});
+
+/**
  * @summary Delete a contestant (admin only)
  */
 export const DeleteContestantParams = zod.object({
   contestantId: zod.coerce.number(),
+});
+
+/**
+ * Returns a presigned GCS URL for direct upload. The client sends JSON
+metadata here, then uploads the file directly to the returned URL.
+
+ * @summary Request a presigned URL for file upload
+ */
+
+export const RequestUploadUrlBody = zod.object({
+  name: zod.string().min(1),
+  size: zod.number().min(1),
+  contentType: zod.string().min(1),
+});
+
+export const RequestUploadUrlResponse = zod.object({
+  uploadURL: zod.string().url(),
+  objectPath: zod.string(),
+  metadata: zod
+    .object({
+      name: zod.string().min(1),
+      size: zod.number().min(1),
+      contentType: zod.string().min(1),
+    })
+    .optional(),
 });
 
 /**

@@ -9,6 +9,7 @@ import {
   useUpdateGame,
   useListContestants,
   useCreateContestant,
+  useUpdateContestant,
   useDeleteContestant,
   useListWeeks,
   useCreateWeek,
@@ -35,7 +36,8 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Nav } from "@/components/nav";
-import { Trash2, Plus, ChevronDown, ChevronUp, DatabaseZap, Eraser, PlayCircle, CheckCircle, RotateCcw } from "lucide-react";
+import { Trash2, Plus, ChevronDown, ChevronUp, DatabaseZap, Eraser, PlayCircle, CheckCircle, RotateCcw, Upload, User as UserIcon, X } from "lucide-react";
+import { useUpload } from "@workspace/object-storage-web";
 
 function GameSetupSection({ onGameCreated, selectedGameId }: { onGameCreated: (id: number | null) => void; selectedGameId: number | null }) {
   const { toast } = useToast();
@@ -305,23 +307,137 @@ function ContestantsSection({ gameId }: { gameId: number }) {
           Add
         </button>
       </div>
-      <div className="space-y-2 max-h-64 overflow-y-auto">
+      <p className="text-xs text-muted-foreground mb-3">Upload a headshot for each contestant. Photos appear on the player Contestants page.</p>
+      <div className="space-y-2 max-h-[28rem] overflow-y-auto">
         {(contestants ?? []).map((c) => (
-          <div key={c.id} data-testid={`contestant-item-${c.id}`} className="flex items-center justify-between px-3 py-2 bg-muted/40 rounded-lg">
-            <span className="text-foreground font-medium">{c.name}</span>
-            <button
-              data-testid={`button-delete-contestant-${c.id}`}
-              onClick={() => handleDelete(c.id)}
-              className="text-destructive hover:text-destructive/80 transition-colors"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
+          <ContestantRow
+            key={c.id}
+            contestant={c}
+            gameId={gameId}
+            onDelete={() => handleDelete(c.id)}
+          />
         ))}
         {(!contestants || contestants.length === 0) && (
           <p className="text-sm text-muted-foreground text-center py-4">No contestants yet</p>
         )}
       </div>
+    </div>
+  );
+}
+
+function ContestantRow({
+  contestant,
+  gameId,
+  onDelete,
+}: {
+  contestant: { id: number; name: string; headshotPath: string | null };
+  gameId: number;
+  onDelete: () => void;
+}) {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const updateContestant = useUpdateContestant();
+
+  const { uploadFile, isUploading } = useUpload({
+    onSuccess: (response) => {
+      updateContestant.mutate(
+        { contestantId: contestant.id, data: { headshotPath: response.objectPath } },
+        {
+          onSuccess: () => {
+            qc.invalidateQueries({ queryKey: getListContestantsQueryKey(gameId) });
+            toast({ title: "Headshot uploaded!" });
+          },
+          onError: () => toast({ title: "Failed to save headshot", variant: "destructive" }),
+        }
+      );
+    },
+    onError: () => toast({ title: "Upload failed", variant: "destructive" }),
+  });
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Please select an image file", variant: "destructive" });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Image must be smaller than 5MB", variant: "destructive" });
+      return;
+    }
+    uploadFile(file);
+    e.target.value = "";
+  }
+
+  function handleRemovePhoto() {
+    updateContestant.mutate(
+      { contestantId: contestant.id, data: { headshotPath: null } },
+      {
+        onSuccess: () => {
+          qc.invalidateQueries({ queryKey: getListContestantsQueryKey(gameId) });
+          toast({ title: "Headshot removed" });
+        },
+        onError: () => toast({ title: "Failed to remove photo", variant: "destructive" }),
+      }
+    );
+  }
+
+  const busy = isUploading || updateContestant.isPending;
+
+  return (
+    <div
+      data-testid={`contestant-item-${contestant.id}`}
+      className="flex items-center gap-3 px-3 py-2 bg-muted/40 rounded-lg"
+    >
+      <div className="w-10 h-10 rounded-full bg-muted overflow-hidden flex items-center justify-center flex-shrink-0 border border-border">
+        {contestant.headshotPath ? (
+          <img
+            src={`/api/storage${contestant.headshotPath}`}
+            alt={contestant.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <UserIcon className="w-5 h-5 text-muted-foreground/60" />
+        )}
+      </div>
+      <span className="text-foreground font-medium flex-1 truncate">{contestant.name}</span>
+      <label
+        data-testid={`button-upload-headshot-${contestant.id}`}
+        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-colors ${
+          busy
+            ? "bg-muted text-muted-foreground"
+            : "bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20"
+        }`}
+        title="Upload headshot"
+      >
+        <Upload className="w-3.5 h-3.5" />
+        {isUploading ? "Uploading..." : contestant.headshotPath ? "Replace" : "Photo"}
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          disabled={busy}
+          className="hidden"
+        />
+      </label>
+      {contestant.headshotPath && (
+        <button
+          data-testid={`button-remove-headshot-${contestant.id}`}
+          onClick={handleRemovePhoto}
+          disabled={busy}
+          title="Remove headshot"
+          className="text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      )}
+      <button
+        data-testid={`button-delete-contestant-${contestant.id}`}
+        onClick={onDelete}
+        className="text-destructive hover:text-destructive/80 transition-colors"
+      >
+        <Trash2 className="w-4 h-4" />
+      </button>
     </div>
   );
 }

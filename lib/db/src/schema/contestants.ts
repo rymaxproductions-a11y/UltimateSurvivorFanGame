@@ -7,6 +7,7 @@ export const contestantsTable = pgTable("contestants", {
   id: serial("id").primaryKey(),
   gameId: integer("game_id").notNull().references(() => gamesTable.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
+  headshotPath: text("headshot_path"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

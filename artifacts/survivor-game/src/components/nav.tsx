@@ -13,6 +13,7 @@ export function Nav() {
 
   const links = [
     { label: "Dashboard", href: "/dashboard", testId: "nav-dashboard" },
+    { label: "Contestants", href: "/contestants", testId: "nav-contestants" },
     { label: "Leaderboard", href: "/leaderboard", testId: "nav-leaderboard" },
     ...(me?.role === "admin" ? [{ label: "Admin", href: "/admin", testId: "nav-admin" }] : []),
   ];

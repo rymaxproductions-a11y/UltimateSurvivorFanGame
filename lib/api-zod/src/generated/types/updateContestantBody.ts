@@ -6,11 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface Contestant {
-  id: number;
-  gameId: number;
-  name: string;
+export interface UpdateContestantBody {
+  name?: string;
   /** @nullable */
-  headshotPath: string | null;
-  createdAt: string;
+  headshotPath?: string | null;
 }

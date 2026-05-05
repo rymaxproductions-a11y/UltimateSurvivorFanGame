@@ -13,6 +13,7 @@ const Onboarding = lazy(() => import("@/pages/onboarding"));
 const Dashboard = lazy(() => import("@/pages/dashboard"));
 const Admin = lazy(() => import("@/pages/admin"));
 const Leaderboard = lazy(() => import("@/pages/leaderboard"));
+const Contestants = lazy(() => import("@/pages/contestants"));
 
 const clerkPubKey = publishableKeyFromHost(
   window.location.hostname,
@@ -173,6 +174,7 @@ function RouterContent() {
         <Route path="/dashboard" component={Dashboard} />
         <Route path="/admin" component={Admin} />
         <Route path="/leaderboard" component={Leaderboard} />
+        <Route path="/contestants" component={Contestants} />
         <Route component={NotFound} />
       </Switch>
     </Suspense>
