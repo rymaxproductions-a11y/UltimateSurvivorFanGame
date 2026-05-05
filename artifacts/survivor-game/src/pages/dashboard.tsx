@@ -366,7 +366,7 @@ function GameView({ gameId }: { gameId: number }) {
   );
 }
 
-function SetNameModal({ onSaved, onSkip }: { onSaved: () => void; onSkip: () => void }) {
+function SetNameModal({ onSaved }: { onSaved: () => void }) {
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const updateProfile = useUpdateMyProfile();
@@ -384,7 +384,7 @@ function SetNameModal({ onSaved, onSkip }: { onSaved: () => void; onSkip: () => 
           qc.invalidateQueries({ queryKey: getGetMeQueryKey() });
           onSaved();
         },
-        onError: () => setError("Could not save your name. You can set it later from your profile."),
+        onError: () => setError("Could not save your name. Please try again."),
       }
     );
   }
@@ -396,11 +396,11 @@ function SetNameModal({ onSaved, onSkip }: { onSaved: () => void; onSkip: () => 
           WELCOME TO THE GAME
         </h2>
         <p className="text-sm text-muted-foreground mb-6">
-          Enter your name so other players can find you on the leaderboard.
+          Enter your name so other players can identify you on the leaderboard.
         </p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-foreground mb-1">Your Name</label>
+            <label className="block text-sm font-semibold text-foreground mb-1">Your Name <span className="text-destructive">*</span></label>
             <input
               data-testid="input-display-name"
               type="text"
@@ -420,13 +420,6 @@ function SetNameModal({ onSaved, onSkip }: { onSaved: () => void; onSkip: () => 
             className="w-full py-2.5 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 disabled:opacity-50 transition-colors"
           >
             {updateProfile.isPending ? "Saving..." : "Let's Play"}
-          </button>
-          <button
-            type="button"
-            onClick={onSkip}
-            className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Skip for now
           </button>
         </form>
       </div>
@@ -464,7 +457,7 @@ export default function Dashboard() {
   return (
     <Show when="signed-in" fallback={<Redirect to="/sign-in" />}>
       <div className="min-h-screen bg-background">
-        {needsName && <SetNameModal onSaved={() => setNameSaved(true)} onSkip={() => setNameSaved(true)} />}
+        {needsName && <SetNameModal onSaved={() => setNameSaved(true)} />}
         <Nav />
         <div className="max-w-3xl mx-auto px-4 py-8">
           <div className="mb-8">

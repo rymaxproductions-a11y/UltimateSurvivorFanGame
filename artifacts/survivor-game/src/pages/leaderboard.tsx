@@ -79,7 +79,7 @@ export default function Leaderboard() {
                           #{entry.rank}
                         </span>
                       </td>
-                      <td className="px-4 py-3 font-semibold text-foreground">{entry.username}</td>
+                      <td className="px-4 py-3 font-semibold text-foreground">{entry.displayName ?? entry.username}</td>
                       <td className="px-4 py-3 text-right text-sm text-primary font-semibold">
                         {entry.survivorPickPoints > 0 ? `+${entry.survivorPickPoints}` : "—"}
                       </td>
