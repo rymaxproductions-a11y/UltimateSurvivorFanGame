@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
-import { db, gamesTable, weeksTable, survivorPicksTable, contestantsTable, questionsTable, choicesTable } from "@workspace/db";
+import { eq, ne } from "drizzle-orm";
+import { db, gamesTable, weeksTable, survivorPicksTable, contestantsTable, questionsTable, choicesTable, usersTable } from "@workspace/db";
 import {
   ListGamesResponse,
   CreateGameBody,
@@ -97,6 +97,7 @@ router.post("/games/:gameId/clear", requireAuth, async (req: any, res: any): Pro
   await db.delete(survivorPicksTable).where(eq(survivorPicksTable.gameId, gameId));
   await db.delete(contestantsTable).where(eq(contestantsTable.gameId, gameId));
   await db.delete(weeksTable).where(eq(weeksTable.gameId, gameId));
+  await db.delete(usersTable).where(ne(usersTable.role, "admin"));
   await db.update(gamesTable).set({ status: "setup", currentWeekNumber: 1, survivorWinnerContestantId: null, finalThreeContestantId1: null, finalThreeContestantId2: null, finalThreeContestantId3: null } as any).where(eq(gamesTable.id, gameId));
   res.json({ success: true });
 });
