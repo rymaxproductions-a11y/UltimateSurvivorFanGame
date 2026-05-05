@@ -23,7 +23,7 @@ export default function Leaderboard() {
     return <Redirect to="/sign-in" />;
   }
 
-  const weeks = leaderboard?.[0]?.weeklyPoints?.map((w) => w.weekNumber) ?? [];
+  const episodes = leaderboard?.[0]?.weeklyPoints?.map((w) => w.weekNumber) ?? [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -34,7 +34,7 @@ export default function Leaderboard() {
             LEADERBOARD
           </h1>
           {activeGame && (
-            <p className="text-muted-foreground mt-1 text-sm">{activeGame.name} — Week {activeGame.currentWeekNumber} of {activeGame.totalWeeks}</p>
+            <p className="text-muted-foreground mt-1 text-sm">{activeGame.name} — Episode {activeGame.currentWeekNumber} of {activeGame.totalWeeks}</p>
           )}
         </div>
 
@@ -48,11 +48,10 @@ export default function Leaderboard() {
         ) : !leaderboard || leaderboard.length === 0 ? (
           <div className="text-center py-16 bg-card border border-border rounded-2xl">
             <h2 className="text-xl font-semibold text-foreground mb-2">No Scores Yet</h2>
-            <p className="text-muted-foreground">Scores will appear here once the first week is locked.</p>
+            <p className="text-muted-foreground">Scores will appear here once the first episode is locked.</p>
           </div>
         ) : (
           <>
-            {/* Mobile card view */}
             <div className="md:hidden space-y-3">
               {leaderboard.map((entry) => (
                 <div
@@ -79,7 +78,6 @@ export default function Leaderboard() {
               ))}
             </div>
 
-            {/* Desktop table view */}
             <div className="hidden md:block bg-card border border-border rounded-2xl overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -88,9 +86,9 @@ export default function Leaderboard() {
                       <th className="px-4 py-3 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">Rank</th>
                       <th className="px-4 py-3 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">Player</th>
                       <th className="px-4 py-3 text-right text-xs font-bold text-muted-foreground uppercase tracking-wider">Survivor</th>
-                      {weeks.map((w) => (
+                      {episodes.map((w) => (
                         <th key={w} className="px-3 py-3 text-center text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                          Wk {w}
+                          Ep {w}
                         </th>
                       ))}
                       <th className="px-4 py-3 text-right text-xs font-bold text-foreground uppercase tracking-wider">Total</th>
@@ -112,7 +110,7 @@ export default function Leaderboard() {
                         <td className="px-4 py-3 text-right text-sm text-primary font-semibold">
                           {entry.survivorPickPoints > 0 ? `+${entry.survivorPickPoints}` : "—"}
                         </td>
-                        {weeks.map((w) => {
+                        {episodes.map((w) => {
                           const wp = entry.weeklyPoints.find((x) => x.weekNumber === w);
                           return (
                             <td key={w} className="px-3 py-3 text-center text-sm text-foreground">

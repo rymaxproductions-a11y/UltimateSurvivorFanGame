@@ -24,23 +24,23 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Nav } from "@/components/nav";
 
-function WeekTab({
-  weekId,
-  weekNumber,
+function EpisodeTab({
+  episodeId,
+  episodeNumber,
   gameId,
   isOpen,
   isLocked,
 }: {
-  weekId: number;
-  weekNumber: number;
+  episodeId: number;
+  episodeNumber: number;
   gameId: number;
   isOpen: boolean;
   isLocked: boolean;
 }) {
   const { toast } = useToast();
   const qc = useQueryClient();
-  const { data: questions, isLoading: qLoading } = useListQuestions(weekId);
-  const { data: myAnswers } = useGetMyAnswers(weekId);
+  const { data: questions, isLoading: qLoading } = useListQuestions(episodeId);
+  const { data: myAnswers } = useGetMyAnswers(episodeId);
   const { data: contestants } = useListContestants(gameId, {
     query: { queryKey: getListContestantsQueryKey(gameId) },
   });
@@ -68,10 +68,10 @@ function WeekTab({
       return;
     }
     saveAnswers.mutate(
-      { weekId, data: { answers: answersToSave } },
+      { weekId: episodeId, data: { answers: answersToSave } },
       {
         onSuccess: () => {
-          qc.invalidateQueries({ queryKey: getGetMyAnswersQueryKey(weekId) });
+          qc.invalidateQueries({ queryKey: getGetMyAnswersQueryKey(episodeId) });
           setSelections({});
           toast({ title: "Answers saved!" });
         },
@@ -82,19 +82,19 @@ function WeekTab({
 
   if (qLoading) return <div className="py-8 text-center text-muted-foreground">Loading questions...</div>;
   if (!questions || questions.length === 0) return (
-    <div className="py-8 text-center text-muted-foreground">No questions for this week yet.</div>
+    <div className="py-8 text-center text-muted-foreground">No questions for this episode yet.</div>
   );
 
   return (
     <div className="space-y-4">
       {isLocked && (
         <div className="bg-muted/60 border border-border rounded-lg px-4 py-2 text-sm text-muted-foreground font-medium">
-          Week {weekNumber} is locked — answers have been scored.
+          Episode {episodeNumber} is locked — answers have been scored.
         </div>
       )}
       {!isOpen && !isLocked && (
         <div className="bg-muted/60 border border-border rounded-lg px-4 py-2 text-sm text-muted-foreground font-medium">
-          Week {weekNumber} is not yet open.
+          Episode {episodeNumber} is not yet open.
         </div>
       )}
       {questions.map((q) => {
@@ -186,7 +186,7 @@ function SeasonPicksGate({ gameId, onComplete }: { gameId: number; onComplete: (
         SEASON PREDICTIONS REQUIRED
       </h3>
       <p className="text-sm text-muted-foreground mb-6">
-        Answer both questions before accessing weekly picks. These are locked in for the whole season and scored when the winner is revealed.
+        Answer both questions before accessing episode picks. These are locked in for the whole season and scored when the winner is revealed.
       </p>
 
       {!contestants || contestants.length === 0 ? (
@@ -309,10 +309,10 @@ function GameView({ gameId }: { gameId: number }) {
         </div>
       )}
 
-      {/* Weekly questions — only shown once picks are in */}
+      {/* Episode questions — only shown once picks are in */}
       {hasPicks && (
         visibleWeeks.length === 0 ? (
-          <div className="py-12 text-center text-muted-foreground">No open weeks yet — check back soon.</div>
+          <div className="py-12 text-center text-muted-foreground">No open episodes yet — check back soon.</div>
         ) : (
           <>
             <div className="flex gap-2 mb-6 flex-wrap">
@@ -326,15 +326,15 @@ function GameView({ gameId }: { gameId: number }) {
                       : "bg-card border border-border text-foreground hover:bg-muted/40"
                   }`}
                 >
-                  Week {w.weekNumber}
+                  Episode {w.weekNumber}
                   {w.isLocked && <span className="ml-1.5 text-xs opacity-70">Scored</span>}
                 </button>
               ))}
             </div>
             {activeWeekEntry && (
-              <WeekTab
-                weekId={activeWeekEntry.id}
-                weekNumber={activeWeekEntry.weekNumber}
+              <EpisodeTab
+                episodeId={activeWeekEntry.id}
+                episodeNumber={activeWeekEntry.weekNumber}
                 gameId={gameId}
                 isOpen={activeWeekEntry.isOpen}
                 isLocked={activeWeekEntry.isLocked}
