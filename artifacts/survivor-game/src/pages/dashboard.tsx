@@ -459,9 +459,9 @@ export default function Dashboard() {
       <div className="min-h-screen bg-background">
         {needsName && <SetNameModal onSaved={() => setNameSaved(true)} />}
         <Nav />
-        <div className="max-w-3xl mx-auto px-4 py-8">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-foreground" style={{ fontFamily: "'Oswald', sans-serif" }}>
+        <div className="max-w-3xl mx-auto px-4 py-6 pb-24 md:pb-10">
+          <div className="mb-6">
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground" style={{ fontFamily: "'Oswald', sans-serif" }}>
               MY DASHBOARD
             </h1>
             {game && (

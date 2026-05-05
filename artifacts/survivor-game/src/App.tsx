@@ -137,21 +137,21 @@ function LandingPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
       {/* Branding side */}
-      <div className="flex flex-col items-center justify-center px-8 py-12 md:flex-1 text-center">
-        <img src={`${basePath}/survivor-logo.png`} alt="Survivor" className="h-28 mb-8" />
-        <div className="inline-block bg-primary/10 text-primary font-semibold text-sm px-4 py-1 rounded-full mb-4 uppercase tracking-widest">
+      <div className="flex flex-col items-center justify-center px-6 pt-8 pb-4 md:py-12 md:flex-1 text-center">
+        <img src={`${basePath}/survivor-logo.png`} alt="Survivor" className="h-16 md:h-28 mb-4 md:mb-8" />
+        <div className="inline-block bg-primary/10 text-primary font-semibold text-xs md:text-sm px-3 py-1 rounded-full mb-3 md:mb-4 uppercase tracking-widest">
           Season Active
         </div>
-        <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-4" style={{ fontFamily: "'Oswald', sans-serif" }}>
+        <h1 className="text-3xl md:text-6xl font-bold text-foreground mb-2 md:mb-4" style={{ fontFamily: "'Oswald', sans-serif" }}>
           ULTIMATE SURVIVOR<br /><span className="text-primary">FAN GAME</span>
         </h1>
-        <p className="text-base text-muted-foreground max-w-sm mx-auto">
+        <p className="text-sm md:text-base text-muted-foreground max-w-sm mx-auto hidden md:block">
           Predict weekly outcomes, pick your winner, and climb the leaderboard. Who will you back to the end?
         </p>
       </div>
 
       {/* Sign-in side */}
-      <div className="flex flex-col items-center justify-center px-8 py-12 md:flex-1 bg-card border-t md:border-t-0 md:border-l border-border">
+      <div className="flex flex-col items-center justify-center px-4 pb-8 md:py-12 md:flex-1 bg-card border-t md:border-t-0 md:border-l border-border">
         <SignIn
           routing="hash"
           signUpUrl={`${basePath}/sign-up`}

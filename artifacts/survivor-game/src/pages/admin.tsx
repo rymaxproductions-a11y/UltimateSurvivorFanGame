@@ -876,7 +876,7 @@ export default function Admin() {
     <Show when="signed-in" fallback={<Redirect to="/sign-in" />}>
       <div className="min-h-screen bg-background">
         <Nav />
-        <div className="max-w-5xl mx-auto px-4 py-8">
+        <div className="max-w-5xl mx-auto px-4 py-6 pb-24 md:pb-10">
           <div className="mb-8">
             <h1 className="text-4xl font-bold text-foreground" style={{ fontFamily: "'Oswald', sans-serif" }}>
               ADMIN CONTROL CENTER
