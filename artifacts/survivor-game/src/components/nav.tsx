@@ -42,8 +42,8 @@ export function Nav() {
       </div>
       <div className="flex items-center gap-3">
         {me && (
-          <span className="text-sm font-medium text-muted-foreground hidden sm:inline">
-            {me.username}
+          <span className="text-sm font-medium text-foreground hidden sm:inline">
+            {me.displayName ?? me.username}
           </span>
         )}
         <UserButton />

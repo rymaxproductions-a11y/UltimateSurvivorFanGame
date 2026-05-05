@@ -78,6 +78,10 @@ const clerkAppearance = {
     otpCodeFieldInput: "border-border",
     formFieldRow: "",
     main: "",
+    userButtonPopoverActionButton: "hover:bg-muted",
+    userButtonPopoverActionButtonText: "text-foreground font-medium",
+    userButtonPopoverActionButtonIcon: "text-foreground",
+    userButtonPopoverFooter: "hidden",
   },
 };
 
