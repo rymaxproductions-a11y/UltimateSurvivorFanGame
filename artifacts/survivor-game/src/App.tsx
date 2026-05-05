@@ -135,9 +135,9 @@ function HomeRedirect() {
 
 function LandingPage() {
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center py-8">
       {/* Branding */}
-      <div className="flex flex-col items-center text-center px-6 pt-10 pb-6">
+      <div className="w-full flex flex-col items-center text-center px-6 mb-6">
         <img src={`${basePath}/survivor-logo.png`} alt="Survivor" className="h-28 mb-4" />
         <div className="inline-block bg-primary/10 text-primary font-semibold text-sm px-4 py-1 rounded-full mb-3 uppercase tracking-widest">
           Season Active
@@ -150,8 +150,8 @@ function LandingPage() {
         </p>
       </div>
 
-      {/* Sign-in — edge-to-edge on mobile, card on desktop */}
-      <div className="flex-1 flex flex-col items-center justify-start sm:justify-center sm:px-6 sm:pb-10 border-t border-border sm:border-t-0 bg-card sm:bg-background">
+      {/* Sign-in — edge-to-edge on mobile, constrained card on desktop */}
+      <div className="w-full flex justify-center">
         <SignIn
           routing="hash"
           signUpUrl={`${basePath}/sign-up`}

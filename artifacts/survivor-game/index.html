@@ -3,7 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <style>html, body { overflow-x: hidden; max-width: 100vw; }</style>
+    <style>
+      html, body { overflow-x: hidden; max-width: 100vw; }
+      /* Force Clerk's internal card elements to respect mobile viewport width */
+      .cl-rootBox { width: 100% !important; max-width: 100vw !important; }
+      .cl-cardBox { width: 100% !important; max-width: 100vw !important; min-width: 0 !important; box-sizing: border-box !important; }
+      .cl-card { min-width: 0 !important; box-sizing: border-box !important; }
+      @media (min-width: 640px) {
+        .cl-cardBox { max-width: 440px !important; border-radius: 1rem !important; box-shadow: 0 4px 24px rgba(0,0,0,0.08) !important; border: 1px solid var(--border) !important; }
+      }
+    </style>
     <title>Survivor Guessing Game</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
