@@ -66,7 +66,7 @@ export default function Onboarding() {
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
-          <img src={`${basePath}/logo.svg`} alt="Survivor Pick'em" className="h-12 mx-auto mb-4" />
+          <img src={`${basePath}/survivor-logo.png`} alt="Survivor" className="h-16 mx-auto mb-4" />
           <h1 className="text-3xl font-bold text-foreground" style={{ fontFamily: "'Oswald', sans-serif" }}>
             WELCOME, {user?.username?.toUpperCase() ?? "PLAYER"}
           </h1>

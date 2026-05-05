@@ -135,7 +135,7 @@ function LandingPage() {
     <div className="min-h-screen bg-background flex flex-col">
       <header className="border-b border-border px-8 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <img src={`${basePath}/logo.svg`} alt="Survivor Pick'em" className="h-10" />
+          <img src={`${basePath}/survivor-logo.png`} alt="Survivor" className="h-12" />
         </div>
         <div className="flex gap-3">
           <button
@@ -145,13 +145,6 @@ function LandingPage() {
           >
             Sign In
           </button>
-          <button
-            data-testid="button-signup"
-            onClick={() => setLocation("/sign-up")}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors"
-          >
-            Join the Game
-          </button>
         </div>
       </header>
       <main className="flex-1 flex flex-col items-center justify-center px-8 text-center">
@@ -160,7 +153,7 @@ function LandingPage() {
             Season Active
           </div>
           <h1 className="text-5xl md:text-7xl font-bold text-foreground mb-6" style={{ fontFamily: "'Oswald', sans-serif" }}>
-            SURVIVOR<br /><span className="text-primary">PICK'EM</span>
+            ULTIMATE SURVIVOR<br /><span className="text-primary">FAN GAME</span>
           </h1>
           <p className="text-lg text-muted-foreground mb-10 max-w-lg mx-auto">
             Predict weekly outcomes, pick your winner, and climb the leaderboard. One game. Fifteen weeks. Who will you back to the end?
@@ -206,8 +199,8 @@ function ClerkProviderWithRoutes() {
       signInUrl={`${basePath}/sign-in`}
       signUpUrl={`${basePath}/sign-up`}
       localization={{
-        signIn: { start: { title: "Welcome back", subtitle: "Sign in to your Pick'em account" } },
-        signUp: { start: { title: "Join Survivor Pick'em", subtitle: "Create your account and start predicting" } },
+        signIn: { start: { title: "Welcome back", subtitle: "Sign in to your Ultimate Survivor Fan Game account" } },
+        signUp: { start: { title: "Join the Ultimate Survivor Fan Game", subtitle: "Create your account and start predicting" } },
       }}
       routerPush={(to) => setLocation(stripBase(to))}
       routerReplace={(to) => setLocation(stripBase(to), { replace: true })}

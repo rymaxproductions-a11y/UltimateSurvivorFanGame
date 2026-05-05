@@ -21,7 +21,7 @@ export function Nav() {
     <header className="border-b border-border bg-card px-6 py-3 flex items-center justify-between">
       <div className="flex items-center gap-6">
         <Link href="/dashboard">
-          <img src={`${basePath}/logo.svg`} alt="Survivor Pick'em" className="h-9 cursor-pointer" />
+          <img src={`${basePath}/survivor-logo.png`} alt="Survivor" className="h-10 cursor-pointer" />
         </Link>
         <nav className="hidden md:flex gap-1">
           {links.map((link) => (
