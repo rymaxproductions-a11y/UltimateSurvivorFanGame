@@ -1,0 +1,8 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "hcyr0ouENHUz4kBI_y1f0"
+uri = "file://artifacts/survivor-mobile/assets/images/icon.png"
+type = "image"
+title = "survivor torch icon"

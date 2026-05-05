@@ -27,6 +27,19 @@ pnpm monorepo using TypeScript. Each package manages its own dependencies.
 |---|---|---|
 | `artifacts/survivor-game` | `/` | `$PORT` (Vite dev) |
 | `artifacts/api-server` | `/api` | 8080 |
+| `artifacts/survivor-mobile` | `/survivor-mobile/` (Expo dev) | 25817 |
+
+## Mobile App
+
+Expo (React Native) artifact mirrors the player-facing flows of the web game. Admin features are intentionally web-only.
+
+- Auth: `@clerk/clerk-expo` with `expo-secure-store` token cache. Publishable key wired in via `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` (sourced from `VITE_CLERK_PUBLISHABLE_KEY` in the dev script).
+- API access: `lib/api.ts` calls `setBaseUrl(https://$EXPO_PUBLIC_DOMAIN)`; `components/AuthBridge.tsx` plugs Clerk's `getToken` into the shared client via `setAuthTokenGetter`. API server middleware (`@clerk/express`) accepts the `Authorization: Bearer` token automatically — no API changes required.
+- Generated React Query hooks/queryKeys come from `@workspace/api-client-react`; mobile screens always pass an explicit `queryKey` in hook options (TanStack Query v5 requirement).
+- Fonts: Oswald (headings) + Work Sans (body) loaded via `@expo-google-fonts/*` in `app/_layout.tsx`.
+- Image URLs use `lib/api.ts#storageImageUrl(headshotPath)` which resolves to `${API_BASE_URL}/api/storage${headshotPath}`.
+- Routes (Expo Router): `app/sign-in.tsx`, `app/onboarding.tsx`, `app/episode/[id].tsx`, `app/(tabs)/{index,contestants,leaderboard,profile}.tsx`.
+- Required Clerk peer dep: `expo-auth-session` (used internally by Clerk's `useSSO` hook even though we don't expose SSO).
 
 ## Object Storage
 
