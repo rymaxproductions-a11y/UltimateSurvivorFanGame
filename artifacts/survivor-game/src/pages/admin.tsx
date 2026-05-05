@@ -504,9 +504,9 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
       {
         onSuccess: () => {
           qc.invalidateQueries({ queryKey: getListWeeksQueryKey(gameId) });
-          toast({ title: `Week ${week.weekNumber} is now open for answers!` });
+          toast({ title: `Episode ${week.weekNumber} is now open for answers!` });
         },
-        onError: () => toast({ title: "Failed to open week", variant: "destructive" }),
+        onError: () => toast({ title: "Failed to open episode", variant: "destructive" }),
       }
     );
   }
@@ -517,23 +517,23 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
       {
         onSuccess: () => {
           qc.invalidateQueries({ queryKey: getListWeeksQueryKey(gameId) });
-          toast({ title: `Week ${week.weekNumber} reverted to Not Open.` });
+          toast({ title: `Episode ${week.weekNumber} reverted to Not Open.` });
         },
-        onError: () => toast({ title: "Failed to close week", variant: "destructive" }),
+        onError: () => toast({ title: "Failed to close episode", variant: "destructive" }),
       }
     );
   }
 
   function handleDeleteWeek() {
-    if (!confirm(`Delete Week ${week.weekNumber} and all its questions? This cannot be undone.`)) return;
+    if (!confirm(`Delete Episode ${week.weekNumber} and all its questions? This cannot be undone.`)) return;
     deleteWeek.mutate(
       { weekId: week.id },
       {
         onSuccess: () => {
           qc.invalidateQueries({ queryKey: getListWeeksQueryKey(gameId) });
-          toast({ title: `Week ${week.weekNumber} deleted.` });
+          toast({ title: `Episode ${week.weekNumber} deleted.` });
         },
-        onError: () => toast({ title: "Failed to delete week", variant: "destructive" }),
+        onError: () => toast({ title: "Failed to delete episode", variant: "destructive" }),
       }
     );
   }
@@ -567,7 +567,7 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
       {
         onSuccess: () => {
           qc.invalidateQueries({ queryKey: getListWeeksQueryKey(gameId) });
-          toast({ title: `Week ${week.weekNumber} locked and scored!` });
+          toast({ title: `Episode ${week.weekNumber} locked and scored!` });
         },
         onError: () => toast({ title: "Failed to submit answers", variant: "destructive" }),
       }
@@ -583,7 +583,7 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
       >
         <div className="flex items-center gap-3">
           <span className="font-bold text-foreground" style={{ fontFamily: "'Oswald', sans-serif" }}>
-            WEEK {week.weekNumber}
+            EPISODE {week.weekNumber}
           </span>
           <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
             week.isLocked ? "bg-muted text-muted-foreground" :
@@ -607,7 +607,7 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
                   disabled={openWeek.isPending}
                   className="flex-1 py-2.5 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 disabled:opacity-50 text-sm"
                 >
-                  {openWeek.isPending ? "Opening..." : `Open Week ${week.weekNumber} for Players`}
+                  {openWeek.isPending ? "Opening..." : `Open Episode ${week.weekNumber} for Players`}
                 </button>
               ) : (
                 <button
@@ -616,7 +616,7 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
                   disabled={closeWeek.isPending}
                   className="flex-1 py-2.5 bg-amber-500 text-white rounded-lg font-bold hover:bg-amber-600 disabled:opacity-50 text-sm"
                 >
-                  {closeWeek.isPending ? "Reverting..." : `Revert Week ${week.weekNumber} to Not Open`}
+                  {closeWeek.isPending ? "Reverting..." : `Revert Episode ${week.weekNumber} to Not Open`}
                 </button>
               )}
               <button
@@ -670,7 +670,7 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
 
           {questions && questions.length > 0 && !week.isLocked && (
             <div className="border-t border-border pt-4">
-              <h4 className="text-sm font-bold text-foreground mb-3">Submit Correct Answers (Locks Week)</h4>
+              <h4 className="text-sm font-bold text-foreground mb-3">Submit Correct Answers (Locks Episode)</h4>
               <div className="space-y-3 mb-4">
                 {questions.map((q) => {
                   const existing = existingCorrect?.find((ca: any) => ca.questionId === q.id);
@@ -698,7 +698,7 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
                 disabled={submitAnswers.isPending}
                 className="w-full py-2.5 bg-destructive text-destructive-foreground rounded-lg font-bold hover:bg-destructive/90 disabled:opacity-50 text-sm"
               >
-                {submitAnswers.isPending ? "Locking..." : `Lock Week ${week.weekNumber} & Score Players`}
+                {submitAnswers.isPending ? "Locking..." : `Lock Episode ${week.weekNumber} & Score Players`}
               </button>
             </div>
           )}
@@ -751,7 +751,7 @@ function WeeksSection({ gameId }: { gameId: number }) {
       { gameId, data: { weekNumber: nextWeekNumber } },
       {
         onSuccess: () => qc.invalidateQueries({ queryKey: getListWeeksQueryKey(gameId) }),
-        onError: () => toast({ title: "Failed to create week", variant: "destructive" }),
+        onError: () => toast({ title: "Failed to create episode", variant: "destructive" }),
       }
     );
   }
@@ -783,7 +783,7 @@ function WeeksSection({ gameId }: { gameId: number }) {
           className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold text-sm hover:bg-primary/90 disabled:opacity-50"
         >
           <Plus className="w-4 h-4 inline mr-1" />
-          Add Week {nextWeekNumber}
+          Add Episode {nextWeekNumber}
         </button>
       </div>
 
@@ -792,7 +792,7 @@ function WeeksSection({ gameId }: { gameId: number }) {
           <WeekSection key={w.id} gameId={gameId} week={w} contestants={contestants ?? []} />
         ))}
         {dedupedWeeks.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-6">No weeks yet. Add Week 1 to get started.</p>
+          <p className="text-sm text-muted-foreground text-center py-6">No episodes yet. Add Episode 1 to get started.</p>
         )}
       </div>
 
