@@ -54,7 +54,7 @@ const clerkAppearance = {
   },
   elements: {
     rootBox: "w-full flex justify-center",
-    cardBox: "bg-white rounded-2xl w-full max-w-[440px] overflow-hidden shadow-lg border border-border",
+    cardBox: "bg-white rounded-2xl w-full overflow-hidden shadow-lg border border-border",
     card: "!shadow-none !border-0 !bg-transparent !rounded-none",
     footer: "!shadow-none !border-0 !bg-transparent !rounded-none",
     headerTitle: "text-foreground font-bold",
@@ -135,8 +135,8 @@ function HomeRedirect() {
 
 function LandingPage() {
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center py-8">
-      <div className="w-full flex flex-col items-center text-center px-4" style={{ maxWidth: "440px" }}>
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center py-8 px-4">
+      <div className="w-full sm:max-w-sm flex flex-col items-center text-center">
         <img src={`${basePath}/survivor-logo.png`} alt="Survivor" className="h-32 mb-5" />
         <div className="inline-block bg-primary/10 text-primary font-semibold text-sm px-4 py-1 rounded-full mb-4 uppercase tracking-widest">
           Season Active
@@ -147,13 +147,13 @@ function LandingPage() {
         <p className="text-base text-muted-foreground mb-8">
           Predict weekly outcomes, pick your winner, and climb the leaderboard.
         </p>
-      </div>
-      <div className="w-full px-2" style={{ maxWidth: "440px" }}>
-        <SignIn
-          routing="hash"
-          signUpUrl={`${basePath}/sign-up`}
-          fallbackRedirectUrl={`${basePath}/dashboard`}
-        />
+        <div className="w-full">
+          <SignIn
+            routing="hash"
+            signUpUrl={`${basePath}/sign-up`}
+            fallbackRedirectUrl={`${basePath}/dashboard`}
+          />
+        </div>
       </div>
     </div>
   );
