@@ -54,7 +54,7 @@ const clerkAppearance = {
   },
   elements: {
     rootBox: "w-full flex justify-center",
-    cardBox: "bg-white rounded-2xl w-full overflow-hidden shadow-lg border border-border",
+    cardBox: "bg-white w-full overflow-hidden sm:rounded-2xl sm:shadow-lg sm:border sm:border-border sm:max-w-[440px]",
     card: "!shadow-none !border-0 !bg-transparent !rounded-none",
     footer: "!shadow-none !border-0 !bg-transparent !rounded-none",
     headerTitle: "text-foreground font-bold",
@@ -135,25 +135,28 @@ function HomeRedirect() {
 
 function LandingPage() {
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center py-8 px-4">
-      <div className="w-full sm:max-w-sm flex flex-col items-center text-center">
-        <img src={`${basePath}/survivor-logo.png`} alt="Survivor" className="h-32 mb-5" />
-        <div className="inline-block bg-primary/10 text-primary font-semibold text-sm px-4 py-1 rounded-full mb-4 uppercase tracking-widest">
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Branding */}
+      <div className="flex flex-col items-center text-center px-6 pt-10 pb-6">
+        <img src={`${basePath}/survivor-logo.png`} alt="Survivor" className="h-28 mb-4" />
+        <div className="inline-block bg-primary/10 text-primary font-semibold text-sm px-4 py-1 rounded-full mb-3 uppercase tracking-widest">
           Season Active
         </div>
-        <h1 className="text-5xl font-bold text-foreground mb-3" style={{ fontFamily: "'Oswald', sans-serif" }}>
+        <h1 className="text-5xl font-bold text-foreground mb-2" style={{ fontFamily: "'Oswald', sans-serif" }}>
           ULTIMATE SURVIVOR<br /><span className="text-primary">FAN GAME</span>
         </h1>
-        <p className="text-base text-muted-foreground mb-8">
+        <p className="text-base text-muted-foreground">
           Predict weekly outcomes, pick your winner, and climb the leaderboard.
         </p>
-        <div className="w-full">
-          <SignIn
-            routing="hash"
-            signUpUrl={`${basePath}/sign-up`}
-            fallbackRedirectUrl={`${basePath}/dashboard`}
-          />
-        </div>
+      </div>
+
+      {/* Sign-in — edge-to-edge on mobile, card on desktop */}
+      <div className="flex-1 flex flex-col items-center justify-start sm:justify-center sm:px-6 sm:pb-10 border-t border-border sm:border-t-0 bg-card sm:bg-background">
+        <SignIn
+          routing="hash"
+          signUpUrl={`${basePath}/sign-up`}
+          fallbackRedirectUrl={`${basePath}/dashboard`}
+        />
       </div>
     </div>
   );
