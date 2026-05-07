@@ -40,9 +40,13 @@ export default function Onboarding() {
   );
   const gameId = activeGame?.id;
 
-  const { data: contestants } = useListContestants(gameId!, {
+  const { data: allContestants } = useListContestants(gameId!, {
     query: { enabled: !!gameId, queryKey: getListContestantsQueryKey(gameId!) },
   });
+  const contestants = useMemo(
+    () => (allContestants ?? []).filter((c) => c.isActive),
+    [allContestants],
+  );
   const { data: existingPicks } = useGetMySurvivorPicks(gameId!, {
     query: { enabled: !!gameId, queryKey: getGetMySurvivorPicksQueryKey(gameId!) },
   });

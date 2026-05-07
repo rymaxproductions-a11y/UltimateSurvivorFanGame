@@ -1,6 +1,13 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
-import { db, contestantsTable } from "@workspace/db";
+import { eq, sql } from "drizzle-orm";
+import {
+  db,
+  contestantsTable,
+  playerAnswersTable,
+  correctAnswersTable,
+  survivorPicksTable,
+  gamesTable,
+} from "@workspace/db";
 import {
   ListContestantsParams,
   ListContestantsResponse,
@@ -22,7 +29,9 @@ router.get("/games/:gameId/contestants", async (req, res): Promise<void> => {
     return;
   }
 
-  const contestants = await db.select().from(contestantsTable)
+  const contestants = await db
+    .select()
+    .from(contestantsTable)
     .where(eq(contestantsTable.gameId, params.data.gameId))
     .orderBy(contestantsTable.name);
 
@@ -42,10 +51,13 @@ router.post("/games/:gameId/contestants", requireAuth, async (req: any, res: any
     return;
   }
 
-  const [contestant] = await db.insert(contestantsTable).values({
-    gameId: params.data.gameId,
-    name: parsed.data.name,
-  }).returning();
+  const [contestant] = await db
+    .insert(contestantsTable)
+    .values({
+      gameId: params.data.gameId,
+      name: parsed.data.name,
+    })
+    .returning();
 
   res.status(201).json(serialize(contestant));
 });
@@ -72,7 +84,8 @@ router.patch("/contestants/:contestantId", requireAuth, async (req: any, res: an
     return;
   }
 
-  const [updated] = await db.update(contestantsTable)
+  const [updated] = await db
+    .update(contestantsTable)
     .set(updates)
     .where(eq(contestantsTable.id, params.data.contestantId))
     .returning();
@@ -92,13 +105,74 @@ router.delete("/contestants/:contestantId", requireAuth, async (req: any, res: a
     return;
   }
 
-  const [deleted] = await db.delete(contestantsTable).where(eq(contestantsTable.id, params.data.contestantId)).returning();
-  if (!deleted) {
+  const contestantId = params.data.contestantId;
+
+  // Check if any historical references exist. If yes, archive instead of
+  // hard delete so existing scoring/picks stay intact.
+  const [{ refCount }] = await db
+    .select({
+      refCount: sql<number>`(
+        (SELECT COUNT(*) FROM ${playerAnswersTable} WHERE ${playerAnswersTable.contestantId} = ${contestantId})
+        + (SELECT COUNT(*) FROM ${correctAnswersTable} WHERE ${correctAnswersTable.contestantId} = ${contestantId})
+        + (SELECT COUNT(*) FROM ${survivorPicksTable} WHERE ${survivorPicksTable.firstChoiceContestantId} = ${contestantId} OR ${survivorPicksTable.secondChoiceContestantId} = ${contestantId})
+        + (SELECT COUNT(*) FROM ${gamesTable} WHERE ${gamesTable.survivorWinnerContestantId} = ${contestantId} OR ${gamesTable.finalThreeContestantId1} = ${contestantId} OR ${gamesTable.finalThreeContestantId2} = ${contestantId} OR ${gamesTable.finalThreeContestantId3} = ${contestantId})
+      )::int`,
+    })
+    .from(contestantsTable)
+    .where(eq(contestantsTable.id, contestantId))
+    .limit(1)
+    .then((rows) => (rows.length ? rows : [{ refCount: -1 }]));
+
+  if (refCount === -1) {
     res.status(404).json({ error: "Contestant not found" });
     return;
   }
 
-  res.sendStatus(204);
+  if (refCount > 0) {
+    const [archived] = await db
+      .update(contestantsTable)
+      .set({ isActive: false })
+      .where(eq(contestantsTable.id, contestantId))
+      .returning();
+    if (!archived) {
+      res.status(404).json({ error: "Contestant not found" });
+      return;
+    }
+    req.log?.info({ contestantId, refCount }, "contestant archived (had references)");
+    res.json({ deleted: false, archived: true });
+    return;
+  }
+
+  const [deleted] = await db
+    .delete(contestantsTable)
+    .where(eq(contestantsTable.id, contestantId))
+    .returning();
+  if (!deleted) {
+    res.status(404).json({ error: "Contestant not found" });
+    return;
+  }
+  res.json({ deleted: true, archived: false });
+});
+
+router.post("/contestants/:contestantId/restore", requireAuth, async (req: any, res: any): Promise<void> => {
+  const params = DeleteContestantParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const [restored] = await db
+    .update(contestantsTable)
+    .set({ isActive: true })
+    .where(eq(contestantsTable.id, params.data.contestantId))
+    .returning();
+
+  if (!restored) {
+    res.status(404).json({ error: "Contestant not found" });
+    return;
+  }
+
+  res.json(serialize(restored));
 });
 
 export default router;

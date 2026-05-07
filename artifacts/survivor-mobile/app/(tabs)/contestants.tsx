@@ -28,7 +28,11 @@ export default function Contestants() {
   });
 
   const sorted = useMemo(
-    () => (contestants ?? []).slice().sort((a, b) => a.name.localeCompare(b.name)),
+    () =>
+      (contestants ?? [])
+        .filter((c) => c.isActive)
+        .slice()
+        .sort((a, b) => a.name.localeCompare(b.name)),
     [contestants],
   );
 

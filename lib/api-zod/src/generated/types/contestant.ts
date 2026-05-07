@@ -12,5 +12,7 @@ export interface Contestant {
   name: string;
   /** @nullable */
   headshotPath: string | null;
+  /** When false, the contestant is archived and excluded from new picks but kept for historical scoring. */
+  isActive: boolean;
   createdAt: string;
 }

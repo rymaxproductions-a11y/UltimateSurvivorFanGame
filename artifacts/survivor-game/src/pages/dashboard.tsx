@@ -126,7 +126,7 @@ function EpisodeTab({
               className="w-full border border-border rounded-lg px-3 py-2 bg-background text-foreground disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <option value="">Select a contestant...</option>
-              {(contestants ?? []).map((c) => (
+              {(contestants ?? []).filter((c) => c.isActive || c.id === currentSelection).map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
@@ -211,7 +211,7 @@ function SeasonPicksGate({ gameId, onComplete }: { gameId: number; onComplete: (
               className="w-full border border-border rounded-lg px-3 py-2 bg-card text-foreground"
             >
               <option value="">Select a contestant...</option>
-              {contestants.map((c) => (
+              {contestants.filter((c) => c.isActive).map((c) => (
                 <option key={c.id} value={c.id} disabled={c.id === secondPickId}>{c.name}</option>
               ))}
             </select>
@@ -229,7 +229,7 @@ function SeasonPicksGate({ gameId, onComplete }: { gameId: number; onComplete: (
               className="w-full border border-border rounded-lg px-3 py-2 bg-card text-foreground"
             >
               <option value="">Select a contestant...</option>
-              {contestants.map((c) => (
+              {contestants.filter((c) => c.isActive).map((c) => (
                 <option key={c.id} value={c.id} disabled={c.id === firstPickId}>{c.name}</option>
               ))}
             </select>

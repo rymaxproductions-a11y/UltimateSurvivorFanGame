@@ -309,7 +309,12 @@ paths:
     delete:
       operationId: deleteContestant
       tags: [contestants]
-      summary: Delete a contestant (admin only)
+      summary: Delete or archive a contestant (admin only)
+      description: |
+        Deletes the contestant outright when no picks or answers reference
+        them. Otherwise the contestant is archived (`isActive = false`) so
+        historical scoring stays intact but they no longer appear as a choice
+        for new picks.
       parameters:
         - name: contestantId
           in: path
@@ -317,8 +322,31 @@ paths:
           schema:
             type: integer
       responses:
-        "204":
-          description: Deleted
+        "200":
+          description: Deleted or archived
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteContestantResponse"
+
+  /contestants/{contestantId}/restore:
+    post:
+      operationId: restoreContestant
+      tags: [contestants]
+      summary: Restore an archived contestant (admin only)
+      parameters:
+        - name: contestantId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Restored contestant
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contestant"
 
   /storage/uploads/request-url:
     post:
@@ -925,6 +953,9 @@ components:
           type: string
         headshotPath:
           type: ["string", "null"]
+        isActive:
+          type: boolean
+          description: When false, the contestant is archived and excluded from new picks but kept for historical scoring.
         createdAt:
           type: string
       required:
@@ -932,7 +963,21 @@ components:
         - gameId
         - name
         - headshotPath
+        - isActive
         - createdAt
+
+    DeleteContestantResponse:
+      type: object
+      properties:
+        deleted:
+          type: boolean
+          description: True when the contestant was hard-deleted (no historical references).
+        archived:
+          type: boolean
+          description: True when the contestant was soft-deleted because picks or answers reference them.
+      required:
+        - deleted
+        - archived
 
     CreateContestantBody:
       type: object

@@ -25,6 +25,7 @@ import type {
   CreateGameBody,
   CreateQuestionBody,
   CreateWeekBody,
+  DeleteContestantResponse,
   DeleteResult,
   Game,
   GameStats,
@@ -1196,7 +1197,12 @@ export const useUpdateContestant = <
 };
 
 /**
- * @summary Delete a contestant (admin only)
+ * Deletes the contestant outright when no picks or answers reference
+them. Otherwise the contestant is archived (`isActive = false`) so
+historical scoring stays intact but they no longer appear as a choice
+for new picks.
+
+ * @summary Delete or archive a contestant (admin only)
  */
 export const getDeleteContestantUrl = (contestantId: number) => {
   return `/api/contestants/${contestantId}`;
@@ -1205,11 +1211,14 @@ export const getDeleteContestantUrl = (contestantId: number) => {
 export const deleteContestant = async (
   contestantId: number,
   options?: RequestInit,
-): Promise<void> => {
-  return customFetch<void>(getDeleteContestantUrl(contestantId), {
-    ...options,
-    method: "DELETE",
-  });
+): Promise<DeleteContestantResponse> => {
+  return customFetch<DeleteContestantResponse>(
+    getDeleteContestantUrl(contestantId),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
 };
 
 export const getDeleteContestantMutationOptions = <
@@ -1257,7 +1266,7 @@ export type DeleteContestantMutationResult = NonNullable<
 export type DeleteContestantMutationError = ErrorType<unknown>;
 
 /**
- * @summary Delete a contestant (admin only)
+ * @summary Delete or archive a contestant (admin only)
  */
 export const useDeleteContestant = <
   TError = ErrorType<unknown>,
@@ -1277,6 +1286,90 @@ export const useDeleteContestant = <
   TContext
 > => {
   return useMutation(getDeleteContestantMutationOptions(options));
+};
+
+/**
+ * @summary Restore an archived contestant (admin only)
+ */
+export const getRestoreContestantUrl = (contestantId: number) => {
+  return `/api/contestants/${contestantId}/restore`;
+};
+
+export const restoreContestant = async (
+  contestantId: number,
+  options?: RequestInit,
+): Promise<Contestant> => {
+  return customFetch<Contestant>(getRestoreContestantUrl(contestantId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getRestoreContestantMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof restoreContestant>>,
+    TError,
+    { contestantId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof restoreContestant>>,
+  TError,
+  { contestantId: number },
+  TContext
+> => {
+  const mutationKey = ["restoreContestant"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof restoreContestant>>,
+    { contestantId: number }
+  > = (props) => {
+    const { contestantId } = props ?? {};
+
+    return restoreContestant(contestantId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RestoreContestantMutationResult = NonNullable<
+  Awaited<ReturnType<typeof restoreContestant>>
+>;
+
+export type RestoreContestantMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Restore an archived contestant (admin only)
+ */
+export const useRestoreContestant = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof restoreContestant>>,
+    TError,
+    { contestantId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof restoreContestant>>,
+  TError,
+  { contestantId: number },
+  TContext
+> => {
+  return useMutation(getRestoreContestantMutationOptions(options));
 };
 
 /**

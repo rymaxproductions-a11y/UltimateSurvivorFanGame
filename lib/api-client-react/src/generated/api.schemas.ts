@@ -104,7 +104,16 @@ export interface Contestant {
   name: string;
   /** @nullable */
   headshotPath: string | null;
+  /** When false, the contestant is archived and excluded from new picks but kept for historical scoring. */
+  isActive: boolean;
   createdAt: string;
+}
+
+export interface DeleteContestantResponse {
+  /** True when the contestant was hard-deleted (no historical references). */
+  deleted: boolean;
+  /** True when the contestant was soft-deleted because picks or answers reference them. */
+  archived: boolean;
 }
 
 export interface CreateContestantBody {

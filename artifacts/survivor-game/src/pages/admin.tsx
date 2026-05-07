@@ -11,6 +11,7 @@ import {
   useCreateContestant,
   useUpdateContestant,
   useDeleteContestant,
+  useRestoreContestant,
   useListWeeks,
   useCreateWeek,
   useListQuestions,
@@ -36,7 +37,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Nav } from "@/components/nav";
-import { Trash2, Plus, ChevronDown, ChevronUp, DatabaseZap, Eraser, PlayCircle, CheckCircle, RotateCcw, Upload, User as UserIcon, X } from "lucide-react";
+import { Trash2, Plus, ChevronDown, ChevronUp, DatabaseZap, Eraser, PlayCircle, CheckCircle, RotateCcw, Upload, User as UserIcon, X, ArchiveRestore, Archive } from "lucide-react";
 import { useUpload } from "@workspace/object-storage-web";
 
 function GameSetupSection({ onGameCreated, selectedGameId }: { onGameCreated: (id: number | null) => void; selectedGameId: number | null }) {
@@ -259,6 +260,7 @@ function ContestantsSection({ gameId }: { gameId: number }) {
   const { data: contestants } = useListContestants(gameId);
   const createContestant = useCreateContestant();
   const deleteContestant = useDeleteContestant();
+  const restoreContestant = useRestoreContestant();
   const [name, setName] = useState("");
 
   function handleAdd() {
@@ -275,15 +277,46 @@ function ContestantsSection({ gameId }: { gameId: number }) {
     );
   }
 
-  function handleDelete(contestantId: number) {
+  function handleDelete(contestantId: number, contestantName: string) {
+    if (
+      !window.confirm(
+        `Remove "${contestantName}"?\n\nIf any players have picked this contestant or scoring uses them, they'll be archived (hidden from new picks) instead of deleted to keep history intact.`,
+      )
+    ) {
+      return;
+    }
     deleteContestant.mutate(
       { contestantId },
       {
-        onSuccess: () => qc.invalidateQueries({ queryKey: getListContestantsQueryKey(gameId) }),
-        onError: () => toast({ title: "Failed to delete contestant", variant: "destructive" }),
-      }
+        onSuccess: (result: any) => {
+          qc.invalidateQueries({ queryKey: getListContestantsQueryKey(gameId) });
+          toast({
+            title: result?.archived
+              ? `${contestantName} archived (hidden from new picks)`
+              : `${contestantName} deleted`,
+          });
+        },
+        onError: () => toast({ title: "Failed to remove contestant", variant: "destructive" }),
+      },
     );
   }
+
+  function handleRestore(contestantId: number, contestantName: string) {
+    restoreContestant.mutate(
+      { contestantId },
+      {
+        onSuccess: () => {
+          qc.invalidateQueries({ queryKey: getListContestantsQueryKey(gameId) });
+          toast({ title: `${contestantName} restored` });
+        },
+        onError: () => toast({ title: "Failed to restore contestant", variant: "destructive" }),
+      },
+    );
+  }
+
+  const all = contestants ?? [];
+  const active = all.filter((c) => c.isActive);
+  const archived = all.filter((c) => !c.isActive);
 
   return (
     <div className="bg-card border border-border rounded-xl p-6">
@@ -307,18 +340,37 @@ function ContestantsSection({ gameId }: { gameId: number }) {
           Add
         </button>
       </div>
-      <p className="text-xs text-muted-foreground mb-3">Upload a headshot for each contestant. Photos appear on the player Contestants page.</p>
+      <p className="text-xs text-muted-foreground mb-3">
+        Upload a headshot for each contestant. Removing someone after picks or
+        scoring exist will archive them (hidden from future picks, history kept).
+      </p>
       <div className="space-y-2 max-h-[28rem] overflow-y-auto">
-        {(contestants ?? []).map((c) => (
+        {active.map((c) => (
           <ContestantRow
             key={c.id}
             contestant={c}
             gameId={gameId}
-            onDelete={() => handleDelete(c.id)}
+            onDelete={() => handleDelete(c.id, c.name)}
           />
         ))}
-        {(!contestants || contestants.length === 0) && (
+        {all.length === 0 && (
           <p className="text-sm text-muted-foreground text-center py-4">No contestants yet</p>
+        )}
+        {archived.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-border">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              Archived ({archived.length})
+            </p>
+            {archived.map((c) => (
+              <ContestantRow
+                key={c.id}
+                contestant={c}
+                gameId={gameId}
+                onDelete={() => handleDelete(c.id, c.name)}
+                onRestore={() => handleRestore(c.id, c.name)}
+              />
+            ))}
+          </div>
         )}
       </div>
     </div>
@@ -329,10 +381,12 @@ function ContestantRow({
   contestant,
   gameId,
   onDelete,
+  onRestore,
 }: {
-  contestant: { id: number; name: string; headshotPath: string | null };
+  contestant: { id: number; name: string; headshotPath: string | null; isActive: boolean };
   gameId: number;
   onDelete: () => void;
+  onRestore?: () => void;
 }) {
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -387,7 +441,9 @@ function ContestantRow({
   return (
     <div
       data-testid={`contestant-item-${contestant.id}`}
-      className="flex items-center gap-3 px-3 py-2 bg-muted/40 rounded-lg"
+      className={`flex items-center gap-3 px-3 py-2 rounded-lg ${
+        contestant.isActive ? "bg-muted/40" : "bg-muted/20 opacity-60"
+      }`}
     >
       <div className="w-10 h-10 rounded-full bg-muted overflow-hidden flex items-center justify-center flex-shrink-0 border border-border">
         {contestant.headshotPath ? (
@@ -400,7 +456,14 @@ function ContestantRow({
           <UserIcon className="w-5 h-5 text-muted-foreground/60" />
         )}
       </div>
-      <span className="text-foreground font-medium flex-1 truncate">{contestant.name}</span>
+      <span className="text-foreground font-medium flex-1 truncate">
+        {contestant.name}
+        {!contestant.isActive && (
+          <span className="ml-2 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <Archive className="w-3 h-3" /> Archived
+          </span>
+        )}
+      </span>
       <label
         data-testid={`button-upload-headshot-${contestant.id}`}
         className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-colors ${
@@ -431,9 +494,20 @@ function ContestantRow({
           <X className="w-4 h-4" />
         </button>
       )}
+      {onRestore && (
+        <button
+          data-testid={`button-restore-contestant-${contestant.id}`}
+          onClick={onRestore}
+          title="Restore contestant"
+          className="text-primary hover:text-primary/80 transition-colors"
+        >
+          <ArchiveRestore className="w-4 h-4" />
+        </button>
+      )}
       <button
         data-testid={`button-delete-contestant-${contestant.id}`}
         onClick={onDelete}
+        title={contestant.isActive ? "Remove or archive" : "Permanently delete"}
         className="text-destructive hover:text-destructive/80 transition-colors"
       >
         <Trash2 className="w-4 h-4" />

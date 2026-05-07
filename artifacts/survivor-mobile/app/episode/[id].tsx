@@ -70,12 +70,16 @@ export default function EpisodeScreen() {
   }, [myAnswers]);
 
   const sortedContestants = useMemo(
-    () => (contestants ?? []).slice().sort((a, b) => a.name.localeCompare(b.name)),
+    () =>
+      (contestants ?? [])
+        .filter((c) => c.isActive)
+        .slice()
+        .sort((a, b) => a.name.localeCompare(b.name)),
     [contestants],
   );
   const contestantsById = useMemo(
-    () => new Map(sortedContestants.map((c) => [c.id, c])),
-    [sortedContestants],
+    () => new Map((contestants ?? []).map((c) => [c.id, c])),
+    [contestants],
   );
   const correctById = useMemo(
     () => new Map((correctAnswers ?? []).map((a) => [a.questionId, a.contestantId])),

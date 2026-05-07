@@ -24,7 +24,7 @@ export default function Contestants() {
     return <Redirect to="/sign-in" />;
   }
 
-  const sorted = (contestants ?? []).slice().sort((a, b) => a.name.localeCompare(b.name));
+  const sorted = (contestants ?? []).filter((c) => c.isActive).slice().sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div className="min-h-screen bg-background">

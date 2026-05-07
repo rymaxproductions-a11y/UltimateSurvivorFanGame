@@ -127,7 +127,7 @@ export default function Onboarding() {
                         className="w-full border border-border rounded-lg px-3 py-2 bg-card text-foreground"
                       >
                         <option value="">Select a contestant...</option>
-                        {contestants.map((c) => (
+                        {contestants.filter((c) => c.isActive).map((c) => (
                           <option key={c.id} value={c.id} disabled={c.id === secondPickId}>{c.name}</option>
                         ))}
                       </select>
@@ -145,7 +145,7 @@ export default function Onboarding() {
                         className="w-full border border-border rounded-lg px-3 py-2 bg-card text-foreground"
                       >
                         <option value="">Select a contestant...</option>
-                        {contestants.map((c) => (
+                        {contestants.filter((c) => c.isActive).map((c) => (
                           <option key={c.id} value={c.id} disabled={c.id === firstPickId}>{c.name}</option>
                         ))}
                       </select>

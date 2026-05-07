@@ -189,6 +189,11 @@ export const ListContestantsResponseItem = zod.object({
   gameId: zod.number(),
   name: zod.string(),
   headshotPath: zod.string().nullable(),
+  isActive: zod
+    .boolean()
+    .describe(
+      "When false, the contestant is archived and excluded from new picks but kept for historical scoring.",
+    ),
   createdAt: zod.string(),
 });
 export const ListContestantsResponse = zod.array(ListContestantsResponseItem);
@@ -221,14 +226,57 @@ export const UpdateContestantResponse = zod.object({
   gameId: zod.number(),
   name: zod.string(),
   headshotPath: zod.string().nullable(),
+  isActive: zod
+    .boolean()
+    .describe(
+      "When false, the contestant is archived and excluded from new picks but kept for historical scoring.",
+    ),
   createdAt: zod.string(),
 });
 
 /**
- * @summary Delete a contestant (admin only)
+ * Deletes the contestant outright when no picks or answers reference
+them. Otherwise the contestant is archived (`isActive = false`) so
+historical scoring stays intact but they no longer appear as a choice
+for new picks.
+
+ * @summary Delete or archive a contestant (admin only)
  */
 export const DeleteContestantParams = zod.object({
   contestantId: zod.coerce.number(),
+});
+
+export const DeleteContestantResponse = zod.object({
+  deleted: zod
+    .boolean()
+    .describe(
+      "True when the contestant was hard-deleted (no historical references).",
+    ),
+  archived: zod
+    .boolean()
+    .describe(
+      "True when the contestant was soft-deleted because picks or answers reference them.",
+    ),
+});
+
+/**
+ * @summary Restore an archived contestant (admin only)
+ */
+export const RestoreContestantParams = zod.object({
+  contestantId: zod.coerce.number(),
+});
+
+export const RestoreContestantResponse = zod.object({
+  id: zod.number(),
+  gameId: zod.number(),
+  name: zod.string(),
+  headshotPath: zod.string().nullable(),
+  isActive: zod
+    .boolean()
+    .describe(
+      "When false, the contestant is archived and excluded from new picks but kept for historical scoring.",
+    ),
+  createdAt: zod.string(),
 });
 
 /**
