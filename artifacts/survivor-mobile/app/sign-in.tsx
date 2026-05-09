@@ -35,34 +35,45 @@ export default function SignInScreen() {
 
   if (isLoaded && isSignedIn) return <Redirect href="/" />;
 
-  // ── Sign-in: email → code (no password on mobile) ──────────────────────
-  async function handleRequestSignInCode() {
+  // ── Sign-in: password first, with email-code fallback only if Clerk offers it ──
+  async function handleSignIn() {
     if (!signIn) return;
     setBusy(true);
     setError(null);
     try {
-      // Create the sign-in attempt to discover supported factors.
-      const attempt = await signIn.create({ identifier: email.trim() });
+      const res = await signIn.create({
+        identifier: email.trim(),
+        password,
+      });
 
-      const factors: any[] = (attempt.supportedFirstFactors as any[]) ?? [];
-      const emailFactor = factors.find((f: any) => f.strategy === "email_code");
-
-      if (!emailFactor?.emailAddressId) {
-        setError(
-          "This account doesn't support email-code sign-in. Please use the web app to sign in.",
-        );
+      if (res.status === "complete") {
+        await setActiveSignIn({ session: res.createdSessionId });
+        router.replace("/");
         return;
       }
 
-      await signIn.prepareFirstFactor({
-        strategy: "email_code",
-        emailAddressId: emailFactor.emailAddressId,
-      });
+      // Clerk wants more — typically because the account's email isn't
+      // verified yet, or MFA is required. Try email_code if available.
+      if (res.status === "needs_first_factor") {
+        const factors: any[] = (res.supportedFirstFactors as any[]) ?? [];
+        const emailFactor = factors.find((f: any) => f.strategy === "email_code");
+        if (emailFactor?.emailAddressId) {
+          await signIn.prepareFirstFactor({
+            strategy: "email_code",
+            emailAddressId: emailFactor.emailAddressId,
+          });
+          setCode("");
+          setMode("verify-sign-in");
+          return;
+        }
+      }
 
-      setCode("");
-      setMode("verify-sign-in");
+      setError(
+        `Sign-in could not be completed (status: ${res.status ?? "unknown"}). Please try the web app.`,
+      );
     } catch (err: any) {
-      setError(err?.errors?.[0]?.longMessage ?? err?.errors?.[0]?.message ?? "Could not send code.");
+      // Surfaces "Password is incorrect", "Couldn't find your account", etc.
+      setError(err?.errors?.[0]?.longMessage ?? err?.errors?.[0]?.message ?? "Sign-in failed.");
     } finally {
       setBusy(false);
     }
@@ -143,7 +154,7 @@ export default function SignInScreen() {
     ? "Enter the 6-digit code we just emailed you."
     : isSignUp
     ? "Create an account to make picks and track your score."
-    : "Enter your email and we'll send you a sign-in code.";
+    : "Sign in to make picks and climb the leaderboard.";
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={["top"]}>
@@ -194,15 +205,17 @@ export default function SignInScreen() {
                   </Body>
                 </Pressable>
               </>
-            ) : mode === "sign-up" ? (
+            ) : (
               <>
-                <Input
-                  label="Username"
-                  placeholder="jeff_probst"
-                  autoCapitalize="none"
-                  value={username}
-                  onChangeText={setUsername}
-                />
+                {mode === "sign-up" && (
+                  <Input
+                    label="Username"
+                    placeholder="jeff_probst"
+                    autoCapitalize="none"
+                    value={username}
+                    onChangeText={setUsername}
+                  />
+                )}
                 <Input
                   label="Email"
                   placeholder="you@example.com"
@@ -213,27 +226,15 @@ export default function SignInScreen() {
                 />
                 <Input
                   label="Password"
-                  placeholder="Create a password (8+ chars)"
+                  placeholder={mode === "sign-up" ? "Create a password (8+ chars)" : "••••••••"}
                   secureTextEntry
                   value={password}
                   onChangeText={setPassword}
                 />
-                <Button label="Create Account" loading={busy} onPress={handleSignUp} fullWidth />
-              </>
-            ) : (
-              <>
-                <Input
-                  label="Email"
-                  placeholder="you@example.com"
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  value={email}
-                  onChangeText={setEmail}
-                />
                 <Button
-                  label="Send Sign-In Code"
+                  label={mode === "sign-up" ? "Create Account" : "Sign In"}
                   loading={busy}
-                  onPress={handleRequestSignInCode}
+                  onPress={mode === "sign-up" ? handleSignUp : handleSignIn}
                   fullWidth
                 />
               </>
