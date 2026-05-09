@@ -35,44 +35,38 @@ export default function SignInScreen() {
 
   if (isLoaded && isSignedIn) return <Redirect href="/" />;
 
-  // ── Sign-in: password first, with email-code fallback only if Clerk offers it ──
+  // ── Sign-in: explicit two-step password flow (works across all Clerk configs) ──
   async function handleSignIn() {
     if (!signIn) return;
     setBusy(true);
     setError(null);
     try {
-      const res = await signIn.create({
-        identifier: email.trim(),
-        password,
-      });
+      // Step 1: create the sign-in attempt with just the identifier.
+      // Some Clerk configs accept identifier+password in one shot, others
+      // require attemptFirstFactor separately. The two-step flow works
+      // for both.
+      let attempt = await signIn.create({ identifier: email.trim() });
 
-      if (res.status === "complete") {
-        await setActiveSignIn({ session: res.createdSessionId });
+      // Step 2: verify the password as the first factor.
+      if (attempt.status !== "complete") {
+        attempt = await signIn.attemptFirstFactor({
+          strategy: "password",
+          password,
+        });
+      }
+
+      if (attempt.status === "complete") {
+        await setActiveSignIn({ session: attempt.createdSessionId });
         router.replace("/");
         return;
       }
 
-      // Clerk wants more — typically because the account's email isn't
-      // verified yet, or MFA is required. Try email_code if available.
-      if (res.status === "needs_first_factor") {
-        const factors: any[] = (res.supportedFirstFactors as any[]) ?? [];
-        const emailFactor = factors.find((f: any) => f.strategy === "email_code");
-        if (emailFactor?.emailAddressId) {
-          await signIn.prepareFirstFactor({
-            strategy: "email_code",
-            emailAddressId: emailFactor.emailAddressId,
-          });
-          setCode("");
-          setMode("verify-sign-in");
-          return;
-        }
-      }
-
       setError(
-        `Sign-in could not be completed (status: ${res.status ?? "unknown"}). Please try the web app.`,
+        `Sign-in needs another step (${attempt.status ?? "unknown"}) that this app can't handle. Try the web app.`,
       );
     } catch (err: any) {
-      // Surfaces "Password is incorrect", "Couldn't find your account", etc.
+      // Surfaces real Clerk errors: "Password is incorrect",
+      // "Couldn't find your account", etc.
       setError(err?.errors?.[0]?.longMessage ?? err?.errors?.[0]?.message ?? "Sign-in failed.");
     } finally {
       setBusy(false);
