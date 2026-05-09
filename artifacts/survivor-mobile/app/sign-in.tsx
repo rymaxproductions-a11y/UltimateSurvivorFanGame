@@ -2,7 +2,6 @@ import { useAuth, useSignIn, useSignUp } from "@clerk/clerk-expo";
 import { Redirect, useRouter } from "expo-router";
 import { useState } from "react";
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -17,7 +16,7 @@ import { Input } from "@/components/Input";
 import { Logo } from "@/components/Logo";
 import { useColors } from "@/hooks/useColors";
 
-type Mode = "sign-in" | "sign-up" | "verify" | "verify-sign-in";
+type Mode = "sign-in" | "sign-up" | "verify-sign-in" | "verify-sign-up";
 
 export default function SignInScreen() {
   const colors = useColors();
@@ -36,44 +35,34 @@ export default function SignInScreen() {
 
   if (isLoaded && isSignedIn) return <Redirect href="/" />;
 
-  async function handleSignIn() {
+  // ── Sign-in: email → code (no password on mobile) ──────────────────────
+  async function handleRequestSignInCode() {
     if (!signIn) return;
     setBusy(true);
     setError(null);
     try {
-      // First try password-based sign-in (works when Clerk instance has
-      // password as a first factor and the attempt completes immediately).
-      let complete = false;
-      try {
-        const res = await signIn.create({ identifier: email.trim(), password });
-        if (res.status === "complete") {
-          await setActiveSignIn({ session: res.createdSessionId });
-          router.replace("/");
-          complete = true;
-        }
-      } catch {
-        // Password attempt rejected or not applicable — fall through to
-        // email-code strategy below.
-      }
-      if (complete) return;
+      // Create the sign-in attempt to discover supported factors.
+      const attempt = await signIn.create({ identifier: email.trim() });
 
-      // Fall back: restart the sign-in with the email_code strategy.
-      // This covers accounts that require email verification as a first
-      // factor, or where the password step alone doesn't finish the session.
-      const codeRes = await signIn.create({
-        identifier: email.trim(),
-        strategy: "email_code",
-      });
-      if (codeRes.status === "complete") {
-        await setActiveSignIn({ session: codeRes.createdSessionId });
-        router.replace("/");
+      const factors: any[] = (attempt.supportedFirstFactors as any[]) ?? [];
+      const emailFactor = factors.find((f: any) => f.strategy === "email_code");
+
+      if (!emailFactor?.emailAddressId) {
+        setError(
+          "This account doesn't support email-code sign-in. Please use the web app to sign in.",
+        );
         return;
       }
-      // code was sent — switch to the entry screen
+
+      await signIn.prepareFirstFactor({
+        strategy: "email_code",
+        emailAddressId: emailFactor.emailAddressId,
+      });
+
       setCode("");
       setMode("verify-sign-in");
     } catch (err: any) {
-      setError(err?.errors?.[0]?.longMessage ?? err?.errors?.[0]?.message ?? "Could not sign in.");
+      setError(err?.errors?.[0]?.longMessage ?? err?.errors?.[0]?.message ?? "Could not send code.");
     } finally {
       setBusy(false);
     }
@@ -101,6 +90,7 @@ export default function SignInScreen() {
     }
   }
 
+  // ── Sign-up: email + password + optional username ───────────────────────
   async function handleSignUp() {
     if (!signUp) return;
     setBusy(true);
@@ -112,15 +102,15 @@ export default function SignInScreen() {
         username: username.trim() || undefined,
       });
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
-      setMode("verify");
+      setMode("verify-sign-up");
     } catch (err: any) {
-      setError(err?.errors?.[0]?.message ?? "Could not create account.");
+      setError(err?.errors?.[0]?.longMessage ?? err?.errors?.[0]?.message ?? "Could not create account.");
     } finally {
       setBusy(false);
     }
   }
 
-  async function handleVerify() {
+  async function handleVerifySignUp() {
     if (!signUp) return;
     setBusy(true);
     setError(null);
@@ -133,11 +123,27 @@ export default function SignInScreen() {
         setError("Verification incomplete.");
       }
     } catch (err: any) {
-      setError(err?.errors?.[0]?.message ?? "Invalid code.");
+      setError(err?.errors?.[0]?.longMessage ?? err?.errors?.[0]?.message ?? "Invalid code.");
     } finally {
       setBusy(false);
     }
   }
+
+  // ── Derived UI state ────────────────────────────────────────────────────
+  const isVerifying = mode === "verify-sign-in" || mode === "verify-sign-up";
+  const isSignUp = mode === "sign-up" || mode === "verify-sign-up";
+
+  const heading = isVerifying
+    ? "Verify your email"
+    : isSignUp
+    ? "Join the tribe"
+    : "Welcome back";
+
+  const subheading = isVerifying
+    ? "Enter the 6-digit code we just emailed you."
+    : isSignUp
+    ? "Create an account to make picks and track your score."
+    : "Enter your email and we'll send you a sign-in code.";
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={["top"]}>
@@ -152,23 +158,15 @@ export default function SignInScreen() {
           <View style={{ alignItems: "center", marginBottom: 32 }}>
             <Logo size={56} />
             <Heading level={2} style={{ marginTop: 24, textAlign: "center" }}>
-              {mode === "sign-up"
-                ? "Join the tribe"
-                : mode === "verify" || mode === "verify-sign-in"
-                ? "Verify your email"
-                : "Welcome back"}
+              {heading}
             </Heading>
             <Body muted style={{ marginTop: 8, textAlign: "center" }}>
-              {mode === "sign-up"
-                ? "Create an account to make picks and track your score."
-                : mode === "verify" || mode === "verify-sign-in"
-                ? "Enter the code we just emailed you."
-                : "Sign in to make picks and climb the leaderboard."}
+              {subheading}
             </Body>
           </View>
 
           <View style={{ gap: 14 }}>
-            {mode === "verify" || mode === "verify-sign-in" ? (
+            {isVerifying ? (
               <>
                 <Input
                   label="Verification code"
@@ -181,7 +179,7 @@ export default function SignInScreen() {
                 <Button
                   label="Verify & Sign In"
                   loading={busy}
-                  onPress={mode === "verify-sign-in" ? handleVerifySignIn : handleVerify}
+                  onPress={mode === "verify-sign-in" ? handleVerifySignIn : handleVerifySignUp}
                   fullWidth
                 />
                 <Pressable
@@ -196,17 +194,15 @@ export default function SignInScreen() {
                   </Body>
                 </Pressable>
               </>
-            ) : (
+            ) : mode === "sign-up" ? (
               <>
-                {mode === "sign-up" && (
-                  <Input
-                    label="Username"
-                    placeholder="jeff_probst"
-                    autoCapitalize="none"
-                    value={username}
-                    onChangeText={setUsername}
-                  />
-                )}
+                <Input
+                  label="Username"
+                  placeholder="jeff_probst"
+                  autoCapitalize="none"
+                  value={username}
+                  onChangeText={setUsername}
+                />
                 <Input
                   label="Email"
                   placeholder="you@example.com"
@@ -217,15 +213,27 @@ export default function SignInScreen() {
                 />
                 <Input
                   label="Password"
-                  placeholder={mode === "sign-up" ? "Create a password (8+ chars)" : "••••••••"}
+                  placeholder="Create a password (8+ chars)"
                   secureTextEntry
                   value={password}
                   onChangeText={setPassword}
                 />
+                <Button label="Create Account" loading={busy} onPress={handleSignUp} fullWidth />
+              </>
+            ) : (
+              <>
+                <Input
+                  label="Email"
+                  placeholder="you@example.com"
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  value={email}
+                  onChangeText={setEmail}
+                />
                 <Button
-                  label={mode === "sign-up" ? "Create Account" : "Sign In"}
+                  label="Send Sign-In Code"
                   loading={busy}
-                  onPress={mode === "sign-up" ? handleSignUp : handleSignIn}
+                  onPress={handleRequestSignInCode}
                   fullWidth
                 />
               </>
@@ -237,7 +245,7 @@ export default function SignInScreen() {
               </Body>
             ) : null}
 
-            {mode !== "verify" && mode !== "verify-sign-in" && (
+            {!isVerifying && (
               <Pressable
                 onPress={() => {
                   setError(null);
