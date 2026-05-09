@@ -47,26 +47,25 @@ export default function SignInScreen() {
         router.replace("/");
         return;
       }
-      // Clerk wants another step. The most common one is "needs_first_factor"
-      // with an email verification code (e.g. on a fresh device or if the
-      // account was created with email-code-only). Prepare it and switch
-      // to the code-entry screen.
-      if (res.status === "needs_first_factor") {
-        const emailFactor = (res.supportedFirstFactors ?? []).find(
-          (f: any) => f.strategy === "email_code",
-        ) as any;
-        if (emailFactor?.emailAddressId) {
-          await signIn.prepareFirstFactor({
-            strategy: "email_code",
-            emailAddressId: emailFactor.emailAddressId,
-          });
-          setCode("");
-          setMode("verify-sign-in");
-          return;
-        }
+      // Sign-in isn't complete. Try to fall back to an email verification
+      // code regardless of the exact status (it can be "needs_first_factor",
+      // null, or undefined depending on how the Clerk instance is configured).
+      const factors =
+        (res.supportedFirstFactors as any[] | null | undefined) ??
+        ((signIn as any).supportedFirstFactors as any[] | null | undefined) ??
+        [];
+      const emailFactor = factors.find((f: any) => f.strategy === "email_code");
+      if (emailFactor?.emailAddressId) {
+        await signIn.prepareFirstFactor({
+          strategy: "email_code",
+          emailAddressId: emailFactor.emailAddressId,
+        });
+        setCode("");
+        setMode("verify-sign-in");
+        return;
       }
       setError(
-        `Sign-in needs another step ("${res.status}") that this app can't complete. Please sign in on the web first, then try again.`,
+        `Sign-in needs another step ("${res.status ?? "unknown"}") that this app can't complete. Please sign in on the web first, then try again.`,
       );
     } catch (err: any) {
       setError(err?.errors?.[0]?.longMessage ?? err?.errors?.[0]?.message ?? "Could not sign in.");
