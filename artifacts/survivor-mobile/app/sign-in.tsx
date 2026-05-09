@@ -41,32 +41,37 @@ export default function SignInScreen() {
     setBusy(true);
     setError(null);
     try {
-      const res = await signIn.create({ identifier: email.trim(), password });
-      if (res.status === "complete") {
-        await setActiveSignIn({ session: res.createdSessionId });
+      // First try password-based sign-in (works when Clerk instance has
+      // password as a first factor and the attempt completes immediately).
+      let complete = false;
+      try {
+        const res = await signIn.create({ identifier: email.trim(), password });
+        if (res.status === "complete") {
+          await setActiveSignIn({ session: res.createdSessionId });
+          router.replace("/");
+          complete = true;
+        }
+      } catch {
+        // Password attempt rejected or not applicable — fall through to
+        // email-code strategy below.
+      }
+      if (complete) return;
+
+      // Fall back: restart the sign-in with the email_code strategy.
+      // This covers accounts that require email verification as a first
+      // factor, or where the password step alone doesn't finish the session.
+      const codeRes = await signIn.create({
+        identifier: email.trim(),
+        strategy: "email_code",
+      });
+      if (codeRes.status === "complete") {
+        await setActiveSignIn({ session: codeRes.createdSessionId });
         router.replace("/");
         return;
       }
-      // Sign-in isn't complete. Try to fall back to an email verification
-      // code regardless of the exact status (it can be "needs_first_factor",
-      // null, or undefined depending on how the Clerk instance is configured).
-      const factors =
-        (res.supportedFirstFactors as any[] | null | undefined) ??
-        ((signIn as any).supportedFirstFactors as any[] | null | undefined) ??
-        [];
-      const emailFactor = factors.find((f: any) => f.strategy === "email_code");
-      if (emailFactor?.emailAddressId) {
-        await signIn.prepareFirstFactor({
-          strategy: "email_code",
-          emailAddressId: emailFactor.emailAddressId,
-        });
-        setCode("");
-        setMode("verify-sign-in");
-        return;
-      }
-      setError(
-        `Sign-in needs another step ("${res.status ?? "unknown"}") that this app can't complete. Please sign in on the web first, then try again.`,
-      );
+      // code was sent — switch to the entry screen
+      setCode("");
+      setMode("verify-sign-in");
     } catch (err: any) {
       setError(err?.errors?.[0]?.longMessage ?? err?.errors?.[0]?.message ?? "Could not sign in.");
     } finally {
