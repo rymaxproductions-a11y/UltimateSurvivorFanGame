@@ -17,7 +17,7 @@ import { Input } from "@/components/Input";
 import { Logo } from "@/components/Logo";
 import { useColors } from "@/hooks/useColors";
 
-type Mode = "sign-in" | "sign-up" | "verify";
+type Mode = "sign-in" | "sign-up" | "verify" | "verify-sign-in";
 
 export default function SignInScreen() {
   const colors = useColors();
@@ -45,11 +45,53 @@ export default function SignInScreen() {
       if (res.status === "complete") {
         await setActiveSignIn({ session: res.createdSessionId });
         router.replace("/");
+        return;
+      }
+      // Clerk wants another step. The most common one is "needs_first_factor"
+      // with an email verification code (e.g. on a fresh device or if the
+      // account was created with email-code-only). Prepare it and switch
+      // to the code-entry screen.
+      if (res.status === "needs_first_factor") {
+        const emailFactor = (res.supportedFirstFactors ?? []).find(
+          (f: any) => f.strategy === "email_code",
+        ) as any;
+        if (emailFactor?.emailAddressId) {
+          await signIn.prepareFirstFactor({
+            strategy: "email_code",
+            emailAddressId: emailFactor.emailAddressId,
+          });
+          setCode("");
+          setMode("verify-sign-in");
+          return;
+        }
+      }
+      setError(
+        `Sign-in needs another step ("${res.status}") that this app can't complete. Please sign in on the web first, then try again.`,
+      );
+    } catch (err: any) {
+      setError(err?.errors?.[0]?.longMessage ?? err?.errors?.[0]?.message ?? "Could not sign in.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleVerifySignIn() {
+    if (!signIn) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await signIn.attemptFirstFactor({
+        strategy: "email_code",
+        code: code.trim(),
+      });
+      if (res.status === "complete") {
+        await setActiveSignIn({ session: res.createdSessionId });
+        router.replace("/");
       } else {
-        setError("Additional verification required.");
+        setError(`Verification incomplete (${res.status}).`);
       }
     } catch (err: any) {
-      setError(err?.errors?.[0]?.message ?? "Could not sign in.");
+      setError(err?.errors?.[0]?.longMessage ?? err?.errors?.[0]?.message ?? "Invalid code.");
     } finally {
       setBusy(false);
     }
@@ -108,21 +150,21 @@ export default function SignInScreen() {
             <Heading level={2} style={{ marginTop: 24, textAlign: "center" }}>
               {mode === "sign-up"
                 ? "Join the tribe"
-                : mode === "verify"
+                : mode === "verify" || mode === "verify-sign-in"
                 ? "Verify your email"
                 : "Welcome back"}
             </Heading>
             <Body muted style={{ marginTop: 8, textAlign: "center" }}>
               {mode === "sign-up"
                 ? "Create an account to make picks and track your score."
-                : mode === "verify"
+                : mode === "verify" || mode === "verify-sign-in"
                 ? "Enter the code we just emailed you."
                 : "Sign in to make picks and climb the leaderboard."}
             </Body>
           </View>
 
           <View style={{ gap: 14 }}>
-            {mode === "verify" ? (
+            {mode === "verify" || mode === "verify-sign-in" ? (
               <>
                 <Input
                   label="Verification code"
@@ -135,12 +177,18 @@ export default function SignInScreen() {
                 <Button
                   label="Verify & Sign In"
                   loading={busy}
-                  onPress={handleVerify}
+                  onPress={mode === "verify-sign-in" ? handleVerifySignIn : handleVerify}
                   fullWidth
                 />
-                <Pressable onPress={() => setMode("sign-up")}>
+                <Pressable
+                  onPress={() => {
+                    setError(null);
+                    setCode("");
+                    setMode(mode === "verify-sign-in" ? "sign-in" : "sign-up");
+                  }}
+                >
                   <Body muted style={{ textAlign: "center", marginTop: 8 }}>
-                    Use a different email
+                    {mode === "verify-sign-in" ? "Back to sign in" : "Use a different email"}
                   </Body>
                 </Pressable>
               </>
@@ -185,7 +233,7 @@ export default function SignInScreen() {
               </Body>
             ) : null}
 
-            {mode !== "verify" && (
+            {mode !== "verify" && mode !== "verify-sign-in" && (
               <Pressable
                 onPress={() => {
                   setError(null);
