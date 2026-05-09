@@ -26,6 +26,24 @@ export interface UserProfile {
   createdAt: string;
 }
 
+export interface SignUpBody {
+  email: string;
+  /** @minLength 8 */
+  password: string;
+  /** @minLength 1 */
+  username: string;
+}
+
+export interface SignInBody {
+  email: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: UserProfile;
+}
+
 export interface UpdateProfileBody {
   displayName: string;
 }

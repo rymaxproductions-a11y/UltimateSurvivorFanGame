@@ -1,4 +1,3 @@
-import { ClerkProvider, ClerkLoaded } from "@clerk/clerk-expo";
 import {
   Oswald_400Regular,
   Oswald_600SemiBold,
@@ -23,7 +22,7 @@ import { AuthBridge } from "@/components/AuthBridge";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { configureApi } from "@/lib/api";
-import { tokenCache } from "@/lib/clerkTokenCache";
+import { LocalAuthProvider } from "@/lib/localAuth";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -37,14 +36,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
-const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
-
-if (!publishableKey) {
-  throw new Error(
-    "Missing EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY. Set it in the workflow environment.",
-  );
-}
 
 function RootLayoutNav() {
   return (
@@ -87,19 +78,17 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ErrorBoundary>
-        <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+        <LocalAuthProvider>
           <QueryClientProvider client={queryClient}>
             <AuthBridge>
               <GestureHandlerRootView style={{ flex: 1 }}>
                 <KeyboardProvider>
-                  <ClerkLoaded>
-                    <RootLayoutNav />
-                  </ClerkLoaded>
+                  <RootLayoutNav />
                 </KeyboardProvider>
               </GestureHandlerRootView>
             </AuthBridge>
           </QueryClientProvider>
-        </ClerkProvider>
+        </LocalAuthProvider>
       </ErrorBoundary>
     </SafeAreaProvider>
   );

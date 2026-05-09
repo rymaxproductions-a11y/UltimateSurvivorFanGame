@@ -15,6 +15,37 @@ export const HealthCheckResponse = zod.object({
 });
 
 /**
+ * @summary Create a new mobile-app account with email + password
+ */
+export const signUpBodyPasswordMin = 8;
+
+export const SignUpBody = zod.object({
+  email: zod.string().email(),
+  password: zod.string().min(signUpBodyPasswordMin),
+  username: zod.string().min(1),
+});
+
+/**
+ * @summary Sign in with email + password
+ */
+export const SignInBody = zod.object({
+  email: zod.string().email(),
+  password: zod.string(),
+});
+
+export const SignInResponse = zod.object({
+  token: zod.string(),
+  user: zod.object({
+    id: zod.number(),
+    clerkId: zod.string(),
+    username: zod.string(),
+    displayName: zod.string().nullish(),
+    role: zod.enum(["admin", "player"]),
+    createdAt: zod.string(),
+  }),
+});
+
+/**
  * @summary Get current user profile
  */
 export const GetMeResponse = zod.object({

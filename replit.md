@@ -111,10 +111,12 @@ Tables: `users`, `games`, `contestants`, `weeks`, `questions`, `choices`, `corre
 
 ## Auth
 
-- Clerk-managed. `requireAuth` middleware reads Clerk session from Express routes.
-- Frontend uses `ClerkProvider` with wouter routing bridge.
-- `useGetMe` auto-creates DB user on first authenticated call.
-- Proxy path: `/api/__clerk`
+Two auth systems run side-by-side, unified server-side via a single helper:
+
+- **Web (Clerk)** — `ClerkProvider` + `@clerk/express` middleware. `useGetMe` auto-creates the DB user on first authenticated call. Proxy path: `/api/__clerk`.
+- **Mobile (custom email + password)** — `artifacts/survivor-mobile/lib/localAuth.tsx` provides `LocalAuthProvider` + `useAuth/useUser` hooks that mirror Clerk's API so screens stay unchanged. JWT (HS256, 365d, signed with `SESSION_SECRET`) + cached user are stored in `expo-secure-store` and hydrated on boot — users sign in once and stay signed in. The shared API client (`@workspace/api-client-react`) sends the JWT as `Authorization: Bearer …` and auto-clears local auth state on any 401 via `setOnUnauthorized`.
+- **Server unification** — Mobile signups get a synthetic `clerkId = "local:<uuid>"` so every existing route keeps working unchanged. `localAuthMiddleware` (in `artifacts/api-server/src/lib/localAuth.ts`) runs after `clerkMiddleware` and sets `req.localAuthClerkId` when a valid local JWT is present. Every route reads the user via `getAuthClerkId(req)`, which prefers the local JWT and falls back to Clerk. JWT verification pins `algorithms: ["HS256"]` and validates the `sub` matches `local:<uuid-v4>`. Auth endpoints sanitize their responses through `GetMeResponse.parse(...)` so `passwordHash`/`email` never leak.
+- **Endpoints**: `POST /api/auth/signup` ({ email, password, username }) and `POST /api/auth/signin` ({ email, password }) — both return `{ token, user }`. Web does not use these.
 
 ## Codegen Fix
 

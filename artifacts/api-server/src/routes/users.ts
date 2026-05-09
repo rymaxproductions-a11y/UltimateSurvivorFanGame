@@ -1,9 +1,9 @@
 import { Router, type IRouter } from "express";
-import { getAuth } from "@clerk/express";
 import { eq } from "drizzle-orm";
 import { db, usersTable } from "@workspace/db";
 import { GetMeResponse, UpdateMyProfileBody, UpdateMyProfileResponse } from "@workspace/api-zod";
 import { serialize } from "../lib/serialize";
+import { getAuthClerkId } from "../lib/localAuth";
 
 const router: IRouter = Router();
 
@@ -12,8 +12,8 @@ const ADMIN_CLERK_IDS = new Set(
 );
 
 const requireAuth = (req: any, res: any, next: any) => {
-  const auth = getAuth(req);
-  if (!auth?.userId) {
+  const clerkId = getAuthClerkId(req);
+  if (!clerkId) {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
@@ -21,15 +21,19 @@ const requireAuth = (req: any, res: any, next: any) => {
 };
 
 router.get("/users/me", requireAuth, async (req: any, res: any): Promise<void> => {
-  const auth = getAuth(req);
-  const clerkId = auth!.userId!;
+  const clerkId = getAuthClerkId(req)!;
   const isDesignatedAdmin = ADMIN_CLERK_IDS.has(clerkId);
 
   let [user] = await db.select().from(usersTable).where(eq(usersTable.clerkId, clerkId));
 
   if (!user) {
-    const clerkUser = auth as any;
-    const username = clerkUser.sessionClaims?.username || clerkId;
+    // Try to pull a Clerk-style username if present in the session claims.
+    let username: string = clerkId;
+    if (!clerkId.startsWith("local:")) {
+      const { getAuth } = await import("@clerk/express");
+      const clerkAuth = getAuth(req) as any;
+      username = clerkAuth?.sessionClaims?.username || clerkId;
+    }
     [user] = await db.insert(usersTable).values({
       clerkId,
       username,
@@ -46,8 +50,7 @@ router.get("/users/me", requireAuth, async (req: any, res: any): Promise<void> =
 });
 
 router.patch("/users/me", requireAuth, async (req: any, res: any): Promise<void> => {
-  const auth = getAuth(req);
-  const clerkId = auth!.userId!;
+  const clerkId = getAuthClerkId(req)!;
 
   const parsed = UpdateMyProfileBody.safeParse(req.body);
   if (!parsed.success) {

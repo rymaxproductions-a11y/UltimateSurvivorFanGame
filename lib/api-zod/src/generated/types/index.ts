@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./authResponse";
 export * from "./choice";
 export * from "./contestant";
 export * from "./correctAnswer";
@@ -27,6 +28,8 @@ export * from "./playerAnswerInput";
 export * from "./questionWithChoices";
 export * from "./saveAnswersBody";
 export * from "./saveSurvivorPicksBody";
+export * from "./signInBody";
+export * from "./signUpBody";
 export * from "./submitCorrectAnswersBody";
 export * from "./submitSurvivorWinnerBody";
 export * from "./survivorPicks";

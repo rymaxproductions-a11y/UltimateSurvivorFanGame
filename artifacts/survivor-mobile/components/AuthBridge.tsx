@@ -1,11 +1,12 @@
-import { useAuth } from "@clerk/clerk-expo";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 
 import { setAuthTokenGetter } from "@workspace/api-client-react";
 
+import { useAuth } from "@/lib/localAuth";
+
 /**
- * Wires Clerk's getToken into the shared API client and clears the
+ * Wires the locally-stored JWT into the shared API client and clears the
  * React Query cache when the auth state flips.
  */
 export function AuthBridge({ children }: { children: React.ReactNode }) {

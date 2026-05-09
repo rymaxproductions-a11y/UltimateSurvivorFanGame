@@ -1,4 +1,4 @@
-import { useAuth, useUser } from "@clerk/clerk-expo";
+import { useAuth, useUser } from "@/lib/localAuth";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, View } from "react-native";
@@ -30,6 +30,7 @@ export default function Profile() {
   if (isLoading) return <LoadingScreen />;
 
   const displayName = me?.displayName ?? me?.username ?? user?.username ?? "Player";
+  const email = user?.email ?? "—";
 
   async function handleSave() {
     if (!name.trim()) return;
@@ -130,9 +131,7 @@ export default function Profile() {
           <Body muted style={{ fontSize: 11, letterSpacing: 1 }}>
             EMAIL
           </Body>
-          <Body style={{ marginTop: 4 }}>
-            {user?.primaryEmailAddress?.emailAddress ?? "—"}
-          </Body>
+          <Body style={{ marginTop: 4 }}>{email}</Body>
         </View>
 
         <View>

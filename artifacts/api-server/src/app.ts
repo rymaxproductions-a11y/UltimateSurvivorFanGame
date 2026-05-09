@@ -5,6 +5,7 @@ import { clerkMiddleware } from "@clerk/express";
 import { publishableKeyFromHost } from "@clerk/shared/keys";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { localAuthMiddleware } from "./lib/localAuth";
 import {
   CLERK_PROXY_PATH,
   clerkProxyMiddleware,
@@ -47,6 +48,10 @@ app.use(
     ),
   })),
 );
+
+// After clerkMiddleware: if a local JWT is present, attach the clerkId
+// to the request so getAuthClerkId() can return it.
+app.use(localAuthMiddleware);
 
 app.use("/api", router);
 

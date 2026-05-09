@@ -17,6 +17,7 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  AuthResponse,
   Choice,
   Contestant,
   CorrectAnswer,
@@ -35,6 +36,8 @@ import type {
   QuestionWithChoices,
   SaveAnswersBody,
   SaveSurvivorPicksBody,
+  SignInBody,
+  SignUpBody,
   SubmitCorrectAnswersBody,
   SubmitSurvivorWinnerBody,
   SurvivorPicks,
@@ -132,6 +135,178 @@ export function useHealthCheck<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Create a new mobile-app account with email + password
+ */
+export const getSignUpUrl = () => {
+  return `/api/auth/signup`;
+};
+
+export const signUp = async (
+  signUpBody: SignUpBody,
+  options?: RequestInit,
+): Promise<AuthResponse> => {
+  return customFetch<AuthResponse>(getSignUpUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(signUpBody),
+  });
+};
+
+export const getSignUpMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof signUp>>,
+    TError,
+    { data: BodyType<SignUpBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof signUp>>,
+  TError,
+  { data: BodyType<SignUpBody> },
+  TContext
+> => {
+  const mutationKey = ["signUp"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof signUp>>,
+    { data: BodyType<SignUpBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return signUp(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SignUpMutationResult = NonNullable<
+  Awaited<ReturnType<typeof signUp>>
+>;
+export type SignUpMutationBody = BodyType<SignUpBody>;
+export type SignUpMutationError = ErrorType<void>;
+
+/**
+ * @summary Create a new mobile-app account with email + password
+ */
+export const useSignUp = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof signUp>>,
+    TError,
+    { data: BodyType<SignUpBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof signUp>>,
+  TError,
+  { data: BodyType<SignUpBody> },
+  TContext
+> => {
+  return useMutation(getSignUpMutationOptions(options));
+};
+
+/**
+ * @summary Sign in with email + password
+ */
+export const getSignInUrl = () => {
+  return `/api/auth/signin`;
+};
+
+export const signIn = async (
+  signInBody: SignInBody,
+  options?: RequestInit,
+): Promise<AuthResponse> => {
+  return customFetch<AuthResponse>(getSignInUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(signInBody),
+  });
+};
+
+export const getSignInMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof signIn>>,
+    TError,
+    { data: BodyType<SignInBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof signIn>>,
+  TError,
+  { data: BodyType<SignInBody> },
+  TContext
+> => {
+  const mutationKey = ["signIn"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof signIn>>,
+    { data: BodyType<SignInBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return signIn(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SignInMutationResult = NonNullable<
+  Awaited<ReturnType<typeof signIn>>
+>;
+export type SignInMutationBody = BodyType<SignInBody>;
+export type SignInMutationError = ErrorType<void>;
+
+/**
+ * @summary Sign in with email + password
+ */
+export const useSignIn = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof signIn>>,
+    TError,
+    { data: BodyType<SignInBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof signIn>>,
+  TError,
+  { data: BodyType<SignInBody> },
+  TContext
+> => {
+  return useMutation(getSignInMutationOptions(options));
+};
 
 /**
  * @summary Get current user profile

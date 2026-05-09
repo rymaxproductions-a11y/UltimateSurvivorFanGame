@@ -21,6 +21,7 @@ import {
   SubmitSurvivorWinnerBody,
 } from "@workspace/api-zod";
 import { requireAuth } from "./users";
+import { getAuthClerkId } from "../lib/localAuth";
 
 const router: IRouter = Router();
 
@@ -31,9 +32,8 @@ router.get("/weeks/:weekId/my-answers", requireAuth, async (req: any, res: any):
     return;
   }
 
-  const { getAuth } = await import("@clerk/express");
-  const auth = getAuth(req);
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.clerkId, auth!.userId!));
+  const clerkId = getAuthClerkId(req)!;
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.clerkId, clerkId));
   if (!user) {
     res.status(404).json({ error: "User not found" });
     return;
@@ -71,9 +71,8 @@ router.post("/weeks/:weekId/my-answers", requireAuth, async (req: any, res: any)
     return;
   }
 
-  const { getAuth } = await import("@clerk/express");
-  const auth = getAuth(req);
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.clerkId, auth!.userId!));
+  const clerkId = getAuthClerkId(req)!;
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.clerkId, clerkId));
   if (!user) {
     res.status(404).json({ error: "User not found" });
     return;
@@ -215,9 +214,8 @@ router.get("/games/:gameId/survivor-picks", requireAuth, async (req: any, res: a
     return;
   }
 
-  const { getAuth } = await import("@clerk/express");
-  const auth = getAuth(req);
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.clerkId, auth!.userId!));
+  const clerkId = getAuthClerkId(req)!;
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.clerkId, clerkId));
   if (!user) {
     res.status(404).json({ error: "User not found" });
     return;
@@ -275,9 +273,8 @@ router.post("/games/:gameId/survivor-picks", requireAuth, async (req: any, res: 
     return;
   }
 
-  const { getAuth } = await import("@clerk/express");
-  const auth = getAuth(req);
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.clerkId, auth!.userId!));
+  const clerkId = getAuthClerkId(req)!;
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.clerkId, clerkId));
   if (!user) {
     res.status(404).json({ error: "User not found" });
     return;
