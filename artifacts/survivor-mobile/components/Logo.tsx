@@ -1,10 +1,19 @@
-import { Image, type ImageStyle, type StyleProp } from "react-native";
+import { Text, View, type StyleProp, type ViewStyle } from "react-native";
 
-export function Logo({ size = 48, style }: { size?: number; style?: StyleProp<ImageStyle> }) {
+export function Logo({ size = 48, style }: { size?: number; style?: StyleProp<ViewStyle> }) {
   return (
-    <Image
-      source={require("@/assets/images/survivor-logo.png")}
-      style={[{ width: size * 4, height: size, resizeMode: "contain" }, style]}
-    />
+    <View style={[{ height: size, justifyContent: "center" }, style]}>
+      <Text
+        style={{
+          fontFamily: "Oswald_700Bold",
+          fontSize: size * 0.55,
+          letterSpacing: 2,
+          color: "#e08a1e",
+          textTransform: "uppercase",
+        }}
+      >
+        Fan Game
+      </Text>
+    </View>
   );
 }

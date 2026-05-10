@@ -40,7 +40,6 @@ const clerkAppearance = {
   options: {
     logoPlacement: "inside" as const,
     logoLinkUrl: basePath || "/",
-    logoImageUrl: `${window.location.origin}${basePath}/survivor-logo.png`,
   },
   variables: {
     colorPrimary: "hsl(35 90% 50%)",
@@ -140,7 +139,6 @@ function LandingPage() {
     <div className="min-h-screen bg-background flex flex-col items-center justify-center py-8">
       {/* Branding */}
       <div className="w-full flex flex-col items-center text-center px-6 mb-6">
-        <img src={`${basePath}/survivor-logo.png`} alt="Survivor" className="h-28 mb-4" />
         <div className="inline-block bg-primary/10 text-primary font-semibold text-sm px-4 py-1 rounded-full mb-3 uppercase tracking-widest">
           Season Active
         </div>
