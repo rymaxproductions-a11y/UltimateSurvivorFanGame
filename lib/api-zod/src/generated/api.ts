@@ -46,6 +46,48 @@ export const SignInResponse = zod.object({
 });
 
 /**
+ * @summary List all users (admin only)
+ */
+export const ListAdminUsersResponseItem = zod.object({
+  id: zod.number(),
+  clerkId: zod.string(),
+  username: zod.string(),
+  displayName: zod.string().nullish(),
+  role: zod.enum(["admin", "player"]),
+  createdAt: zod.string(),
+  authProvider: zod.enum(["clerk", "mobile"]),
+});
+export const ListAdminUsersResponse = zod.array(ListAdminUsersResponseItem);
+
+/**
+ * @summary Change a user's role (admin only)
+ */
+export const UpdateAdminUserRoleParams = zod.object({
+  userId: zod.coerce.number(),
+});
+
+export const UpdateAdminUserRoleBody = zod.object({
+  role: zod.enum(["admin", "player"]),
+});
+
+export const UpdateAdminUserRoleResponse = zod.object({
+  id: zod.number(),
+  clerkId: zod.string(),
+  username: zod.string(),
+  displayName: zod.string().nullish(),
+  role: zod.enum(["admin", "player"]),
+  createdAt: zod.string(),
+  authProvider: zod.enum(["clerk", "mobile"]),
+});
+
+/**
+ * @summary Delete a user (admin only)
+ */
+export const DeleteAdminUserParams = zod.object({
+  userId: zod.coerce.number(),
+});
+
+/**
  * @summary Get current user profile
  */
 export const GetMeResponse = zod.object({

@@ -6,6 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./adminUser";
+export * from "./adminUserAuthProvider";
+export * from "./adminUserRole";
 export * from "./authResponse";
 export * from "./choice";
 export * from "./contestant";
@@ -23,6 +26,7 @@ export * from "./gameStats";
 export * from "./gameStatus";
 export * from "./healthStatus";
 export * from "./leaderboardEntry";
+export * from "./listAdminUsersResponse";
 export * from "./playerAnswer";
 export * from "./playerAnswerInput";
 export * from "./questionWithChoices";
@@ -33,6 +37,8 @@ export * from "./signUpBody";
 export * from "./submitCorrectAnswersBody";
 export * from "./submitSurvivorWinnerBody";
 export * from "./survivorPicks";
+export * from "./updateAdminUserRoleBody";
+export * from "./updateAdminUserRoleBodyRole";
 export * from "./updateContestantBody";
 export * from "./updateGameBody";
 export * from "./updateGameBodyStatus";

@@ -12,6 +12,7 @@ import NotFound from "@/pages/not-found";
 const Onboarding = lazy(() => import("@/pages/onboarding"));
 const Dashboard = lazy(() => import("@/pages/dashboard"));
 const Admin = lazy(() => import("@/pages/admin"));
+const AdminUsers = lazy(() => import("@/pages/admin-users"));
 const Leaderboard = lazy(() => import("@/pages/leaderboard"));
 const Contestants = lazy(() => import("@/pages/contestants"));
 
@@ -173,6 +174,7 @@ function RouterContent() {
         <Route path="/onboarding" component={Onboarding} />
         <Route path="/dashboard" component={Dashboard} />
         <Route path="/admin" component={Admin} />
+        <Route path="/admin/users" component={AdminUsers} />
         <Route path="/leaderboard" component={Leaderboard} />
         <Route path="/contestants" component={Contestants} />
         <Route component={NotFound} />

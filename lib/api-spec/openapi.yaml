@@ -14,6 +14,8 @@ tags:
     description: Custom email/password auth (mobile)
   - name: users
     description: User management
+  - name: admin
+    description: Admin-only endpoints
   - name: games
     description: Game management
   - name: contestants
@@ -91,6 +93,59 @@ paths:
                 $ref: "#/components/schemas/AuthResponse"
         "401":
           description: Incorrect email or password
+
+  /admin/users:
+    get:
+      operationId: listAdminUsers
+      tags: [admin]
+      summary: List all users (admin only)
+      responses:
+        "200":
+          description: All users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListAdminUsersResponse"
+
+  /admin/users/{userId}/role:
+    patch:
+      operationId: updateAdminUserRole
+      tags: [admin]
+      summary: Change a user's role (admin only)
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAdminUserRoleBody"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUser"
+
+  /admin/users/{userId}:
+    delete:
+      operationId: deleteAdminUser
+      tags: [admin]
+      summary: Delete a user (admin only)
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
 
   /users/me:
     get:
@@ -886,6 +941,48 @@ components:
         - username
         - role
         - createdAt
+
+    AdminUser:
+      type: object
+      properties:
+        id:
+          type: integer
+        clerkId:
+          type: string
+        username:
+          type: string
+        displayName:
+          type: string
+          nullable: true
+        role:
+          type: string
+          enum: [admin, player]
+        createdAt:
+          type: string
+        authProvider:
+          type: string
+          enum: [clerk, mobile]
+      required:
+        - id
+        - clerkId
+        - username
+        - role
+        - createdAt
+        - authProvider
+
+    ListAdminUsersResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/AdminUser"
+
+    UpdateAdminUserRoleBody:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [admin, player]
+      required:
+        - role
 
     SignUpBody:
       type: object

@@ -26,6 +26,45 @@ export interface UserProfile {
   createdAt: string;
 }
 
+export type AdminUserRole = (typeof AdminUserRole)[keyof typeof AdminUserRole];
+
+export const AdminUserRole = {
+  admin: "admin",
+  player: "player",
+} as const;
+
+export type AdminUserAuthProvider =
+  (typeof AdminUserAuthProvider)[keyof typeof AdminUserAuthProvider];
+
+export const AdminUserAuthProvider = {
+  clerk: "clerk",
+  mobile: "mobile",
+} as const;
+
+export interface AdminUser {
+  id: number;
+  clerkId: string;
+  username: string;
+  displayName?: string | null;
+  role: AdminUserRole;
+  createdAt: string;
+  authProvider: AdminUserAuthProvider;
+}
+
+export type ListAdminUsersResponse = AdminUser[];
+
+export type UpdateAdminUserRoleBodyRole =
+  (typeof UpdateAdminUserRoleBodyRole)[keyof typeof UpdateAdminUserRoleBodyRole];
+
+export const UpdateAdminUserRoleBodyRole = {
+  admin: "admin",
+  player: "player",
+} as const;
+
+export interface UpdateAdminUserRoleBody {
+  role: UpdateAdminUserRoleBodyRole;
+}
+
 export interface SignUpBody {
   email: string;
   /** @minLength 8 */
