@@ -97,6 +97,33 @@ export default function Dashboard() {
         ) : null}
       </View>
 
+      {me?.role === "admin" && (
+        <View
+          style={{
+            marginBottom: 16,
+            padding: 14,
+            borderRadius: colors.radius,
+            backgroundColor: colors.accent,
+            borderWidth: 1,
+            borderColor: colors.primary,
+          }}
+        >
+          <Body
+            style={{
+              fontFamily: "Oswald_700Bold",
+              fontSize: 14,
+              letterSpacing: 1,
+              color: colors.foreground,
+            }}
+          >
+            ADMIN MODE
+          </Body>
+          <Body muted style={{ fontSize: 13, marginTop: 4 }}>
+            Manage games, contestants, episodes, questions, and users from the web version. The mobile app is for player-facing actions only.
+          </Body>
+        </View>
+      )}
+
       {!activeGame ? (
         <EmptyState
           icon="tv"

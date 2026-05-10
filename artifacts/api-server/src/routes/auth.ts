@@ -50,6 +50,7 @@ router.post("/auth/signup", async (req: any, res: any): Promise<void> => {
       email,
       passwordHash,
       username,
+      displayName: username,
       role: isAdmin ? "admin" : "player",
     })
     .returning();

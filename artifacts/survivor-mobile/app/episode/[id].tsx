@@ -60,6 +60,8 @@ export default function EpisodeScreen() {
 
   const [draft, setDraft] = useState<Record<number, number>>({});
   const [pickerForQuestion, setPickerForQuestion] = useState<number | null>(null);
+  const hasSavedAnswers = (myAnswers?.length ?? 0) > 0;
+  const canEdit = isOpen && !isLocked && !hasSavedAnswers;
 
   useEffect(() => {
     if (myAnswers) {
@@ -121,13 +123,17 @@ export default function EpisodeScreen() {
         EPISODE {weekNumber} {isLocked ? "· SCORED" : isOpen ? "· OPEN" : ""}
       </Body>
       <Heading style={{ marginTop: 4 }}>Episode Questions</Heading>
-      {!isLocked && isOpen ? (
+      {canEdit ? (
         <Body muted style={{ marginTop: 8 }}>
           Tap a question to pick a contestant. {answeredCount}/{totalQuestions} answered.
         </Body>
       ) : isLocked ? (
         <Body muted style={{ marginTop: 8 }}>
           This episode has been scored. Green = correct.
+        </Body>
+      ) : hasSavedAnswers ? (
+        <Body muted style={{ marginTop: 8 }}>
+          Your picks are locked in. You'll see your score once the episode is scored.
         </Body>
       ) : (
         <Body muted style={{ marginTop: 8 }}>
@@ -218,7 +224,7 @@ export default function EpisodeScreen() {
                 </View>
 
                 <Pressable
-                  disabled={isLocked || !isOpen}
+                  disabled={!canEdit}
                   onPress={() => setPickerForQuestion(q.id)}
                   style={{
                     flexDirection: "row",
@@ -229,7 +235,7 @@ export default function EpisodeScreen() {
                     borderColor: colors.border,
                     borderRadius: colors.radius,
                     backgroundColor: colors.background,
-                    opacity: isLocked || !isOpen ? 0.7 : 1,
+                    opacity: !canEdit ? 0.7 : 1,
                   }}
                 >
                   <Avatar headshotPath={myPick?.headshotPath ?? null} size={40} />
@@ -240,9 +246,9 @@ export default function EpisodeScreen() {
                       color: myPick ? colors.foreground : colors.mutedForeground,
                     }}
                   >
-                    {myPick?.name ?? "Tap to choose a contestant"}
+                    {myPick?.name ?? (canEdit ? "Tap to choose a contestant" : "—")}
                   </Body>
-                  {!isLocked && isOpen ? (
+                  {canEdit ? (
                     <Body muted style={{ fontSize: 12 }}>
                       Change
                     </Body>
@@ -271,10 +277,10 @@ export default function EpisodeScreen() {
         )}
       </View>
 
-      {!isLocked && isOpen && sortedQuestions.length > 0 && (
+      {canEdit && sortedQuestions.length > 0 && (
         <View style={{ marginTop: 20 }}>
           <Button
-            label="Save my picks"
+            label="Lock in my picks — you cannot change this later"
             loading={save.isPending}
             onPress={handleSave}
             fullWidth

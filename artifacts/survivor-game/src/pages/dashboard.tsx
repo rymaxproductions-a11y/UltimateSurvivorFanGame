@@ -55,7 +55,7 @@ function EpisodeTab({
   }
 
   function handleSelect(questionId: number, contestantId: number) {
-    if (!isOpen || isLocked) return;
+    if (!isOpen || isLocked || lockedAnswers) return;
     setSelections((prev) => ({ ...prev, [questionId]: contestantId }));
   }
 
@@ -122,7 +122,7 @@ function EpisodeTab({
               data-testid={`select-answer-${q.id}`}
               value={currentSelection ?? ""}
               onChange={(e) => handleSelect(q.id, Number(e.target.value))}
-              disabled={!isOpen || isLocked}
+              disabled={!isOpen || isLocked || lockedAnswers}
               className="w-full border border-border rounded-lg px-3 py-2 bg-background text-foreground disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <option value="">Select a contestant...</option>
