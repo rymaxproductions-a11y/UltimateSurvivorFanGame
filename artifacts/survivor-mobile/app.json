@@ -14,7 +14,9 @@
       "backgroundColor": "#0f1f17"
     },
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "bundleIdentifier": "app.replit.ultimatesurvivorfangame",
+      "buildNumber": "1"
     },
     "android": {},
     "web": {
