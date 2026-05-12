@@ -13,7 +13,7 @@
     },
     "production": {
       "autoIncrement": true,
-      "pnpm": "10.26.1",
+      "config": "eas-build-ios.yml",
       "cache": {
         "disabled": true
       }
