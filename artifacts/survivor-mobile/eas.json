@@ -12,7 +12,11 @@
       "distribution": "internal"
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "pnpm": "10.26.1",
+      "cache": {
+        "disabled": true
+      }
     }
   },
   "submit": {
