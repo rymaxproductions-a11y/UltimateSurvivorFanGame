@@ -105,7 +105,7 @@ export default function Profile() {
                 justifyContent: "space-between",
               }}
             >
-              <Body style={{ fontFamily: "Oswald_700Bold", fontSize: 22 }}>
+              <Body style={{ fontFamily: "Oswald_700Bold", fontSize: 22, lineHeight: 30, paddingTop: 4 }}>
                 {displayName}
               </Body>
               <Button
