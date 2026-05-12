@@ -1,0 +1,45 @@
+✔ Select the iOS distribution certificate to use for code signing: › [Choose another existing certificate] (Recommended)
+✔ Select the iOS Distribution Certificate from the list: › Cert ID: 466VZ38952, Serial number: 5666C056205F94671A0E8EA4868EAF5, Team ID: J2JTMZV5VX, Team name: Rymax Productions LLC (Company/Organization)
+    Created: 7 months ago, Updated: 7 months ago,
+    Expires: Tue, 22 Sep 2026 17:32:45 MST
+    📲 Used by: @rymax/survivor-guessing-game
+✔ Generate a new Apple Provisioning Profile? … yes
+✔ Created Apple provisioning profile
+✔ Created provisioning profile
+
+Project Credentials Configuration
+
+Project                   @rymax/survivor-mobile
+Bundle Identifier         app.replit.ultimatesurvivorfangame
+                          
+App Store Configuration   
+                          
+Distribution Certificate  
+Serial Number             5666C056205F94671A0E8EA4868EAF5
+Expiration Date           Tue, 22 Sep 2026 17:32:45 MST
+Apple Team                J2JTMZV5VX (Rymax Productions LLC (Company/Organization))
+Updated                   7 months ago
+                          
+Provisioning Profile      
+Developer Portal ID       G94JDZL84R
+Status                    active
+Expiration                Tue, 22 Sep 2026 17:32:45 MST
+Apple Team                J2JTMZV5VX (Rymax Productions LLC (Company/Organization))
+Updated                   0 second ago
+                          
+All credentials are ready to build @rymax/survivor-mobile (app.replit.ultimatesurvivorfangame)
+
+
+Compressing project files and uploading to EAS Build. Learn more: https://expo.fyi/eas-build-archive
+✔ Compressed project files 2s (3.1 MB)
+✔ Uploaded to EAS 1s
+✔ Computed project fingerprint
+
+See logs: https://expo.dev/accounts/rymax/projects/survivor-mobile/builds/1f61d2da-25df-4254-af2b-8534cd5cefac
+
+Waiting for build to complete. You can press Ctrl+C to exit.
+✖ Build failed
+
+🍏 iOS build failed:
+Unknown error. See logs of the Install dependencies build phase for more information.
+ryanjones@Ryans-MacBook-Pro survivor-mobile % 
