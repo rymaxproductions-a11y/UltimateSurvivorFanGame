@@ -1,0 +1,30 @@
+ryanjones@Ryans-MacBook-Pro survivor-mobile % cd ~/UltimateSurvivorFanGame
+git pull
+cd artifacts/survivor-mobile
+pnpm install
+eas build:configure
+remote: Enumerating objects: 8, done.
+remote: Counting objects: 100% (8/8), done.
+remote: Compressing objects: 100% (3/3), done.
+remote: Total 5 (delta 2), reused 5 (delta 2), pack-reused 0 (from 0)
+Unpacking objects: 100% (5/5), 1.53 KiB | 261.00 KiB/s, done.
+From https://github.com/rymaxproductions-a11y/UltimateSurvivorFanGame
+   e511562..5d4faaa  main       -> origin/main
+Updating e511562..5d4faaa
+Fast-forward
+ .npmrc                                                          |  1 +
+ ...ns-MacBook-Pro-survivor-mobile-pnpm-instal_1778563273577.txt | 14 ++++++++++++++
+ 2 files changed, 15 insertions(+)
+ create mode 100644 attached_assets/Pasted-ryanjones-Ryans-MacBook-Pro-survivor-mobile-pnpm-instal_1778563273577.txt
+Scope: all 11 workspace projects
+../..                                    | Progress: resolved 1, reused 0, downloaded../api-server                            | [WARN] deprecated @types/bcryptjs@3.0.0
+../..                                    | Progress: resolved 1, reused 0, downloaded../..                                    | Progress: resolved 63, reused 41, download[WARN] deprecated @ungap/structured-clone@1.3.0: Potential CWE-502 - Update to 1.3.1 or higher
+../..                                    | Progress: resolved 63, reused 41, download../..                                    | Progress: resolved 144, reused 125, downlo../..                                    | Progress: resolved 367, reused 341, downlo../..                                    | Progress: resolved 573, reused 555, downlo../..                                    | Progress: resolved 704, reused 680, downlo../..                                    | Progress: resolved 865, reused 836, downlo[ERR_PNPM_MISSING_TIME] The metadata of @clerk/clerk-js is missing the "time" field
+
+This error happened while installing the dependencies of @clerk/clerk-expo@2.19.31
+
+If you cannot fix this registry issue, then set "resolution-mode" to "highest".
+../..                                    | Progress: resolved 865, reused 836, downlo../..                                    | Progress: resolved 921, reused 889, downloaded 15, added 0
+Failed to resolve plugin for module "expo-router" relative to "/Users/ryanjones/UltimateSurvivorFanGame/artifacts/survivor-mobile". Do you have node modules installed?
+    Error: build:configure command failed.
+ryanjones@Ryans-MacBook-Pro survivor-mobile % 

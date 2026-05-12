@@ -33,6 +33,10 @@ minimumReleaseAgeExclude:
   # this setting guards against does not apply to our own packages.
   - '@replit/*'
   - stripe-replit-sync
+  # lodash's npm metadata is missing the "time" field, which breaks the
+  # minimumReleaseAge check entirely. lodash is a long-trusted package
+  # published by OpenJS Foundation, so excluding it is safe.
+  - lodash
 
 packages:
   - artifacts/*
