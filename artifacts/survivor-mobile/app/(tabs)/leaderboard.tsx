@@ -66,7 +66,7 @@ export default function Leaderboard() {
             borderColor: colors.border,
           }}
         >
-          <Body style={{ fontFamily: "Oswald_700Bold", fontSize: 18 }}>
+          <Body style={{ fontFamily: "Oswald_700Bold", fontSize: 18, lineHeight: 26 }}>
             No scores yet
           </Body>
           <Body muted style={{ marginTop: 6, textAlign: "center" }}>
@@ -96,6 +96,7 @@ export default function Leaderboard() {
                     width: 36,
                     fontFamily: "Oswald_700Bold",
                     fontSize: 22,
+                    lineHeight: 30,
                     color: entry.rank <= 3 ? colors.primary : colors.mutedForeground,
                   }}
                 >
@@ -117,6 +118,7 @@ export default function Leaderboard() {
                     style={{
                       fontFamily: "Oswald_700Bold",
                       fontSize: 22,
+                      lineHeight: 30,
                       color: colors.primary,
                     }}
                   >
