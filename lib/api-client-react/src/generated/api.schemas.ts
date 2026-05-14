@@ -24,11 +24,11 @@ export interface UserProfile {
   displayName?: string | null;
   role: UserProfileRole;
   /** @nullable */
-  tribeId: number | null;
+  tribeId?: number | null;
   /** @nullable */
-  tribeName: string | null;
+  tribeName?: string | null;
   /** @nullable */
-  tribeCode: string | null;
+  tribeCode?: string | null;
   createdAt: string;
 }
 

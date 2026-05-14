@@ -41,9 +41,9 @@ export const SignInResponse = zod.object({
     username: zod.string(),
     displayName: zod.string().nullish(),
     role: zod.enum(["admin", "player"]),
-    tribeId: zod.number().nullable(),
-    tribeName: zod.string().nullable(),
-    tribeCode: zod.string().nullable(),
+    tribeId: zod.number().nullish(),
+    tribeName: zod.string().nullish(),
+    tribeCode: zod.string().nullish(),
     createdAt: zod.string(),
   }),
 });
@@ -99,9 +99,9 @@ export const GetMeResponse = zod.object({
   username: zod.string(),
   displayName: zod.string().nullish(),
   role: zod.enum(["admin", "player"]),
-  tribeId: zod.number().nullable(),
-  tribeName: zod.string().nullable(),
-  tribeCode: zod.string().nullable(),
+  tribeId: zod.number().nullish(),
+  tribeName: zod.string().nullish(),
+  tribeCode: zod.string().nullish(),
   createdAt: zod.string(),
 });
 
@@ -118,9 +118,9 @@ export const UpdateMyProfileResponse = zod.object({
   username: zod.string(),
   displayName: zod.string().nullish(),
   role: zod.enum(["admin", "player"]),
-  tribeId: zod.number().nullable(),
-  tribeName: zod.string().nullable(),
-  tribeCode: zod.string().nullable(),
+  tribeId: zod.number().nullish(),
+  tribeName: zod.string().nullish(),
+  tribeCode: zod.string().nullish(),
   createdAt: zod.string(),
 });
 
@@ -137,9 +137,9 @@ export const UpdateMyRoleResponse = zod.object({
   username: zod.string(),
   displayName: zod.string().nullish(),
   role: zod.enum(["admin", "player"]),
-  tribeId: zod.number().nullable(),
-  tribeName: zod.string().nullable(),
-  tribeCode: zod.string().nullable(),
+  tribeId: zod.number().nullish(),
+  tribeName: zod.string().nullish(),
+  tribeCode: zod.string().nullish(),
   createdAt: zod.string(),
 });
 

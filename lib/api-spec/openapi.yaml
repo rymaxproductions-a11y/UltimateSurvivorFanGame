@@ -1021,9 +1021,6 @@ components:
         - clerkId
         - username
         - role
-        - tribeId
-        - tribeName
-        - tribeCode
         - createdAt
 
     AdminUser:
