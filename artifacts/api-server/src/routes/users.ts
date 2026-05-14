@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
-import { db, usersTable } from "@workspace/db";
+import { db, usersTable, tribesTable } from "@workspace/db";
 import { GetMeResponse, UpdateMyProfileBody, UpdateMyProfileResponse } from "@workspace/api-zod";
 import { serialize } from "../lib/serialize";
 import { getAuthClerkId } from "../lib/localAuth";
@@ -19,6 +19,18 @@ const requireAuth = (req: any, res: any, next: any) => {
   }
   next();
 };
+
+async function withTribe(user: any) {
+  if (!user.tribeId) {
+    return { ...user, tribeName: null, tribeCode: null };
+  }
+  const [tribe] = await db.select().from(tribesTable).where(eq(tribesTable.id, user.tribeId));
+  return {
+    ...user,
+    tribeName: tribe?.name ?? null,
+    tribeCode: tribe?.code ?? null,
+  };
+}
 
 router.get("/users/me", requireAuth, async (req: any, res: any): Promise<void> => {
   const clerkId = getAuthClerkId(req)!;
@@ -46,7 +58,7 @@ router.get("/users/me", requireAuth, async (req: any, res: any): Promise<void> =
       .returning();
   }
 
-  res.json(GetMeResponse.parse(serialize(user)));
+  res.json(GetMeResponse.parse(serialize(await withTribe(user))));
 });
 
 router.patch("/users/me", requireAuth, async (req: any, res: any): Promise<void> => {
@@ -65,7 +77,7 @@ router.patch("/users/me", requireAuth, async (req: any, res: any): Promise<void>
   }
 
   [user] = await db.update(usersTable).set({ displayName: parsed.data.displayName.trim() }).where(eq(usersTable.clerkId, clerkId)).returning();
-  res.json(UpdateMyProfileResponse.parse(serialize(user)));
+  res.json(UpdateMyProfileResponse.parse(serialize(await withTribe(user))));
 });
 
 export { requireAuth };

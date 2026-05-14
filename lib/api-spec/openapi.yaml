@@ -36,6 +36,8 @@ tags:
     description: Leaderboard
   - name: storage
     description: Object storage upload and serving endpoints
+  - name: tribes
+    description: Player tribes (groups joined by 5-character code)
 paths:
   /healthz:
     get:
@@ -872,11 +874,17 @@ paths:
     get:
       operationId: getLeaderboard
       tags: [leaderboard]
-      summary: Get leaderboard for a game
+      summary: Get leaderboard for a game (optionally scoped to a tribe)
       parameters:
         - name: gameId
           in: path
           required: true
+          schema:
+            type: integer
+        - name: tribeId
+          in: query
+          required: false
+          description: When provided, only includes players in this tribe.
           schema:
             type: integer
       responses:
@@ -888,6 +896,73 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/LeaderboardEntry"
+
+  /tribes:
+    post:
+      operationId: createTribe
+      tags: [tribes]
+      summary: Create a new tribe and join it
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTribeBody"
+      responses:
+        "201":
+          description: Created tribe
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tribe"
+        "400":
+          description: Validation error
+        "401":
+          description: Unauthorized
+        "409":
+          description: Already in a tribe
+
+  /tribes/join:
+    post:
+      operationId: joinTribe
+      tags: [tribes]
+      summary: Join an existing tribe by code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinTribeBody"
+      responses:
+        "200":
+          description: Joined tribe
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tribe"
+        "400":
+          description: Validation error
+        "401":
+          description: Unauthorized
+        "404":
+          description: No tribe with that code
+        "409":
+          description: Already in a tribe
+
+  /tribes/me:
+    get:
+      operationId: getMyTribe
+      tags: [tribes]
+      summary: Get the current user's tribe (or null if not in one)
+      responses:
+        "200":
+          description: Current tribe or null
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyTribeResponse"
+        "401":
+          description: Unauthorized
 
   /games/{gameId}/stats:
     get:
@@ -933,6 +1008,12 @@ components:
         role:
           type: string
           enum: [admin, player]
+        tribeId:
+          type: ["integer", "null"]
+        tribeName:
+          type: ["string", "null"]
+        tribeCode:
+          type: ["string", "null"]
         createdAt:
           type: string
       required:
@@ -940,6 +1021,9 @@ components:
         - clerkId
         - username
         - role
+        - tribeId
+        - tribeName
+        - tribeCode
         - createdAt
 
     AdminUser:
@@ -1452,6 +1536,8 @@ components:
         displayName:
           type: string
           nullable: true
+        tribeName:
+          type: ["string", "null"]
         totalPoints:
           type: integer
         weeklyPoints:
@@ -1464,9 +1550,63 @@ components:
         - rank
         - userId
         - username
+        - tribeName
         - totalPoints
         - weeklyPoints
         - survivorPickPoints
+
+    Tribe:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        code:
+          type: string
+        createdByUserId:
+          type: ["integer", "null"]
+        memberCount:
+          type: integer
+        createdAt:
+          type: string
+      required:
+        - id
+        - name
+        - code
+        - createdByUserId
+        - memberCount
+        - createdAt
+
+    MyTribeResponse:
+      type: object
+      properties:
+        tribe:
+          oneOf:
+            - $ref: "#/components/schemas/Tribe"
+            - type: "null"
+      required:
+        - tribe
+
+    CreateTribeBody:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+      required:
+        - name
+
+    JoinTribeBody:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 5
+          maxLength: 5
+      required:
+        - code
 
     WeeklyPoints:
       type: object

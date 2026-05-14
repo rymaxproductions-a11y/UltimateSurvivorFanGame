@@ -13,5 +13,11 @@ export interface UserProfile {
   username: string;
   displayName?: string | null;
   role: UserProfileRole;
+  /** @nullable */
+  tribeId: number | null;
+  /** @nullable */
+  tribeName: string | null;
+  /** @nullable */
+  tribeCode: string | null;
   createdAt: string;
 }

@@ -26,14 +26,18 @@ import type {
   CreateContestantBody,
   CreateGameBody,
   CreateQuestionBody,
+  CreateTribeBody,
   CreateWeekBody,
   DeleteContestantResponse,
   DeleteResult,
   Game,
   GameStats,
+  GetLeaderboardParams,
   HealthStatus,
+  JoinTribeBody,
   LeaderboardEntry,
   ListAdminUsersResponse,
+  MyTribeResponse,
   PlayerAnswer,
   QuestionWithChoices,
   SaveAnswersBody,
@@ -43,6 +47,7 @@ import type {
   SubmitCorrectAnswersBody,
   SubmitSurvivorWinnerBody,
   SurvivorPicks,
+  Tribe,
   UpdateAdminUserRoleBody,
   UpdateContestantBody,
   UpdateGameBody,
@@ -3516,24 +3521,46 @@ export const useSubmitSurvivorWinner = <
 };
 
 /**
- * @summary Get leaderboard for a game
+ * @summary Get leaderboard for a game (optionally scoped to a tribe)
  */
-export const getGetLeaderboardUrl = (gameId: number) => {
-  return `/api/games/${gameId}/leaderboard`;
+export const getGetLeaderboardUrl = (
+  gameId: number,
+  params?: GetLeaderboardParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/games/${gameId}/leaderboard?${stringifiedParams}`
+    : `/api/games/${gameId}/leaderboard`;
 };
 
 export const getLeaderboard = async (
   gameId: number,
+  params?: GetLeaderboardParams,
   options?: RequestInit,
 ): Promise<LeaderboardEntry[]> => {
-  return customFetch<LeaderboardEntry[]>(getGetLeaderboardUrl(gameId), {
+  return customFetch<LeaderboardEntry[]>(getGetLeaderboardUrl(gameId, params), {
     ...options,
     method: "GET",
   });
 };
 
-export const getGetLeaderboardQueryKey = (gameId: number) => {
-  return [`/api/games/${gameId}/leaderboard`] as const;
+export const getGetLeaderboardQueryKey = (
+  gameId: number,
+  params?: GetLeaderboardParams,
+) => {
+  return [
+    `/api/games/${gameId}/leaderboard`,
+    ...(params ? [params] : []),
+  ] as const;
 };
 
 export const getGetLeaderboardQueryOptions = <
@@ -3541,6 +3568,7 @@ export const getGetLeaderboardQueryOptions = <
   TError = ErrorType<unknown>,
 >(
   gameId: number,
+  params?: GetLeaderboardParams,
   options?: {
     query?: UseQueryOptions<
       Awaited<ReturnType<typeof getLeaderboard>>,
@@ -3552,11 +3580,12 @@ export const getGetLeaderboardQueryOptions = <
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetLeaderboardQueryKey(gameId);
+  const queryKey =
+    queryOptions?.queryKey ?? getGetLeaderboardQueryKey(gameId, params);
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof getLeaderboard>>> = ({
     signal,
-  }) => getLeaderboard(gameId, { signal, ...requestOptions });
+  }) => getLeaderboard(gameId, params, { signal, ...requestOptions });
 
   return {
     queryKey,
@@ -3576,7 +3605,7 @@ export type GetLeaderboardQueryResult = NonNullable<
 export type GetLeaderboardQueryError = ErrorType<unknown>;
 
 /**
- * @summary Get leaderboard for a game
+ * @summary Get leaderboard for a game (optionally scoped to a tribe)
  */
 
 export function useGetLeaderboard<
@@ -3584,6 +3613,7 @@ export function useGetLeaderboard<
   TError = ErrorType<unknown>,
 >(
   gameId: number,
+  params?: GetLeaderboardParams,
   options?: {
     query?: UseQueryOptions<
       Awaited<ReturnType<typeof getLeaderboard>>,
@@ -3593,7 +3623,254 @@ export function useGetLeaderboard<
     request?: SecondParameter<typeof customFetch>;
   },
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getGetLeaderboardQueryOptions(gameId, options);
+  const queryOptions = getGetLeaderboardQueryOptions(gameId, params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create a new tribe and join it
+ */
+export const getCreateTribeUrl = () => {
+  return `/api/tribes`;
+};
+
+export const createTribe = async (
+  createTribeBody: CreateTribeBody,
+  options?: RequestInit,
+): Promise<Tribe> => {
+  return customFetch<Tribe>(getCreateTribeUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createTribeBody),
+  });
+};
+
+export const getCreateTribeMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createTribe>>,
+    TError,
+    { data: BodyType<CreateTribeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createTribe>>,
+  TError,
+  { data: BodyType<CreateTribeBody> },
+  TContext
+> => {
+  const mutationKey = ["createTribe"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createTribe>>,
+    { data: BodyType<CreateTribeBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createTribe(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateTribeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createTribe>>
+>;
+export type CreateTribeMutationBody = BodyType<CreateTribeBody>;
+export type CreateTribeMutationError = ErrorType<void>;
+
+/**
+ * @summary Create a new tribe and join it
+ */
+export const useCreateTribe = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createTribe>>,
+    TError,
+    { data: BodyType<CreateTribeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createTribe>>,
+  TError,
+  { data: BodyType<CreateTribeBody> },
+  TContext
+> => {
+  return useMutation(getCreateTribeMutationOptions(options));
+};
+
+/**
+ * @summary Join an existing tribe by code
+ */
+export const getJoinTribeUrl = () => {
+  return `/api/tribes/join`;
+};
+
+export const joinTribe = async (
+  joinTribeBody: JoinTribeBody,
+  options?: RequestInit,
+): Promise<Tribe> => {
+  return customFetch<Tribe>(getJoinTribeUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(joinTribeBody),
+  });
+};
+
+export const getJoinTribeMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof joinTribe>>,
+    TError,
+    { data: BodyType<JoinTribeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof joinTribe>>,
+  TError,
+  { data: BodyType<JoinTribeBody> },
+  TContext
+> => {
+  const mutationKey = ["joinTribe"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof joinTribe>>,
+    { data: BodyType<JoinTribeBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return joinTribe(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type JoinTribeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof joinTribe>>
+>;
+export type JoinTribeMutationBody = BodyType<JoinTribeBody>;
+export type JoinTribeMutationError = ErrorType<void>;
+
+/**
+ * @summary Join an existing tribe by code
+ */
+export const useJoinTribe = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof joinTribe>>,
+    TError,
+    { data: BodyType<JoinTribeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof joinTribe>>,
+  TError,
+  { data: BodyType<JoinTribeBody> },
+  TContext
+> => {
+  return useMutation(getJoinTribeMutationOptions(options));
+};
+
+/**
+ * @summary Get the current user's tribe (or null if not in one)
+ */
+export const getGetMyTribeUrl = () => {
+  return `/api/tribes/me`;
+};
+
+export const getMyTribe = async (
+  options?: RequestInit,
+): Promise<MyTribeResponse> => {
+  return customFetch<MyTribeResponse>(getGetMyTribeUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetMyTribeQueryKey = () => {
+  return [`/api/tribes/me`] as const;
+};
+
+export const getGetMyTribeQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMyTribe>>,
+  TError = ErrorType<void>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getMyTribe>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetMyTribeQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyTribe>>> = ({
+    signal,
+  }) => getMyTribe({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMyTribe>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetMyTribeQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getMyTribe>>
+>;
+export type GetMyTribeQueryError = ErrorType<void>;
+
+/**
+ * @summary Get the current user's tribe (or null if not in one)
+ */
+
+export function useGetMyTribe<
+  TData = Awaited<ReturnType<typeof getMyTribe>>,
+  TError = ErrorType<void>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getMyTribe>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetMyTribeQueryOptions(options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

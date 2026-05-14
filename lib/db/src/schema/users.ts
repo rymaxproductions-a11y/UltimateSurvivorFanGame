@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -16,6 +16,9 @@ export const usersTable = pgTable("users", {
   username: text("username").notNull(),
   displayName: text("display_name"),
   role: roleEnum("role").notNull().default("player"),
+  // Tribe membership. Nullable: admin and brand-new users have no tribe yet.
+  // Plain integer (no FK) to avoid a circular reference with tribes.created_by_user_id.
+  tribeId: integer("tribe_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

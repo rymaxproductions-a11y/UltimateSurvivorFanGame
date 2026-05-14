@@ -125,7 +125,7 @@ function HomeRedirect() {
   return (
     <>
       <Show when="signed-in">
-        <Redirect to="/dashboard" />
+        <Redirect to="/onboarding" />
       </Show>
       <Show when="signed-out">
         <LandingPage />
@@ -155,7 +155,7 @@ function LandingPage() {
         <SignIn
           routing="hash"
           signUpUrl={`${basePath}/sign-up`}
-          fallbackRedirectUrl={`${basePath}/dashboard`}
+          fallbackRedirectUrl={`${basePath}/onboarding`}
         />
       </div>
     </div>

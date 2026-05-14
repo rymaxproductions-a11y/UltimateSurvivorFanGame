@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Pressable, View } from "react-native";
+import { Alert, Pressable, TextInput, View } from "react-native";
 
 import { Avatar } from "@/components/Avatar";
 import { Button } from "@/components/Button";
@@ -9,17 +9,20 @@ import { LoadingScreen } from "@/components/LoadingScreen";
 import { Screen } from "@/components/Screen";
 import { useColors } from "@/hooks/useColors";
 import {
+  useCreateTribe,
+  useJoinTribe,
   useGetMe,
   useGetMySurvivorPicks,
   useListContestants,
   useListGames,
   useSaveSurvivorPicks,
-  useUpdateMyProfile,
   getGetMeQueryKey,
   getGetMySurvivorPicksQueryKey,
   getListContestantsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+
+type Step = "tribe-choice" | "tribe-create" | "tribe-join" | "code-shown" | "picks";
 
 export default function Onboarding() {
   const colors = useColors();
@@ -28,7 +31,8 @@ export default function Onboarding() {
 
   const { data: me, isLoading: meLoading } = useGetMe();
   const { data: games, isLoading: gamesLoading } = useListGames();
-  const updateProfile = useUpdateMyProfile();
+  const createTribe = useCreateTribe();
+  const joinTribe = useJoinTribe();
   const savePicks = useSaveSurvivorPicks();
 
   const activeGame = useMemo(
@@ -51,20 +55,30 @@ export default function Onboarding() {
     query: { enabled: !!gameId, queryKey: getGetMySurvivorPicksQueryKey(gameId!) },
   });
 
-  const [displayName, setDisplayName] = useState("");
+  const [step, setStep] = useState<Step | null>(null);
+  const [tribeName, setTribeName] = useState("");
+  const [joinCode, setJoinCode] = useState("");
+  const [createdCode, setCreatedCode] = useState<string | null>(null);
+  const [createdTribeName, setCreatedTribeName] = useState<string | null>(null);
   const [firstPickId, setFirstPickId] = useState<number | null>(null);
   const [secondPickId, setSecondPickId] = useState<number | null>(null);
-  const [step, setStep] = useState<"name" | "picks" | null>(null);
 
-  // Derive starting step once `me` is loaded.
+  // Derive starting step.
   useEffect(() => {
     if (step != null) return;
     if (!me) return;
-    setStep(me.displayName ? "picks" : "name");
-    if (me.displayName) setDisplayName(me.displayName);
-  }, [me, step]);
+    if (!me.tribeId) {
+      setStep("tribe-choice");
+    } else if (
+      existingPicks?.firstChoiceContestantId &&
+      existingPicks?.secondChoiceContestantId
+    ) {
+      router.replace("/");
+    } else {
+      setStep("picks");
+    }
+  }, [me, existingPicks, step, router]);
 
-  // Prefill existing picks for returning users.
   useEffect(() => {
     if (existingPicks?.firstChoiceContestantId && firstPickId == null) {
       setFirstPickId(existingPicks.firstChoiceContestantId);
@@ -76,29 +90,49 @@ export default function Onboarding() {
 
   if (meLoading || gamesLoading || step == null) return <LoadingScreen />;
 
-  const sortedContestants = (contestants ?? []).slice().sort((a, b) =>
-    a.name.localeCompare(b.name),
-  );
+  const sortedContestants = (contestants ?? [])
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name));
 
-  async function handleSaveName() {
-    const trimmed = displayName.trim();
-    if (!trimmed) {
-      Alert.alert("Enter a name", "Other players see this on the leaderboard.");
+  function handleCreate() {
+    const name = tribeName.trim();
+    if (!name) {
+      Alert.alert("Name your tribe", "Pick something memorable.");
       return;
     }
-    updateProfile.mutate(
-      { data: { displayName: trimmed } },
+    createTribe.mutate(
+      { data: { name } },
+      {
+        onSuccess: (tribe) => {
+          setCreatedCode(tribe.code);
+          setCreatedTribeName(tribe.name);
+          qc.invalidateQueries({ queryKey: getGetMeQueryKey() });
+          setStep("code-shown");
+        },
+        onError: () => Alert.alert("Couldn't create tribe", "Please try again."),
+      },
+    );
+  }
+
+  function handleJoin() {
+    const code = joinCode.trim().toUpperCase();
+    if (code.length !== 5) {
+      Alert.alert("Invalid code", "Tribe codes are 5 characters.");
+      return;
+    }
+    joinTribe.mutate(
+      { data: { code } },
       {
         onSuccess: () => {
           qc.invalidateQueries({ queryKey: getGetMeQueryKey() });
           setStep("picks");
         },
-        onError: () => Alert.alert("Could not save", "Please try again."),
+        onError: () => Alert.alert("Couldn't join", "Check the code and try again."),
       },
     );
   }
 
-  async function handleSavePicks() {
+  function handleSavePicks() {
     if (!gameId || !firstPickId || !secondPickId) {
       Alert.alert("Pick two", "Choose your winner and second choice.");
       return;
@@ -121,52 +155,199 @@ export default function Onboarding() {
     );
   }
 
-  if (!activeGame) {
+  if (step === "tribe-choice") {
     return (
       <Screen>
-        <Heading>No active season</Heading>
-        <Body muted style={{ marginTop: 12 }}>
-          Hang tight — the next Survivor season hasn't started yet.
+        <Body muted style={{ fontSize: 12, letterSpacing: 1.5 }}>
+          STEP 1
         </Body>
-        <View style={{ marginTop: 24 }}>
-          <Button label="Back to Dashboard" onPress={() => router.replace("/")} />
+        <Heading style={{ marginTop: 4 }}>Join the action</Heading>
+        <Body muted style={{ marginTop: 8 }}>
+          Create a tribe to invite friends, or join an existing one with a 5-character code.
+        </Body>
+
+        <View style={{ marginTop: 24, gap: 12 }}>
+          <Button label="Create a Tribe" onPress={() => setStep("tribe-create")} fullWidth />
+          <Button
+            label="Join with Code"
+            onPress={() => setStep("tribe-join")}
+            fullWidth
+            variant="secondary"
+          />
         </View>
       </Screen>
     );
   }
 
-  if (step === "name") {
+  if (step === "tribe-create") {
     return (
       <Screen>
         <Body muted style={{ fontSize: 12, letterSpacing: 1.5 }}>
-          STEP 1 OF 2
+          STEP 1
         </Body>
-        <Heading style={{ marginTop: 4 }}>Choose your name</Heading>
+        <Heading style={{ marginTop: 4 }}>Name your tribe</Heading>
         <Body muted style={{ marginTop: 8 }}>
-          This is how other players will see you on the leaderboard.
+          Your tribe name will appear on shared leaderboards.
         </Body>
-        <View style={{ marginTop: 24, gap: 14 }}>
-          <View
+
+        <View
+          style={{
+            marginTop: 20,
+            backgroundColor: colors.card,
+            borderColor: colors.border,
+            borderWidth: 1,
+            borderRadius: colors.radius,
+            padding: 14,
+          }}
+        >
+          <Body muted style={{ fontSize: 11, letterSpacing: 1 }}>
+            TRIBE NAME
+          </Body>
+          <TextInput
+            value={tribeName}
+            onChangeText={setTribeName}
+            placeholder="e.g. Snake Charmers"
+            placeholderTextColor={colors.mutedForeground}
+            maxLength={50}
+            autoFocus
             style={{
-              backgroundColor: colors.card,
-              borderColor: colors.border,
-              borderWidth: 1,
-              borderRadius: colors.radius,
-              padding: 14,
+              fontFamily: "Oswald_700Bold",
+              fontSize: 22,
+              color: colors.foreground,
+              paddingVertical: 6,
             }}
-          >
-            <Body muted style={{ fontSize: 11, letterSpacing: 1 }}>
-              YOUR NAME
-            </Body>
-            <NameInput value={displayName} onChange={setDisplayName} />
-          </View>
-          <Button
-            label="Continue"
-            loading={updateProfile.isPending}
-            onPress={handleSaveName}
-            fullWidth
           />
         </View>
+
+        <View style={{ marginTop: 20, gap: 10 }}>
+          <Button
+            label="Create Tribe"
+            loading={createTribe.isPending}
+            onPress={handleCreate}
+            fullWidth
+          />
+          <Pressable onPress={() => setStep("tribe-choice")} style={{ alignSelf: "center", padding: 8 }}>
+            <Body muted>Back</Body>
+          </Pressable>
+        </View>
+      </Screen>
+    );
+  }
+
+  if (step === "tribe-join") {
+    return (
+      <Screen>
+        <Body muted style={{ fontSize: 12, letterSpacing: 1.5 }}>
+          STEP 1
+        </Body>
+        <Heading style={{ marginTop: 4 }}>Enter tribe code</Heading>
+        <Body muted style={{ marginTop: 8 }}>
+          Ask your tribe organizer for the 5-character code.
+        </Body>
+
+        <View
+          style={{
+            marginTop: 20,
+            backgroundColor: colors.card,
+            borderColor: colors.border,
+            borderWidth: 1,
+            borderRadius: colors.radius,
+            padding: 18,
+            alignItems: "center",
+          }}
+        >
+          <TextInput
+            value={joinCode}
+            onChangeText={(t) => setJoinCode(t.toUpperCase())}
+            placeholder="ABCDE"
+            placeholderTextColor={colors.mutedForeground}
+            maxLength={5}
+            autoCapitalize="characters"
+            autoCorrect={false}
+            autoFocus
+            style={{
+              fontFamily: "Oswald_700Bold",
+              fontSize: 36,
+              letterSpacing: 12,
+              color: colors.foreground,
+              textAlign: "center",
+              paddingVertical: 8,
+            }}
+          />
+        </View>
+
+        <View style={{ marginTop: 20, gap: 10 }}>
+          <Button
+            label="Join Tribe"
+            loading={joinTribe.isPending}
+            onPress={handleJoin}
+            fullWidth
+          />
+          <Pressable onPress={() => setStep("tribe-choice")} style={{ alignSelf: "center", padding: 8 }}>
+            <Body muted>Back</Body>
+          </Pressable>
+        </View>
+      </Screen>
+    );
+  }
+
+  if (step === "code-shown" && createdCode) {
+    return (
+      <Screen>
+        <Body muted style={{ fontSize: 12, letterSpacing: 1.5 }}>
+          TRIBE CREATED
+        </Body>
+        <Heading style={{ marginTop: 4 }}>{createdTribeName}</Heading>
+        <Body muted style={{ marginTop: 8 }}>
+          Share this code with your friends so they can join your tribe.
+        </Body>
+
+        <View
+          style={{
+            marginTop: 24,
+            backgroundColor: colors.accent,
+            borderColor: colors.primary,
+            borderWidth: 2,
+            borderRadius: colors.radius,
+            padding: 24,
+            alignItems: "center",
+          }}
+        >
+          <Body muted style={{ fontSize: 11, letterSpacing: 2 }}>
+            TRIBE CODE
+          </Body>
+          <Body
+            style={{
+              marginTop: 6,
+              fontFamily: "Oswald_700Bold",
+              fontSize: 56,
+              letterSpacing: 14,
+              color: colors.foreground,
+            }}
+          >
+            {createdCode}
+          </Body>
+        </View>
+
+        <Body muted style={{ marginTop: 16, fontSize: 13 }}>
+          You'll always see this code in the app header.
+        </Body>
+
+        <View style={{ marginTop: 24 }}>
+          <Button label="Continue to Season Picks" onPress={() => setStep("picks")} fullWidth />
+        </View>
+      </Screen>
+    );
+  }
+
+  // step === "picks"
+  if (!activeGame) {
+    return (
+      <Screen>
+        <Heading>Almost there!</Heading>
+        <Body muted style={{ marginTop: 12 }}>
+          The season hasn't started yet. We'll let you know when it does.
+        </Body>
       </Screen>
     );
   }
@@ -174,11 +355,11 @@ export default function Onboarding() {
   return (
     <Screen>
       <Body muted style={{ fontSize: 12, letterSpacing: 1.5 }}>
-        STEP 2 OF 2
+        STEP 2
       </Body>
       <Heading style={{ marginTop: 4 }}>Season picks</Heading>
       <Body muted style={{ marginTop: 8 }}>
-        Lock in your winner and second choice. These count for the entire season.
+        Lock in your winner and second choice. Required to access the dashboard.
       </Body>
 
       <View style={{ marginTop: 20, gap: 14 }}>
@@ -210,41 +391,6 @@ export default function Onboarding() {
         />
       </View>
     </Screen>
-  );
-}
-
-function NameInput({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (s: string) => void;
-}) {
-  const colors = useColors();
-  return (
-    <View style={{ marginTop: 8 }}>
-      <NameTextInput value={value} onChange={onChange} colors={colors} />
-    </View>
-  );
-}
-
-function NameTextInput({ value, onChange, colors }: any) {
-  const { TextInput } = require("react-native");
-  return (
-    <TextInput
-      value={value}
-      onChangeText={onChange}
-      placeholder="e.g. Jeff Probst"
-      placeholderTextColor={colors.mutedForeground}
-      maxLength={50}
-      autoFocus
-      style={{
-        fontFamily: "Oswald_700Bold",
-        fontSize: 22,
-        color: colors.foreground,
-        paddingVertical: 4,
-      }}
-    />
   );
 }
 
@@ -281,13 +427,7 @@ function PickerSection({
           {subtitle}
         </Body>
       </View>
-      <View
-        style={{
-          flexDirection: "row",
-          flexWrap: "wrap",
-          marginHorizontal: -4,
-        }}
-      >
+      <View style={{ flexDirection: "row", flexWrap: "wrap", marginHorizontal: -4 }}>
         {contestants.map((c) => {
           const selected = c.id === selectedId;
           const disabled = c.id === disabledId;

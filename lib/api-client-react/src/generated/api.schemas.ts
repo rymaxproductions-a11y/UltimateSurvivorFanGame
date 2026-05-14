@@ -23,6 +23,12 @@ export interface UserProfile {
   username: string;
   displayName?: string | null;
   role: UserProfileRole;
+  /** @nullable */
+  tribeId: number | null;
+  /** @nullable */
+  tribeName: string | null;
+  /** @nullable */
+  tribeCode: string | null;
   createdAt: string;
 }
 
@@ -317,9 +323,41 @@ export interface LeaderboardEntry {
   userId: number;
   username: string;
   displayName?: string | null;
+  /** @nullable */
+  tribeName: string | null;
   totalPoints: number;
   weeklyPoints: WeeklyPoints[];
   survivorPickPoints: number;
+}
+
+export interface Tribe {
+  id: number;
+  name: string;
+  code: string;
+  /** @nullable */
+  createdByUserId: number | null;
+  memberCount: number;
+  createdAt: string;
+}
+
+export interface MyTribeResponse {
+  tribe: Tribe | null;
+}
+
+export interface CreateTribeBody {
+  /**
+   * @minLength 1
+   * @maxLength 50
+   */
+  name: string;
+}
+
+export interface JoinTribeBody {
+  /**
+   * @minLength 5
+   * @maxLength 5
+   */
+  code: string;
 }
 
 export interface GameStats {
@@ -331,3 +369,10 @@ export interface GameStats {
   /** @nullable */
   topPlayerPoints: number | null;
 }
+
+export type GetLeaderboardParams = {
+  /**
+   * When provided, only includes players in this tribe.
+   */
+  tribeId?: number;
+};

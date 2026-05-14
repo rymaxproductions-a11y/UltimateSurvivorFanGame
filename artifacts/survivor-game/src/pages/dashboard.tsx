@@ -252,7 +252,7 @@ function SeasonPicksGate({ gameId, onComplete }: { gameId: number; onComplete: (
 function GameView({ gameId }: { gameId: number }) {
   const { data: weeks } = useListWeeks(gameId);
   const { data: game } = useGetGame(gameId);
-  const { data: leaderboard } = useGetLeaderboard(gameId, {
+  const { data: leaderboard } = useGetLeaderboard(gameId, undefined, {
     query: { queryKey: getGetLeaderboardQueryKey(gameId) },
   });
   const { data: myPicks, isLoading: picksLoading } = useGetMySurvivorPicks(gameId);
@@ -455,6 +455,7 @@ export default function Dashboard() {
   );
   if (me.role === "admin") return <Redirect to="/admin" />;
   if (me.role !== "player") return <Redirect to="/onboarding" />;
+  if (!me.tribeId) return <Redirect to="/onboarding" />;
 
   const activeGames = (games ?? []).filter((g) => g.status === "active" || g.status === "completed");
   const game = activeGames[0];

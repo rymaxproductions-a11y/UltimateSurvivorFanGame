@@ -2,8 +2,6 @@ import { useLocation, Link } from "wouter";
 import { useGetMe } from "@workspace/api-client-react";
 import { useUser, UserButton } from "@clerk/react";
 
-const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
-
 export function Nav() {
   const { isSignedIn } = useUser();
   const [location] = useLocation();
@@ -53,14 +51,46 @@ export function Nav() {
           </nav>
         </div>
         <div className="flex items-center gap-2 md:gap-3">
+          {me?.tribeCode && (
+            <div
+              data-testid="tribe-code-badge"
+              className="hidden sm:flex flex-col items-end leading-none mr-1"
+              title={me.tribeName ?? "Your tribe"}
+            >
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                {me.tribeName ?? "Tribe"}
+              </span>
+              <span
+                className="text-base font-black text-primary tracking-[0.25em] mt-0.5"
+                style={{ fontFamily: "'Oswald', sans-serif" }}
+              >
+                {me.tribeCode}
+              </span>
+            </div>
+          )}
           {me && (
-            <span className="text-sm font-medium text-foreground hidden sm:inline truncate max-w-[140px]">
+            <span className="text-sm font-medium text-foreground hidden md:inline truncate max-w-[140px]">
               {me.displayName ?? me.username}
             </span>
           )}
           <UserButton />
         </div>
       </header>
+
+      {me?.tribeCode && (
+        <div className="sm:hidden bg-primary/5 border-b border-border px-4 py-1.5 flex items-center justify-between">
+          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+            {me.tribeName ?? "Tribe"}
+          </span>
+          <span
+            data-testid="tribe-code-badge-mobile"
+            className="text-sm font-black text-primary tracking-[0.3em]"
+            style={{ fontFamily: "'Oswald', sans-serif" }}
+          >
+            {me.tribeCode}
+          </span>
+        </div>
+      )}
 
       {/* Mobile bottom nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border flex items-center justify-around z-40 safe-area-bottom">

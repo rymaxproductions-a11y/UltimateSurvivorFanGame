@@ -10,6 +10,7 @@ import questionsRouter from "./questions";
 import answersRouter from "./answers";
 import leaderboardRouter from "./leaderboard";
 import storageRouter from "./storage";
+import tribesRouter from "./tribes";
 
 const router: IRouter = Router();
 
@@ -24,5 +25,6 @@ router.use(questionsRouter);
 router.use(answersRouter);
 router.use(leaderboardRouter);
 router.use(storageRouter);
+router.use(tribesRouter);
 
 export default router;

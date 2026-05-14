@@ -6,9 +6,13 @@ import React from "react";
 import { Platform, StyleSheet, View, useColorScheme } from "react-native";
 
 import { useColors } from "@/hooks/useColors";
+import { useGetMe, getGetMeQueryKey } from "@workspace/api-client-react";
 
 export default function TabLayout() {
   const { isLoaded, isSignedIn } = useAuth();
+  const { data: me, isLoading: meLoading } = useGetMe({
+    query: { enabled: isLoaded && isSignedIn, queryKey: getGetMeQueryKey() },
+  });
   const colors = useColors();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
@@ -17,6 +21,8 @@ export default function TabLayout() {
 
   if (!isLoaded) return null;
   if (!isSignedIn) return <Redirect href="/sign-in" />;
+  if (meLoading) return null;
+  if (me && me.role === "player" && !me.tribeId) return <Redirect href="/onboarding" />;
 
   return (
     <Tabs

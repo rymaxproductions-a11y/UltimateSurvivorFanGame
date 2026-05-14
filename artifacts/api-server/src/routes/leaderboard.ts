@@ -1,19 +1,42 @@
 import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
-import { db, usersTable, playerAnswersTable, questionsTable, weeksTable, survivorPicksTable, gamesTable, correctAnswersTable } from "@workspace/db";
-import { GetLeaderboardParams, GetLeaderboardResponse } from "@workspace/api-zod";
+import { db, usersTable, tribesTable, playerAnswersTable, questionsTable, weeksTable, survivorPicksTable, gamesTable } from "@workspace/db";
+import { GetLeaderboardParams, GetLeaderboardQueryParams, GetLeaderboardResponse } from "@workspace/api-zod";
 import { serialize } from "../lib/serialize";
+import { getAuthClerkId } from "../lib/localAuth";
+import { requireAuth } from "./users";
 
 const router: IRouter = Router();
 
-router.get("/games/:gameId/leaderboard", async (req, res): Promise<void> => {
+router.get("/games/:gameId/leaderboard", requireAuth, async (req: any, res): Promise<void> => {
   const params = GetLeaderboardParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
     return;
   }
+  const query = GetLeaderboardQueryParams.safeParse(req.query);
+  if (!query.success) {
+    res.status(400).json({ error: query.error.message });
+    return;
+  }
 
   const gameId = params.data.gameId;
+  const tribeFilterId = query.data.tribeId ?? null;
+
+  if (tribeFilterId !== null) {
+    const clerkId = getAuthClerkId(req);
+    const [me] = clerkId
+      ? await db.select().from(usersTable).where(eq(usersTable.clerkId, clerkId))
+      : [];
+    if (!me) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+    if (me.role !== "admin" && me.tribeId !== tribeFilterId) {
+      res.status(403).json({ error: "You are not a member of this tribe." });
+      return;
+    }
+  }
 
   const [game] = await db.select().from(gamesTable).where(eq(gamesTable.id, gameId));
   if (!game) {
@@ -21,7 +44,21 @@ router.get("/games/:gameId/leaderboard", async (req, res): Promise<void> => {
     return;
   }
 
-  const allUsers = await db.select().from(usersTable).where(eq(usersTable.role, "player"));
+  // Load all players, then filter by tribe if requested.
+  let allUsers = await db.select().from(usersTable).where(eq(usersTable.role, "player"));
+  if (tribeFilterId !== null) {
+    allUsers = allUsers.filter((u) => u.tribeId === tribeFilterId);
+  }
+
+  // Build a tribeId → tribeName map for the entries we'll return.
+  const tribeIds = Array.from(new Set(allUsers.map((u) => u.tribeId).filter((id): id is number => id != null)));
+  const tribeNameById = new Map<number, string>();
+  if (tribeIds.length > 0) {
+    const tribes = await db.select().from(tribesTable);
+    for (const t of tribes) {
+      if (tribeIds.includes(t.id)) tribeNameById.set(t.id, t.name);
+    }
+  }
 
   const weeks = await db.select().from(weeksTable)
     .where(and(eq(weeksTable.gameId, gameId), eq(weeksTable.isLocked, true)))
@@ -59,13 +96,11 @@ router.get("/games/:gameId/leaderboard", async (req, res): Promise<void> => {
     if (game.survivorWinnerContestantId) {
       const userPick = survivorPicks.find(sp => sp.userId === user.id);
       if (userPick) {
-        // Score first pick
         if (userPick.firstChoiceContestantId === game.survivorWinnerContestantId) {
           survivorPickPoints += game.firstPickPoints;
         } else if (finalThreeIds.includes(userPick.firstChoiceContestantId ?? -1)) {
           survivorPickPoints += game.firstPickTopThreePoints;
         }
-        // Score second pick
         if (userPick.secondChoiceContestantId === game.survivorWinnerContestantId) {
           survivorPickPoints += game.secondPickPoints;
         } else if (finalThreeIds.includes(userPick.secondChoiceContestantId ?? -1)) {
@@ -78,6 +113,7 @@ router.get("/games/:gameId/leaderboard", async (req, res): Promise<void> => {
       userId: user.id,
       username: user.username,
       displayName: user.displayName ?? null,
+      tribeName: user.tribeId != null ? tribeNameById.get(user.tribeId) ?? null : null,
       totalPoints: totalPoints + survivorPickPoints,
       weeklyPoints,
       survivorPickPoints,

@@ -49,8 +49,9 @@ export default function Dashboard() {
   const { data: picks } = useGetMySurvivorPicks(gameId!, {
     query: { enabled: !!gameId, queryKey: getGetMySurvivorPicksQueryKey(gameId!) },
   });
-  const { data: leaderboard } = useGetLeaderboard(gameId!, {
-    query: { enabled: !!gameId, queryKey: getGetLeaderboardQueryKey(gameId!) },
+  const lbParams = me?.tribeId ? { tribeId: me.tribeId } : undefined;
+  const { data: leaderboard } = useGetLeaderboard(gameId!, lbParams, {
+    query: { enabled: !!gameId, queryKey: getGetLeaderboardQueryKey(gameId!, lbParams) },
   });
 
   if (meLoading || gamesLoading) return <LoadingScreen />;
@@ -59,7 +60,9 @@ export default function Dashboard() {
     me &&
     me.role === "player" &&
     activeGame &&
-    (!picks?.firstChoiceContestantId || !picks?.secondChoiceContestantId);
+    (!me.tribeId ||
+      !picks?.firstChoiceContestantId ||
+      !picks?.secondChoiceContestantId);
 
   const contestantsById = new Map((contestants ?? []).map((c) => [c.id, c]));
 
@@ -94,6 +97,44 @@ export default function Dashboard() {
           <Body muted style={{ marginTop: 4 }}>
             Episode {activeGame.currentWeekNumber} of {activeGame.totalWeeks}
           </Body>
+        ) : null}
+        {me?.tribeCode ? (
+          <View
+            style={{
+              marginTop: 12,
+              flexDirection: "row",
+              alignItems: "center",
+              alignSelf: "flex-start",
+              paddingVertical: 6,
+              paddingHorizontal: 12,
+              borderRadius: 999,
+              backgroundColor: colors.accent,
+              borderWidth: 1,
+              borderColor: colors.primary,
+              gap: 8,
+            }}
+          >
+            <Body
+              style={{
+                fontFamily: "WorkSans_600SemiBold",
+                fontSize: 11,
+                letterSpacing: 1,
+                color: colors.mutedForeground,
+              }}
+            >
+              {(me.tribeName ?? "TRIBE").toUpperCase()}
+            </Body>
+            <Body
+              style={{
+                fontFamily: "Oswald_700Bold",
+                fontSize: 14,
+                letterSpacing: 4,
+                color: colors.primary,
+              }}
+            >
+              {me.tribeCode}
+            </Body>
+          </View>
         ) : null}
       </View>
 

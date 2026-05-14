@@ -1,15 +1,34 @@
+import { useState } from "react";
 import { Redirect } from "wouter";
-import { useGetMe, useListGames, useGetLeaderboard, getGetLeaderboardQueryKey } from "@workspace/api-client-react";
+import {
+  useGetMe,
+  useListGames,
+  useGetLeaderboard,
+  getGetLeaderboardQueryKey,
+} from "@workspace/api-client-react";
 import { Nav } from "@/components/nav";
+
+type Scope = "tribe" | "global";
 
 export default function Leaderboard() {
   const { data: me, isLoading: meLoading } = useGetMe();
   const { data: games, isLoading: gamesLoading } = useListGames();
+  const [scope, setScope] = useState<Scope>("tribe");
 
   const activeGame = games?.find((g) => g.status === "active") ?? games?.[0];
-  const { data: leaderboard, isLoading: lbLoading } = useGetLeaderboard(activeGame?.id!, {
-    query: { enabled: !!activeGame?.id, queryKey: getGetLeaderboardQueryKey(activeGame?.id!) },
-  });
+  const tribeId = me?.tribeId ?? null;
+  const params = scope === "tribe" && tribeId != null ? { tribeId } : undefined;
+
+  const { data: leaderboard, isLoading: lbLoading } = useGetLeaderboard(
+    activeGame?.id!,
+    params,
+    {
+      query: {
+        enabled: !!activeGame?.id,
+        queryKey: getGetLeaderboardQueryKey(activeGame?.id!, params),
+      },
+    },
+  );
 
   if (meLoading || gamesLoading) {
     return (
@@ -19,24 +38,55 @@ export default function Leaderboard() {
     );
   }
 
-  if (!me) {
-    return <Redirect to="/sign-in" />;
-  }
+  if (!me) return <Redirect to="/sign-in" />;
 
   const episodes = leaderboard?.[0]?.weeklyPoints?.map((w) => w.weekNumber) ?? [];
+  const canShowTribe = !!tribeId;
 
   return (
     <div className="min-h-screen bg-background">
       <Nav />
       <div className="max-w-5xl mx-auto px-4 py-6 pb-24 md:pb-10">
         <div className="mb-6">
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground" style={{ fontFamily: "'Oswald', sans-serif" }}>
+          <h1
+            className="text-3xl md:text-4xl font-bold text-foreground"
+            style={{ fontFamily: "'Oswald', sans-serif" }}
+          >
             LEADERBOARD
           </h1>
           {activeGame && (
-            <p className="text-muted-foreground mt-1 text-sm">{activeGame.name} — Episode {activeGame.currentWeekNumber} of {activeGame.totalWeeks}</p>
+            <p className="text-muted-foreground mt-1 text-sm">
+              {activeGame.name} — Episode {activeGame.currentWeekNumber} of {activeGame.totalWeeks}
+            </p>
           )}
         </div>
+
+        {canShowTribe && (
+          <div className="inline-flex bg-card border border-border rounded-xl p-1 mb-5">
+            <button
+              data-testid="tab-tribe"
+              onClick={() => setScope("tribe")}
+              className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
+                scope === "tribe"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {me.tribeName ?? "My Tribe"}
+            </button>
+            <button
+              data-testid="tab-global"
+              onClick={() => setScope("global")}
+              className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
+                scope === "global"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              All Players
+            </button>
+          </div>
+        )}
 
         {!activeGame ? (
           <div className="text-center py-16 bg-card border border-border rounded-2xl">
@@ -48,7 +98,9 @@ export default function Leaderboard() {
         ) : !leaderboard || leaderboard.length === 0 ? (
           <div className="text-center py-16 bg-card border border-border rounded-2xl">
             <h2 className="text-xl font-semibold text-foreground mb-2">No Scores Yet</h2>
-            <p className="text-muted-foreground">Scores will appear here once the first episode is locked.</p>
+            <p className="text-muted-foreground">
+              Scores will appear here once the first episode is locked.
+            </p>
           </div>
         ) : (
           <>
@@ -60,13 +112,24 @@ export default function Leaderboard() {
                   className="bg-card border border-border rounded-xl px-4 py-3 flex items-center justify-between"
                 >
                   <div className="flex items-center gap-3">
-                    <span className={`text-xl font-black w-8 text-center ${entry.rank <= 3 ? "text-primary" : "text-muted-foreground"}`}>
+                    <span
+                      className={`text-xl font-black w-8 text-center ${
+                        entry.rank <= 3 ? "text-primary" : "text-muted-foreground"
+                      }`}
+                    >
                       #{entry.rank}
                     </span>
                     <div>
-                      <div className="font-semibold text-foreground">{entry.displayName ?? entry.username}</div>
+                      <div className="font-semibold text-foreground">
+                        {entry.displayName ?? entry.username}
+                      </div>
+                      {scope === "global" && entry.tribeName && (
+                        <div className="text-xs text-muted-foreground">{entry.tribeName}</div>
+                      )}
                       {entry.survivorPickPoints > 0 && (
-                        <div className="text-xs text-muted-foreground">Survivor: +{entry.survivorPickPoints} pts</div>
+                        <div className="text-xs text-muted-foreground">
+                          Survivor: +{entry.survivorPickPoints} pts
+                        </div>
                       )}
                     </div>
                   </div>
@@ -85,6 +148,9 @@ export default function Leaderboard() {
                     <tr className="border-b border-border bg-muted/40">
                       <th className="px-4 py-3 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">Rank</th>
                       <th className="px-4 py-3 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">Player</th>
+                      {scope === "global" && (
+                        <th className="px-4 py-3 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">Tribe</th>
+                      )}
                       <th className="px-4 py-3 text-right text-xs font-bold text-muted-foreground uppercase tracking-wider">Survivor</th>
                       {episodes.map((w) => (
                         <th key={w} className="px-3 py-3 text-center text-xs font-bold text-muted-foreground uppercase tracking-wider">
@@ -106,7 +172,14 @@ export default function Leaderboard() {
                             #{entry.rank}
                           </span>
                         </td>
-                        <td className="px-4 py-3 font-semibold text-foreground">{entry.displayName ?? entry.username}</td>
+                        <td className="px-4 py-3 font-semibold text-foreground">
+                          {entry.displayName ?? entry.username}
+                        </td>
+                        {scope === "global" && (
+                          <td className="px-4 py-3 text-sm text-muted-foreground">
+                            {entry.tribeName ?? "—"}
+                          </td>
+                        )}
                         <td className="px-4 py-3 text-right text-sm text-primary font-semibold">
                           {entry.survivorPickPoints > 0 ? `+${entry.survivorPickPoints}` : "—"}
                         </td>
@@ -118,7 +191,9 @@ export default function Leaderboard() {
                             </td>
                           );
                         })}
-                        <td className="px-4 py-3 text-right font-black text-lg text-primary">{entry.totalPoints}</td>
+                        <td className="px-4 py-3 text-right font-black text-lg text-primary">
+                          {entry.totalPoints}
+                        </td>
                       </tr>
                     ))}
                   </tbody>

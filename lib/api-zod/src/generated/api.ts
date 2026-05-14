@@ -41,6 +41,9 @@ export const SignInResponse = zod.object({
     username: zod.string(),
     displayName: zod.string().nullish(),
     role: zod.enum(["admin", "player"]),
+    tribeId: zod.number().nullable(),
+    tribeName: zod.string().nullable(),
+    tribeCode: zod.string().nullable(),
     createdAt: zod.string(),
   }),
 });
@@ -96,6 +99,9 @@ export const GetMeResponse = zod.object({
   username: zod.string(),
   displayName: zod.string().nullish(),
   role: zod.enum(["admin", "player"]),
+  tribeId: zod.number().nullable(),
+  tribeName: zod.string().nullable(),
+  tribeCode: zod.string().nullable(),
   createdAt: zod.string(),
 });
 
@@ -112,6 +118,9 @@ export const UpdateMyProfileResponse = zod.object({
   username: zod.string(),
   displayName: zod.string().nullish(),
   role: zod.enum(["admin", "player"]),
+  tribeId: zod.number().nullable(),
+  tribeName: zod.string().nullable(),
+  tribeCode: zod.string().nullable(),
   createdAt: zod.string(),
 });
 
@@ -128,6 +137,9 @@ export const UpdateMyRoleResponse = zod.object({
   username: zod.string(),
   displayName: zod.string().nullish(),
   role: zod.enum(["admin", "player"]),
+  tribeId: zod.number().nullable(),
+  tribeName: zod.string().nullable(),
+  tribeCode: zod.string().nullable(),
   createdAt: zod.string(),
 });
 
@@ -696,10 +708,17 @@ export const SubmitSurvivorWinnerResponse = zod.object({
 });
 
 /**
- * @summary Get leaderboard for a game
+ * @summary Get leaderboard for a game (optionally scoped to a tribe)
  */
 export const GetLeaderboardParams = zod.object({
   gameId: zod.coerce.number(),
+});
+
+export const GetLeaderboardQueryParams = zod.object({
+  tribeId: zod.coerce
+    .number()
+    .optional()
+    .describe("When provided, only includes players in this tribe."),
 });
 
 export const GetLeaderboardResponseItem = zod.object({
@@ -707,6 +726,7 @@ export const GetLeaderboardResponseItem = zod.object({
   userId: zod.number(),
   username: zod.string(),
   displayName: zod.string().nullish(),
+  tribeName: zod.string().nullable(),
   totalPoints: zod.number(),
   weeklyPoints: zod.array(
     zod.object({
@@ -717,6 +737,51 @@ export const GetLeaderboardResponseItem = zod.object({
   survivorPickPoints: zod.number(),
 });
 export const GetLeaderboardResponse = zod.array(GetLeaderboardResponseItem);
+
+/**
+ * @summary Create a new tribe and join it
+ */
+export const createTribeBodyNameMax = 50;
+
+export const CreateTribeBody = zod.object({
+  name: zod.string().min(1).max(createTribeBodyNameMax),
+});
+
+/**
+ * @summary Join an existing tribe by code
+ */
+export const joinTribeBodyCodeMin = 5;
+export const joinTribeBodyCodeMax = 5;
+
+export const JoinTribeBody = zod.object({
+  code: zod.string().min(joinTribeBodyCodeMin).max(joinTribeBodyCodeMax),
+});
+
+export const JoinTribeResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  code: zod.string(),
+  createdByUserId: zod.number().nullable(),
+  memberCount: zod.number(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Get the current user's tribe (or null if not in one)
+ */
+export const GetMyTribeResponse = zod.object({
+  tribe: zod.union([
+    zod.object({
+      id: zod.number(),
+      name: zod.string(),
+      code: zod.string(),
+      createdByUserId: zod.number().nullable(),
+      memberCount: zod.number(),
+      createdAt: zod.string(),
+    }),
+    zod.null(),
+  ]),
+});
 
 /**
  * @summary Get game stats summary
