@@ -1,4 +1,5 @@
 import * as SecureStore from "expo-secure-store";
+import { Platform } from "react-native";
 import React, {
   createContext,
   useCallback,
@@ -16,6 +17,43 @@ import {
 
 const TOKEN_KEY = "survivor.localAuth.jwt";
 const USER_KEY = "survivor.localAuth.user";
+
+// expo-secure-store is native-only. On web we fall back to localStorage so the
+// Expo web preview (and any future web build) keeps working.
+const storage = {
+  async getItem(key: string): Promise<string | null> {
+    if (Platform.OS === "web") {
+      try {
+        return typeof window !== "undefined" ? window.localStorage.getItem(key) : null;
+      } catch {
+        return null;
+      }
+    }
+    return SecureStore.getItemAsync(key);
+  },
+  async setItem(key: string, value: string): Promise<void> {
+    if (Platform.OS === "web") {
+      try {
+        if (typeof window !== "undefined") window.localStorage.setItem(key, value);
+      } catch {
+        /* ignore */
+      }
+      return;
+    }
+    await SecureStore.setItemAsync(key, value);
+  },
+  async deleteItem(key: string): Promise<void> {
+    if (Platform.OS === "web") {
+      try {
+        if (typeof window !== "undefined") window.localStorage.removeItem(key);
+      } catch {
+        /* ignore */
+      }
+      return;
+    }
+    await SecureStore.deleteItemAsync(key);
+  },
+};
 
 export interface LocalUser {
   id: number;
@@ -51,8 +89,8 @@ export function LocalAuthProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       try {
         const [storedToken, storedUserJson] = await Promise.all([
-          SecureStore.getItemAsync(TOKEN_KEY),
-          SecureStore.getItemAsync(USER_KEY),
+          storage.getItem(TOKEN_KEY),
+          storage.getItem(USER_KEY),
         ]);
         if (storedToken) setToken(storedToken);
         if (storedUserJson) {
@@ -72,8 +110,8 @@ export function LocalAuthProvider({ children }: { children: React.ReactNode }) {
     setToken(nextToken);
     setUser(nextUser);
     await Promise.all([
-      SecureStore.setItemAsync(TOKEN_KEY, nextToken),
-      SecureStore.setItemAsync(USER_KEY, JSON.stringify(nextUser)),
+      storage.setItem(TOKEN_KEY, nextToken),
+      storage.setItem(USER_KEY, JSON.stringify(nextUser)),
     ]);
   }, []);
 
@@ -81,8 +119,8 @@ export function LocalAuthProvider({ children }: { children: React.ReactNode }) {
     setToken(null);
     setUser(null);
     await Promise.all([
-      SecureStore.deleteItemAsync(TOKEN_KEY),
-      SecureStore.deleteItemAsync(USER_KEY),
+      storage.deleteItem(TOKEN_KEY),
+      storage.deleteItem(USER_KEY),
     ]);
   }, []);
 

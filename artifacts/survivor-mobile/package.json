@@ -58,6 +58,6 @@
   "dependencies": {
     "@expo-google-fonts/oswald": "^0.4.2",
     "@expo-google-fonts/work-sans": "^0.4.2",
-    "expo-secure-store": "^55.0.13"
+    "expo-secure-store": "^15.0.8"
   }
 }
