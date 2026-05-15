@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
 import { db, usersTable, tribesTable } from "@workspace/db";
-import { GetMeResponse, UpdateMyProfileBody, UpdateMyProfileResponse } from "@workspace/api-zod";
+import { GetMeResponse, UpdateMyProfileBody, UpdateMyProfileResponse, UpdateMyRoleBody } from "@workspace/api-zod";
 import { serialize } from "../lib/serialize";
 import { getAuthClerkId } from "../lib/localAuth";
 
@@ -78,6 +78,36 @@ router.patch("/users/me", requireAuth, async (req: any, res: any): Promise<void>
 
   [user] = await db.update(usersTable).set({ displayName: parsed.data.displayName.trim() }).where(eq(usersTable.clerkId, clerkId)).returning();
   res.json(UpdateMyProfileResponse.parse(serialize(await withTribe(user))));
+});
+
+router.patch("/users/me/role", requireAuth, async (req: any, res: any): Promise<void> => {
+  const clerkId = getAuthClerkId(req)!;
+
+  const parsed = UpdateMyRoleBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  // Admin role is web-only. Mobile (local-auth) accounts cannot become admin.
+  if (parsed.data.role === "admin" && clerkId.startsWith("local:")) {
+    res.status(403).json({ error: "Admin access is only available on the web app." });
+    return;
+  }
+
+  let [user] = await db.select().from(usersTable).where(eq(usersTable.clerkId, clerkId));
+  if (!user) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+
+  [user] = await db
+    .update(usersTable)
+    .set({ role: parsed.data.role })
+    .where(eq(usersTable.clerkId, clerkId))
+    .returning();
+
+  res.json(GetMeResponse.parse(serialize(await withTribe(user))));
 });
 
 export { requireAuth };
