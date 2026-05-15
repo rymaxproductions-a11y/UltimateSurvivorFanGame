@@ -1,13 +1,32 @@
 import { useLocation, Link } from "wouter";
-import { useGetMe } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  useGetMe,
+  useUpdateMyRole,
+  getGetMeQueryKey,
+} from "@workspace/api-client-react";
 import { useUser, UserButton } from "@clerk/react";
 
 export function Nav() {
   const { isSignedIn } = useUser();
   const [location] = useLocation();
   const { data: me } = useGetMe();
+  const queryClient = useQueryClient();
+  const updateRole = useUpdateMyRole({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
+      },
+    },
+  });
 
   if (!isSignedIn) return null;
+
+  const toggleRole = () => {
+    if (!me) return;
+    const next = me.role === "admin" ? "player" : "admin";
+    updateRole.mutate({ data: { role: next } });
+  };
 
   const links = [
     { label: "Dashboard", href: "/dashboard", testId: "nav-dashboard" },
@@ -72,6 +91,22 @@ export function Nav() {
             <span className="text-sm font-medium text-foreground hidden md:inline truncate max-w-[140px]">
               {me.displayName ?? me.username}
             </span>
+          )}
+          {me && (
+            <button
+              type="button"
+              onClick={toggleRole}
+              disabled={updateRole.isPending}
+              data-testid="dev-role-toggle"
+              title={`Dev: switch to ${me.role === "admin" ? "player" : "admin"}`}
+              className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded border transition-colors ${
+                me.role === "admin"
+                  ? "border-primary text-primary hover:bg-primary/10"
+                  : "border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+              } ${updateRole.isPending ? "opacity-50" : ""}`}
+            >
+              {me.role}
+            </button>
           )}
           <UserButton />
         </div>
