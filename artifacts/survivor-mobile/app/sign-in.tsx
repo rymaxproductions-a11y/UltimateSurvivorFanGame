@@ -16,14 +16,14 @@ import { Logo } from "@/components/Logo";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/lib/localAuth";
 
-type Mode = "sign-in" | "sign-up";
+type Mode = "landing" | "sign-in" | "sign-up";
 
 export default function SignInScreen() {
   const colors = useColors();
   const router = useRouter();
   const { isSignedIn, isLoaded, signIn, signUp } = useAuth();
 
-  const [mode, setMode] = useState<Mode>("sign-in");
+  const [mode, setMode] = useState<Mode>("landing");
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -72,6 +72,53 @@ export default function SignInScreen() {
     ? "Create an account to make picks and track your score."
     : "Sign in to make picks and climb the leaderboard.";
 
+  if (mode === "landing") {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={["top", "bottom"]}>
+        <ScrollView
+          contentContainerStyle={{
+            flexGrow: 1,
+            padding: 24,
+            paddingTop: 40,
+            paddingBottom: 40,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <View style={{ alignItems: "center", marginBottom: 40 }}>
+            <Logo size={72} />
+            <Heading level={2} style={{ marginTop: 16, textAlign: "center" }}>
+              Ultimate Survivor Fan Game
+            </Heading>
+            <Body muted style={{ marginTop: 8, textAlign: "center" }}>
+              Predict weekly outcomes, pick your winner, and climb the leaderboard.
+            </Body>
+          </View>
+
+          <View style={{ width: "100%", gap: 12 }}>
+            <Button
+              label="New Player"
+              onPress={() => {
+                setError(null);
+                setMode("sign-up");
+              }}
+              fullWidth
+            />
+            <Button
+              label="Existing Player"
+              variant="secondary"
+              onPress={() => {
+                setError(null);
+                setMode("sign-in");
+              }}
+              fullWidth
+            />
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={["top"]}>
       <KeyboardAvoidingView
@@ -82,6 +129,15 @@ export default function SignInScreen() {
           contentContainerStyle={{ padding: 24, paddingTop: 40, paddingBottom: 60 }}
           keyboardShouldPersistTaps="handled"
         >
+          <Pressable
+            onPress={() => {
+              setError(null);
+              setMode("landing");
+            }}
+            style={{ alignSelf: "flex-start", marginBottom: 16 }}
+          >
+            <Body muted>← Back</Body>
+          </Pressable>
           <View style={{ alignItems: "center", marginBottom: 32 }}>
             <Logo size={56} />
             <Heading level={2} style={{ marginTop: 24, textAlign: "center" }}>
