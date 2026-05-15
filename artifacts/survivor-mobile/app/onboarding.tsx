@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Alert, Pressable, TextInput, View } from "react-native";
 
 import { Avatar } from "@/components/Avatar";
+import { AvatarPicker } from "@/components/AvatarPicker";
 import { Button } from "@/components/Button";
 import { Body, Heading } from "@/components/Heading";
 import { LoadingScreen } from "@/components/LoadingScreen";
@@ -16,13 +17,20 @@ import {
   useListContestants,
   useListGames,
   useSaveSurvivorPicks,
+  useUpdateMyAvatar,
   getGetMeQueryKey,
   getGetMySurvivorPicksQueryKey,
   getListContestantsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 
-type Step = "tribe-choice" | "tribe-create" | "tribe-join" | "code-shown" | "picks";
+type Step =
+  | "tribe-choice"
+  | "tribe-create"
+  | "tribe-join"
+  | "code-shown"
+  | "avatar"
+  | "picks";
 
 export default function Onboarding() {
   const colors = useColors();
@@ -34,6 +42,7 @@ export default function Onboarding() {
   const createTribe = useCreateTribe();
   const joinTribe = useJoinTribe();
   const savePicks = useSaveSurvivorPicks();
+  const updateAvatar = useUpdateMyAvatar();
 
   const activeGame = useMemo(
     () =>
@@ -69,6 +78,8 @@ export default function Onboarding() {
     if (!me) return;
     if (!me.tribeId) {
       setStep("tribe-choice");
+    } else if (!me.avatarPath) {
+      setStep("avatar");
     } else if (
       existingPicks?.firstChoiceContestantId &&
       existingPicks?.secondChoiceContestantId
@@ -125,7 +136,7 @@ export default function Onboarding() {
       {
         onSuccess: () => {
           qc.invalidateQueries({ queryKey: getGetMeQueryKey() });
-          setStep("picks");
+          setStep(me?.avatarPath ? "picks" : "avatar");
         },
         onError: () => Alert.alert("Couldn't join", "Check the code and try again."),
       },
@@ -336,7 +347,53 @@ export default function Onboarding() {
         </Body>
 
         <View style={{ marginTop: 24 }}>
-          <Button label="Continue to Season Picks" onPress={() => setStep("picks")} fullWidth />
+          <Button label="Continue" onPress={() => setStep("avatar")} fullWidth />
+        </View>
+      </Screen>
+    );
+  }
+
+  if (step === "avatar") {
+    return (
+      <Screen>
+        <Body muted style={{ fontSize: 12, letterSpacing: 1.5 }}>
+          STEP 2
+        </Body>
+        <Heading style={{ marginTop: 4 }}>Add a profile photo</Heading>
+        <Body muted style={{ marginTop: 8 }}>
+          Show up next to your name on the leaderboard and in tribe chat. You can skip and add one later.
+        </Body>
+
+        <View style={{ marginTop: 32, alignItems: "center" }}>
+          <AvatarPicker
+            avatarPath={me?.avatarPath}
+            size={140}
+            disabled={updateAvatar.isPending}
+            onChange={async (path) => {
+              try {
+                await updateAvatar.mutateAsync({ data: { avatarPath: path } });
+                qc.invalidateQueries({ queryKey: getGetMeQueryKey() });
+              } catch {
+                Alert.alert("Could not save photo", "Please try again.");
+              }
+            }}
+          />
+          <Body muted style={{ marginTop: 12, fontSize: 12 }}>
+            Tap the photo to choose or take one.
+          </Body>
+        </View>
+
+        <View style={{ marginTop: 32, gap: 10 }}>
+          <Button
+            label="Continue to Season Picks"
+            onPress={() => setStep("picks")}
+            fullWidth
+          />
+          {!me?.avatarPath && (
+            <Pressable onPress={() => setStep("picks")} style={{ alignSelf: "center", padding: 8 }}>
+              <Body muted>Skip for now</Body>
+            </Pressable>
+          )}
         </View>
       </Screen>
     );
