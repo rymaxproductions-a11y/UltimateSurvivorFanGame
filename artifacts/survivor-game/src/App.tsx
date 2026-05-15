@@ -136,10 +136,16 @@ function HomeRedirect() {
 }
 
 function LandingPage() {
+  const [, navigate] = useLocation();
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center py-8">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center py-8 px-6">
       {/* Branding */}
-      <div className="w-full flex flex-col items-center text-center px-6 mb-6">
+      <div className="w-full flex flex-col items-center text-center mb-8 max-w-md">
+        <img
+          src={`${import.meta.env.BASE_URL}logo-mark.png`}
+          alt="Ultimate Survivor Fan Game"
+          className="w-40 h-40 md:w-48 md:h-48 object-contain mb-4"
+        />
         <div className="inline-block bg-primary/10 text-primary font-semibold text-sm px-4 py-1 rounded-full mb-3 uppercase tracking-widest">
           Season Active
         </div>
@@ -151,13 +157,26 @@ function LandingPage() {
         </p>
       </div>
 
-      {/* Sign-in — edge-to-edge on mobile, constrained card on desktop */}
-      <div className="w-full flex justify-center">
-        <SignIn
-          routing="hash"
-          signUpUrl={`${basePath}/sign-up`}
-          fallbackRedirectUrl={`${basePath}/onboarding`}
-        />
+      {/* Two-button entry: new vs existing player */}
+      <div className="w-full max-w-sm flex flex-col gap-3">
+        <button
+          type="button"
+          data-testid="button-new-player"
+          onClick={() => navigate("/sign-up")}
+          className="w-full py-4 bg-primary text-primary-foreground rounded-xl font-bold text-lg uppercase tracking-wider hover:bg-primary/90 transition-colors"
+          style={{ fontFamily: "'Oswald', sans-serif" }}
+        >
+          New Player
+        </button>
+        <button
+          type="button"
+          data-testid="button-existing-player"
+          onClick={() => navigate("/sign-in")}
+          className="w-full py-4 bg-card border border-border text-foreground rounded-xl font-bold text-lg uppercase tracking-wider hover:bg-muted transition-colors"
+          style={{ fontFamily: "'Oswald', sans-serif" }}
+        >
+          Existing Player
+        </button>
       </div>
     </div>
   );
