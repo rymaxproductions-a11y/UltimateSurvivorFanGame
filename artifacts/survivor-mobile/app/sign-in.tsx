@@ -1,4 +1,4 @@
-import { Redirect, useRouter } from "expo-router";
+import { Link, Redirect, useRouter } from "expo-router";
 import { useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -143,6 +143,16 @@ export default function SignInScreen() {
                   : "New here? Create an account"}
               </Body>
             </Pressable>
+
+            {!isSignUp && (
+              <Link href={"/forgot-password" as any} asChild>
+                <Pressable style={{ marginTop: 4 }}>
+                  <Body muted style={{ textAlign: "center" }}>
+                    Forgot password?
+                  </Body>
+                </Pressable>
+              </Link>
+            )}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

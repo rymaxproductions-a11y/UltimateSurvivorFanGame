@@ -75,6 +75,13 @@ interface LocalAuthContextValue {
     username: string,
   ) => Promise<void>;
   signOut: () => Promise<void>;
+  hydrateFromTokenAndUser: (token: string, user: {
+    id: number;
+    username: string;
+    email?: string | null;
+    displayName?: string | null;
+    role: "admin" | "player";
+  }) => Promise<void>;
 }
 
 const LocalAuthContext = createContext<LocalAuthContextValue | null>(null);
@@ -159,6 +166,15 @@ export function LocalAuthProvider({ children }: { children: React.ReactNode }) {
         });
       },
       signOut,
+      hydrateFromTokenAndUser: async (nextToken, nextUser) => {
+        await persist(nextToken, {
+          id: nextUser.id,
+          username: nextUser.username,
+          email: nextUser.email ?? null,
+          displayName: nextUser.displayName ?? null,
+          role: nextUser.role,
+        });
+      },
     }),
     [isLoaded, token, user, persist, signOut],
   );

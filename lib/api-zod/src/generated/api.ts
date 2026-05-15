@@ -49,6 +49,49 @@ export const SignInResponse = zod.object({
 });
 
 /**
+ * @summary Request a password reset email (always returns 200 to avoid email enumeration)
+ */
+export const ForgotPasswordBody = zod.object({
+  email: zod.string().email(),
+});
+
+export const ForgotPasswordResponse = zod.object({
+  message: zod.string(),
+});
+
+/**
+ * @summary Complete password reset using the emailed code
+ */
+export const resetPasswordBodyCodeMin = 6;
+export const resetPasswordBodyCodeMax = 6;
+
+export const resetPasswordBodyNewPasswordMin = 8;
+
+export const ResetPasswordBody = zod.object({
+  email: zod.string().email(),
+  code: zod
+    .string()
+    .min(resetPasswordBodyCodeMin)
+    .max(resetPasswordBodyCodeMax),
+  newPassword: zod.string().min(resetPasswordBodyNewPasswordMin),
+});
+
+export const ResetPasswordResponse = zod.object({
+  token: zod.string(),
+  user: zod.object({
+    id: zod.number(),
+    clerkId: zod.string(),
+    username: zod.string(),
+    displayName: zod.string().nullish(),
+    role: zod.enum(["admin", "player"]),
+    tribeId: zod.number().nullish(),
+    tribeName: zod.string().nullish(),
+    tribeCode: zod.string().nullish(),
+    createdAt: zod.string(),
+  }),
+});
+
+/**
  * @summary List all users (admin only)
  */
 export const ListAdminUsersResponseItem = zod.object({

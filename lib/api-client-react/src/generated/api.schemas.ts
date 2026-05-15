@@ -89,6 +89,25 @@ export interface AuthResponse {
   user: UserProfile;
 }
 
+export interface ForgotPasswordBody {
+  email: string;
+}
+
+export interface ForgotPasswordResponse {
+  message: string;
+}
+
+export interface ResetPasswordBody {
+  email: string;
+  /**
+   * @minLength 6
+   * @maxLength 6
+   */
+  code: string;
+  /** @minLength 8 */
+  newPassword: string;
+}
+
 export interface UpdateProfileBody {
   displayName: string;
 }
