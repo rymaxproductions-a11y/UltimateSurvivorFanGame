@@ -551,6 +551,26 @@ export const CloseWeekResponse = zod.object({
 });
 
 /**
+ * @summary Reopen a locked/scored week so the admin can edit answers (admin only).
+Flips isLocked back to false and isOpen to true. Existing player answers
+and correct-answer selections are preserved. Re-submitting correct
+answers will re-score and re-lock the week.
+
+ */
+export const UnlockWeekParams = zod.object({
+  weekId: zod.coerce.number(),
+});
+
+export const UnlockWeekResponse = zod.object({
+  id: zod.number(),
+  gameId: zod.number(),
+  weekNumber: zod.number(),
+  isLocked: zod.boolean(),
+  isOpen: zod.boolean(),
+  createdAt: zod.string(),
+});
+
+/**
  * @summary List questions for a week
  */
 export const ListQuestionsParams = zod.object({

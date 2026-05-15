@@ -11,6 +11,23 @@ import {
 } from "@workspace/api-zod";
 import { requireAuth } from "./users";
 import { serialize } from "../lib/serialize";
+import { getAuthClerkId } from "../lib/localAuth";
+import { usersTable } from "@workspace/db";
+import { invalidateLeaderboardCache } from "./leaderboard";
+
+const requireAdmin = async (req: any, res: any, next: any) => {
+  const clerkId = getAuthClerkId(req);
+  if (!clerkId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.clerkId, clerkId));
+  if (!user || user.role !== "admin") {
+    res.status(403).json({ error: "Admin access required" });
+    return;
+  }
+  next();
+};
 
 const router: IRouter = Router();
 
@@ -73,6 +90,28 @@ router.post("/weeks/:weekId/open", requireAuth, async (req: any, res: any): Prom
     res.status(404).json({ error: "Week not found or already locked" });
     return;
   }
+
+  res.json(serialize(week));
+});
+
+router.post("/weeks/:weekId/unlock", requireAuth, requireAdmin, async (req: any, res: any): Promise<void> => {
+  const params = GetWeekParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const [week] = await db.update(weeksTable)
+    .set({ isLocked: false, isOpen: true })
+    .where(eq(weeksTable.id, params.data.weekId))
+    .returning();
+
+  if (!week) {
+    res.status(404).json({ error: "Week not found" });
+    return;
+  }
+
+  invalidateLeaderboardCache(week.gameId);
 
   res.json(serialize(week));
 });

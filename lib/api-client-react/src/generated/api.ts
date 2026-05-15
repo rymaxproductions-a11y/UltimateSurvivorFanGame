@@ -2736,6 +2736,98 @@ export const useCloseWeek = <
 };
 
 /**
+ * @summary Reopen a locked/scored week so the admin can edit answers (admin only).
+Flips isLocked back to false and isOpen to true. Existing player answers
+and correct-answer selections are preserved. Re-submitting correct
+answers will re-score and re-lock the week.
+
+ */
+export const getUnlockWeekUrl = (weekId: number) => {
+  return `/api/weeks/${weekId}/unlock`;
+};
+
+export const unlockWeek = async (
+  weekId: number,
+  options?: RequestInit,
+): Promise<Week> => {
+  return customFetch<Week>(getUnlockWeekUrl(weekId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getUnlockWeekMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof unlockWeek>>,
+    TError,
+    { weekId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof unlockWeek>>,
+  TError,
+  { weekId: number },
+  TContext
+> => {
+  const mutationKey = ["unlockWeek"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof unlockWeek>>,
+    { weekId: number }
+  > = (props) => {
+    const { weekId } = props ?? {};
+
+    return unlockWeek(weekId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UnlockWeekMutationResult = NonNullable<
+  Awaited<ReturnType<typeof unlockWeek>>
+>;
+
+export type UnlockWeekMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Reopen a locked/scored week so the admin can edit answers (admin only).
+Flips isLocked back to false and isOpen to true. Existing player answers
+and correct-answer selections are preserved. Re-submitting correct
+answers will re-score and re-lock the week.
+
+ */
+export const useUnlockWeek = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof unlockWeek>>,
+    TError,
+    { weekId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof unlockWeek>>,
+  TError,
+  { weekId: number },
+  TContext
+> => {
+  return useMutation(getUnlockWeekMutationOptions(options));
+};
+
+/**
  * @summary List questions for a week
  */
 export const getListQuestionsUrl = (weekId: number) => {

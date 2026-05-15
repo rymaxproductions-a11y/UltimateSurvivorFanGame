@@ -661,6 +661,29 @@ paths:
               schema:
                 $ref: "#/components/schemas/Week"
 
+  /weeks/{weekId}/unlock:
+    post:
+      operationId: unlockWeek
+      tags: [weeks]
+      summary: |
+        Reopen a locked/scored week so the admin can edit answers (admin only).
+        Flips isLocked back to false and isOpen to true. Existing player answers
+        and correct-answer selections are preserved. Re-submitting correct
+        answers will re-score and re-lock the week.
+      parameters:
+        - name: weekId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Week unlocked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Week"
+
   /weeks/{weekId}/questions:
     get:
       operationId: listQuestions

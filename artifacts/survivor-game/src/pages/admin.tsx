@@ -21,6 +21,7 @@ import {
   useGetCorrectAnswers,
   useOpenWeek,
   useCloseWeek,
+  useUnlockWeek,
   useDeleteWeek,
   useSubmitSurvivorWinner,
   useGetGameStats,
@@ -570,6 +571,7 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
   const submitAnswers = useSubmitCorrectAnswers();
   const openWeek = useOpenWeek();
   const closeWeek = useCloseWeek();
+  const unlockWeek = useUnlockWeek();
   const deleteWeek = useDeleteWeek();
 
   function handleOpenWeek() {
@@ -595,6 +597,25 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
         },
         onError: () => toast({ title: "Failed to close episode", variant: "destructive" }),
       }
+    );
+  }
+
+  function handleUnlockWeek() {
+    if (!confirm(
+      `Unlock Episode ${week.weekNumber}?\n\n` +
+      `This reopens the episode for editing. Players' answers and your correct ` +
+      `answers are preserved. Re-submit correct answers when you're done to ` +
+      `re-score and re-lock the episode.`,
+    )) return;
+    unlockWeek.mutate(
+      { weekId: week.id },
+      {
+        onSuccess: () => {
+          qc.invalidateQueries({ queryKey: getListWeeksQueryKey(gameId) });
+          toast({ title: `Episode ${week.weekNumber} unlocked for editing.` });
+        },
+        onError: () => toast({ title: "Failed to unlock episode", variant: "destructive" }),
+      },
     );
   }
 
@@ -680,6 +701,22 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
 
       {expanded && (
         <div className="px-5 py-4 bg-background border-t border-border space-y-4">
+          {week.isLocked && (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 flex items-center justify-between gap-3">
+              <div className="text-sm text-amber-900">
+                Episode is locked and scored. Unlock it to fix correct answers
+                or player answers, then re-submit to re-score.
+              </div>
+              <button
+                data-testid={`button-unlock-week-${week.weekNumber}`}
+                onClick={handleUnlockWeek}
+                disabled={unlockWeek.isPending}
+                className="whitespace-nowrap px-4 py-2 bg-amber-600 text-white rounded-lg font-bold hover:bg-amber-700 disabled:opacity-50 text-sm"
+              >
+                {unlockWeek.isPending ? "Unlocking..." : "Unlock Episode"}
+              </button>
+            </div>
+          )}
           {!week.isLocked && (
             <div className="flex gap-2">
               {!week.isOpen ? (
