@@ -12,6 +12,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useQueryClient } from "@tanstack/react-query";
 
+import { Feather } from "@expo/vector-icons";
+
 import { Body, Heading } from "@/components/Heading";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { useColors } from "@/hooks/useColors";
@@ -106,6 +108,9 @@ export default function ChatTab() {
             keyExtractor={(m) => String(m.id)}
             contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 12, gap: 8, flexGrow: 1 }}
             onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
+            keyboardDismissMode="interactive"
+            keyboardShouldPersistTaps="handled"
+            onScrollBeginDrag={() => Keyboard.dismiss()}
             ListEmptyComponent={
               <View style={{ padding: 32, alignItems: "center" }}>
                 <Body muted style={{ textAlign: "center" }}>
@@ -182,6 +187,24 @@ export default function ChatTab() {
               backgroundColor: colors.background,
             }}
           >
+            {keyboardVisible && (
+              <Pressable
+                onPress={() => Keyboard.dismiss()}
+                hitSlop={8}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  backgroundColor: colors.card,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Feather name="chevron-down" size={20} color={colors.foreground} />
+              </Pressable>
+            )}
             <TextInput
               value={draft}
               onChangeText={setDraft}
