@@ -8,6 +8,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { Body, Heading } from "@/components/Heading";
@@ -24,6 +25,7 @@ import {
 export default function ChatTab() {
   const colors = useColors();
   const qc = useQueryClient();
+  const tabBarHeight = useBottomTabBarHeight();
   const { data: me, isLoading: meLoading } = useGetMe();
   const [draft, setDraft] = useState("");
   const listRef = useRef<FlatList<ChatMessage> | null>(null);
@@ -67,7 +69,7 @@ export default function ChatTab() {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+        keyboardVerticalOffset={Platform.OS === "ios" ? tabBarHeight : 0}
       >
         <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8 }}>
           <Body muted style={{ fontSize: 12, letterSpacing: 1.5 }}>
@@ -89,7 +91,7 @@ export default function ChatTab() {
             ref={listRef}
             data={messages ?? []}
             keyExtractor={(m) => String(m.id)}
-            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 12, gap: 8 }}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 12, gap: 8, flexGrow: 1 }}
             onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
             ListEmptyComponent={
               <View style={{ padding: 32, alignItems: "center" }}>
@@ -161,7 +163,7 @@ export default function ChatTab() {
               alignItems: "flex-end",
               gap: 8,
               padding: 12,
-              paddingBottom: Platform.OS === "ios" ? 12 : 16,
+              paddingBottom: 12 + tabBarHeight,
               borderTopWidth: 1,
               borderTopColor: colors.border,
               backgroundColor: colors.background,
