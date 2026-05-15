@@ -30,15 +30,16 @@ async function getResendCredentials(): Promise<ResendCredentials> {
       },
     },
   );
-  const data = await res.json();
+  const data = (await res.json()) as { items?: Array<{ settings?: { api_key?: string; from_email?: string } }> };
   const item = data?.items?.[0];
   if (!item || !item.settings?.api_key) {
     throw new Error("Resend not connected");
   }
-  cachedFromEmail = item.settings.from_email;
+  const fromEmail = item.settings.from_email ?? "onboarding@resend.dev";
+  cachedFromEmail = fromEmail;
   return {
     apiKey: item.settings.api_key,
-    fromEmail: item.settings.from_email,
+    fromEmail,
   };
 }
 
