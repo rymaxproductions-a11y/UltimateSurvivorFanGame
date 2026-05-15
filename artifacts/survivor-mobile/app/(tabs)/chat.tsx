@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   FlatList,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -28,7 +29,19 @@ export default function ChatTab() {
   const tabBarHeight = useBottomTabBarHeight();
   const { data: me, isLoading: meLoading } = useGetMe();
   const [draft, setDraft] = useState("");
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const listRef = useRef<FlatList<ChatMessage> | null>(null);
+
+  useEffect(() => {
+    const showEvt = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvt = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    const s1 = Keyboard.addListener(showEvt, () => setKeyboardVisible(true));
+    const s2 = Keyboard.addListener(hideEvt, () => setKeyboardVisible(false));
+    return () => {
+      s1.remove();
+      s2.remove();
+    };
+  }, []);
 
   const queryKey = getListTribeMessagesQueryKey();
   const { data: messages, isLoading: msgsLoading } = useListTribeMessages(undefined, {
@@ -69,7 +82,7 @@ export default function ChatTab() {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? tabBarHeight : 0}
+        keyboardVerticalOffset={0}
       >
         <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8 }}>
           <Body muted style={{ fontSize: 12, letterSpacing: 1.5 }}>
@@ -163,7 +176,7 @@ export default function ChatTab() {
               alignItems: "flex-end",
               gap: 8,
               padding: 12,
-              paddingBottom: 12 + tabBarHeight,
+              paddingBottom: keyboardVisible ? 12 : 12 + tabBarHeight,
               borderTopWidth: 1,
               borderTopColor: colors.border,
               backgroundColor: colors.background,
