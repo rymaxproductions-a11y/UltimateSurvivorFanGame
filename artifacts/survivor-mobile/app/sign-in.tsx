@@ -47,7 +47,7 @@ export default function SignInScreen() {
 
   async function handleSignUp() {
     if (!username.trim()) {
-      setError("Please choose a username.");
+      setError("Please choose a player nickname.");
       return;
     }
     if (password.length < 8) {
@@ -95,7 +95,7 @@ export default function SignInScreen() {
           <View style={{ gap: 14 }}>
             {isSignUp && (
               <Input
-                label="Username"
+                label="Player nickname"
                 placeholder="jeff_probst"
                 autoCapitalize="none"
                 value={username}
