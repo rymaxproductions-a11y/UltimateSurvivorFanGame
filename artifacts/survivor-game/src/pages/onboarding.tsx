@@ -164,6 +164,11 @@ export default function Onboarding() {
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
+          <img
+            src={`${import.meta.env.BASE_URL}logo-mark.png`}
+            alt="Ultimate Survivor Fan Game"
+            className="mx-auto mb-4 w-32 h-32 md:w-40 md:h-40 object-contain"
+          />
           <h1
             className="text-3xl font-bold text-foreground"
             style={{ fontFamily: "'Oswald', sans-serif" }}

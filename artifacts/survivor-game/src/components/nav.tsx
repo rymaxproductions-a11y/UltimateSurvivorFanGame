@@ -46,11 +46,18 @@ export function Nav() {
       <header className="border-b border-border bg-card px-4 md:px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4 md:gap-6">
           <Link href="/dashboard">
-            <span
-              className="cursor-pointer text-primary text-xl md:text-2xl font-extrabold tracking-widest uppercase leading-none"
-              style={{ fontFamily: "'Oswald', sans-serif" }}
-            >
-              Fan Game
+            <span className="cursor-pointer flex items-center gap-2">
+              <img
+                src={`${import.meta.env.BASE_URL}logo-mark.png`}
+                alt="Ultimate Survivor Fan Game"
+                className="h-9 w-9 md:h-10 md:w-10 object-contain"
+              />
+              <span
+                className="hidden sm:inline text-primary text-xl md:text-2xl font-extrabold tracking-widest uppercase leading-none"
+                style={{ fontFamily: "'Oswald', sans-serif" }}
+              >
+                Fan Game
+              </span>
             </span>
           </Link>
           <nav className="hidden md:flex gap-1">
