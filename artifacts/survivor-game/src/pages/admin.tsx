@@ -679,12 +679,12 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
 
   return (
     <div className="border border-border rounded-xl overflow-hidden">
-      <button
-        data-testid={`button-expand-week-${week.weekNumber}`}
-        onClick={() => setExpanded((p) => !p)}
-        className="w-full flex items-center justify-between px-5 py-4 bg-card hover:bg-muted/30 transition-colors"
-      >
-        <div className="flex items-center gap-3">
+      <div className="w-full flex items-center justify-between px-5 py-4 bg-card hover:bg-muted/30 transition-colors">
+        <button
+          data-testid={`button-expand-week-${week.weekNumber}`}
+          onClick={() => setExpanded((p) => !p)}
+          className="flex items-center gap-3 flex-1 text-left"
+        >
           <span className="font-bold text-foreground" style={{ fontFamily: "'Oswald', sans-serif" }}>
             EPISODE {week.weekNumber}
           </span>
@@ -695,9 +695,27 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
           }`}>
             {week.isLocked ? "Locked" : week.isOpen ? "Open" : "Not Open"}
           </span>
+        </button>
+        <div className="flex items-center gap-2">
+          {week.isLocked && (
+            <button
+              data-testid={`button-unlock-week-header-${week.weekNumber}`}
+              onClick={(e) => { e.stopPropagation(); handleUnlockWeek(); }}
+              disabled={unlockWeek.isPending}
+              className="px-3 py-1.5 bg-amber-600 text-white rounded-md font-bold hover:bg-amber-700 disabled:opacity-50 text-xs"
+            >
+              {unlockWeek.isPending ? "Unlocking..." : "Unlock"}
+            </button>
+          )}
+          <button
+            onClick={() => setExpanded((p) => !p)}
+            className="p-1"
+            aria-label={expanded ? "Collapse" : "Expand"}
+          >
+            {expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+          </button>
         </div>
-        {expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-      </button>
+      </div>
 
       {expanded && (
         <div className="px-5 py-4 bg-background border-t border-border space-y-4">
