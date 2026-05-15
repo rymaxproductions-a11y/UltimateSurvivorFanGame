@@ -91,7 +91,7 @@ export default function SignInScreen() {
               Ultimate Survivor Fan Game
             </Heading>
             <Body muted style={{ marginTop: 8, textAlign: "center" }}>
-              Outwit, Outplay, and Outlast the competition!
+              Outwit, Outplay and Outlast the Competition!
             </Body>
           </View>
 

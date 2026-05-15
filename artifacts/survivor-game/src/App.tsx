@@ -153,7 +153,7 @@ function LandingPage() {
           ULTIMATE SURVIVOR<br /><span className="text-primary">FAN GAME</span>
         </h1>
         <p className="text-base text-muted-foreground">
-          Outwit, Outplay, and Outlast the competition!
+          Outwit, Outplay and Outlast the Competition!
         </p>
       </div>
 
