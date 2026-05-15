@@ -1004,6 +1004,63 @@ paths:
         "401":
           description: Unauthorized
 
+  /tribes/me/messages:
+    get:
+      operationId: listTribeMessages
+      tags: [tribes]
+      summary: List chat messages for the current user's tribe
+      parameters:
+        - name: afterId
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Only return messages with id strictly greater than this value (for polling).
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+          description: Maximum number of recent messages to return when afterId is not provided. Defaults to 100.
+      responses:
+        "200":
+          description: Tribe chat messages, oldest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChatMessage"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Not in a tribe
+    post:
+      operationId: sendTribeMessage
+      tags: [tribes]
+      summary: Send a chat message to the current user's tribe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendTribeMessageBody"
+      responses:
+        "201":
+          description: Created message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessage"
+        "400":
+          description: Validation error
+        "401":
+          description: Unauthorized
+        "403":
+          description: Not in a tribe
+
   /games/{gameId}/stats:
     get:
       operationId: getGameStats
@@ -1697,6 +1754,42 @@ components:
           maxLength: 5
       required:
         - code
+
+    ChatMessage:
+      type: object
+      properties:
+        id:
+          type: integer
+        tribeId:
+          type: integer
+        userId:
+          type: integer
+        username:
+          type: string
+        displayName:
+          type: ["string", "null"]
+        body:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - tribeId
+        - userId
+        - username
+        - displayName
+        - body
+        - createdAt
+
+    SendTribeMessageBody:
+      type: object
+      properties:
+        body:
+          type: string
+          minLength: 1
+          maxLength: 1000
+      required:
+        - body
 
     WeeklyPoints:
       type: object

@@ -19,6 +19,7 @@ import type {
 import type {
   AdminUser,
   AuthResponse,
+  ChatMessage,
   Choice,
   Contestant,
   CorrectAnswer,
@@ -39,12 +40,14 @@ import type {
   JoinTribeBody,
   LeaderboardEntry,
   ListAdminUsersResponse,
+  ListTribeMessagesParams,
   MyTribeResponse,
   PlayerAnswer,
   QuestionWithChoices,
   ResetPasswordBody,
   SaveAnswersBody,
   SaveSurvivorPicksBody,
+  SendTribeMessageBody,
   SignInBody,
   SignUpBody,
   SubmitCorrectAnswersBody,
@@ -4053,6 +4056,189 @@ export function useGetMyTribe<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary List chat messages for the current user's tribe
+ */
+export const getListTribeMessagesUrl = (params?: ListTribeMessagesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/tribes/me/messages?${stringifiedParams}`
+    : `/api/tribes/me/messages`;
+};
+
+export const listTribeMessages = async (
+  params?: ListTribeMessagesParams,
+  options?: RequestInit,
+): Promise<ChatMessage[]> => {
+  return customFetch<ChatMessage[]>(getListTribeMessagesUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListTribeMessagesQueryKey = (
+  params?: ListTribeMessagesParams,
+) => {
+  return [`/api/tribes/me/messages`, ...(params ? [params] : [])] as const;
+};
+
+export const getListTribeMessagesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listTribeMessages>>,
+  TError = ErrorType<void>,
+>(
+  params?: ListTribeMessagesParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listTribeMessages>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListTribeMessagesQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listTribeMessages>>
+  > = ({ signal }) => listTribeMessages(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listTribeMessages>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListTribeMessagesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listTribeMessages>>
+>;
+export type ListTribeMessagesQueryError = ErrorType<void>;
+
+/**
+ * @summary List chat messages for the current user's tribe
+ */
+
+export function useListTribeMessages<
+  TData = Awaited<ReturnType<typeof listTribeMessages>>,
+  TError = ErrorType<void>,
+>(
+  params?: ListTribeMessagesParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listTribeMessages>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListTribeMessagesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Send a chat message to the current user's tribe
+ */
+export const getSendTribeMessageUrl = () => {
+  return `/api/tribes/me/messages`;
+};
+
+export const sendTribeMessage = async (
+  sendTribeMessageBody: SendTribeMessageBody,
+  options?: RequestInit,
+): Promise<ChatMessage> => {
+  return customFetch<ChatMessage>(getSendTribeMessageUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(sendTribeMessageBody),
+  });
+};
+
+export const getSendTribeMessageMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sendTribeMessage>>,
+    TError,
+    { data: BodyType<SendTribeMessageBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof sendTribeMessage>>,
+  TError,
+  { data: BodyType<SendTribeMessageBody> },
+  TContext
+> => {
+  const mutationKey = ["sendTribeMessage"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof sendTribeMessage>>,
+    { data: BodyType<SendTribeMessageBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return sendTribeMessage(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SendTribeMessageMutationResult = NonNullable<
+  Awaited<ReturnType<typeof sendTribeMessage>>
+>;
+export type SendTribeMessageMutationBody = BodyType<SendTribeMessageBody>;
+export type SendTribeMessageMutationError = ErrorType<void>;
+
+/**
+ * @summary Send a chat message to the current user's tribe
+ */
+export const useSendTribeMessage = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sendTribeMessage>>,
+    TError,
+    { data: BodyType<SendTribeMessageBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof sendTribeMessage>>,
+  TError,
+  { data: BodyType<SendTribeMessageBody> },
+  TContext
+> => {
+  return useMutation(getSendTribeMessageMutationOptions(options));
+};
 
 /**
  * @summary Get game stats summary

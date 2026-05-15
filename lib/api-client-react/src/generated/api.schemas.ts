@@ -383,6 +383,25 @@ export interface JoinTribeBody {
   code: string;
 }
 
+export interface ChatMessage {
+  id: number;
+  tribeId: number;
+  userId: number;
+  username: string;
+  /** @nullable */
+  displayName: string | null;
+  body: string;
+  createdAt: string;
+}
+
+export interface SendTribeMessageBody {
+  /**
+   * @minLength 1
+   * @maxLength 1000
+   */
+  body: string;
+}
+
 export interface GameStats {
   totalPlayers: number;
   lockedWeeks: number;
@@ -398,4 +417,17 @@ export type GetLeaderboardParams = {
    * When provided, only includes players in this tribe.
    */
   tribeId?: number;
+};
+
+export type ListTribeMessagesParams = {
+  /**
+   * Only return messages with id strictly greater than this value (for polling).
+   */
+  afterId?: number;
+  /**
+   * Maximum number of recent messages to return when afterId is not provided. Defaults to 100.
+   * @minimum 1
+   * @maximum 200
+   */
+  limit?: number;
 };

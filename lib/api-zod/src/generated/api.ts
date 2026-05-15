@@ -835,6 +835,50 @@ export const GetMyTribeResponse = zod.object({
 });
 
 /**
+ * @summary List chat messages for the current user's tribe
+ */
+export const listTribeMessagesQueryLimitMax = 200;
+
+export const ListTribeMessagesQueryParams = zod.object({
+  afterId: zod.coerce
+    .number()
+    .optional()
+    .describe(
+      "Only return messages with id strictly greater than this value (for polling).",
+    ),
+  limit: zod.coerce
+    .number()
+    .min(1)
+    .max(listTribeMessagesQueryLimitMax)
+    .optional()
+    .describe(
+      "Maximum number of recent messages to return when afterId is not provided. Defaults to 100.",
+    ),
+});
+
+export const ListTribeMessagesResponseItem = zod.object({
+  id: zod.number(),
+  tribeId: zod.number(),
+  userId: zod.number(),
+  username: zod.string(),
+  displayName: zod.string().nullable(),
+  body: zod.string(),
+  createdAt: zod.string(),
+});
+export const ListTribeMessagesResponse = zod.array(
+  ListTribeMessagesResponseItem,
+);
+
+/**
+ * @summary Send a chat message to the current user's tribe
+ */
+export const sendTribeMessageBodyBodyMax = 1000;
+
+export const SendTribeMessageBody = zod.object({
+  body: zod.string().min(1).max(sendTribeMessageBodyBodyMax),
+});
+
+/**
  * @summary Get game stats summary
  */
 export const GetGameStatsParams = zod.object({

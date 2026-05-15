@@ -11,6 +11,7 @@ import answersRouter from "./answers";
 import leaderboardRouter from "./leaderboard";
 import storageRouter from "./storage";
 import tribesRouter from "./tribes";
+import chatRouter from "./chat";
 
 const router: IRouter = Router();
 
@@ -26,5 +27,6 @@ router.use(answersRouter);
 router.use(leaderboardRouter);
 router.use(storageRouter);
 router.use(tribesRouter);
+router.use(chatRouter);
 
 export default router;
