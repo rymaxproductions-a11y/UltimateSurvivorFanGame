@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
 import { db, usersTable, tribesTable } from "@workspace/db";
-import { GetMeResponse, UpdateMyProfileBody, UpdateMyProfileResponse, UpdateMyRoleBody } from "@workspace/api-zod";
+import { GetMeResponse, UpdateMyProfileBody, UpdateMyProfileResponse, UpdateMyRoleBody, UpdateMyAvatarBody } from "@workspace/api-zod";
 import { serialize } from "../lib/serialize";
 import { getAuthClerkId } from "../lib/localAuth";
 
@@ -107,6 +107,26 @@ router.patch("/users/me/role", requireAuth, async (req: any, res: any): Promise<
     .where(eq(usersTable.clerkId, clerkId))
     .returning();
 
+  res.json(GetMeResponse.parse(serialize(await withTribe(user))));
+});
+
+router.patch("/users/me/avatar", requireAuth, async (req: any, res: any): Promise<void> => {
+  const clerkId = getAuthClerkId(req)!;
+  const parsed = UpdateMyAvatarBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  let [user] = await db.select().from(usersTable).where(eq(usersTable.clerkId, clerkId));
+  if (!user) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+  [user] = await db
+    .update(usersTable)
+    .set({ avatarPath: parsed.data.avatarPath })
+    .where(eq(usersTable.clerkId, clerkId))
+    .returning();
   res.json(GetMeResponse.parse(serialize(await withTribe(user))));
 });
 

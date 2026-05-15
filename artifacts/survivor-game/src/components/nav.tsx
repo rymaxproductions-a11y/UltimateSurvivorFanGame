@@ -3,9 +3,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   useGetMe,
   useUpdateMyRole,
+  useUpdateMyAvatar,
   getGetMeQueryKey,
 } from "@workspace/api-client-react";
 import { useUser, UserButton } from "@clerk/react";
+import { AvatarUploader } from "@/components/avatar-uploader";
+import { useToast } from "@/hooks/use-toast";
 
 export function Nav() {
   const { isSignedIn } = useUser();
@@ -19,6 +22,8 @@ export function Nav() {
       },
     },
   });
+  const updateAvatar = useUpdateMyAvatar();
+  const { toast } = useToast();
 
   if (!isSignedIn) return null;
 
@@ -96,9 +101,25 @@ export function Nav() {
             </div>
           )}
           {me && (
-            <span className="text-sm font-medium text-foreground hidden md:inline truncate max-w-[140px]">
-              {me.displayName ?? me.username}
-            </span>
+            <div className="hidden md:flex items-center gap-2">
+              <AvatarUploader
+                avatarPath={me.avatarPath}
+                name={me.displayName ?? me.username}
+                size={32}
+                saving={updateAvatar.isPending}
+                onChange={async (path) => {
+                  try {
+                    await updateAvatar.mutateAsync({ data: { avatarPath: path } });
+                    queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
+                  } catch {
+                    toast({ title: "Could not save photo", variant: "destructive" });
+                  }
+                }}
+              />
+              <span className="text-sm font-medium text-foreground truncate max-w-[140px]">
+                {me.displayName ?? me.username}
+              </span>
+            </div>
           )}
           {me && (
             <button

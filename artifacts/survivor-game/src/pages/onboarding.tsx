@@ -9,14 +9,16 @@ import {
   useGetMySurvivorPicks,
   useCreateTribe,
   useJoinTribe,
+  useUpdateMyAvatar,
   getListContestantsQueryKey,
   getGetMeQueryKey,
   getGetMySurvivorPicksQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { AvatarUploader } from "@/components/avatar-uploader";
 
-type Step = "tribe" | "code-shown" | "picks";
+type Step = "tribe" | "code-shown" | "avatar" | "picks";
 
 export default function Onboarding() {
   const { user } = useUser();
@@ -43,6 +45,7 @@ export default function Onboarding() {
   const createTribe = useCreateTribe();
   const joinTribe = useJoinTribe();
   const savePicks = useSaveSurvivorPicks();
+  const updateAvatar = useUpdateMyAvatar();
 
   const [step, setStep] = useState<Step | null>(null);
   const [tribeChoice, setTribeChoice] = useState<"create" | "join" | null>(null);
@@ -60,6 +63,8 @@ export default function Onboarding() {
     if (me.role === "admin") return; // handled by redirect below
     if (!me.tribeId) {
       setStep("tribe");
+    } else if (!me.avatarPath) {
+      setStep("avatar");
     } else if (
       existingPicks?.firstChoiceContestantId &&
       existingPicks?.secondChoiceContestantId
@@ -125,7 +130,7 @@ export default function Onboarding() {
       {
         onSuccess: () => {
           qc.invalidateQueries({ queryKey: getGetMeQueryKey() });
-          setStep("picks");
+          setStep(me?.avatarPath ? "picks" : "avatar");
         },
         onError: (err: any) =>
           toast({
@@ -297,12 +302,58 @@ export default function Onboarding() {
             </p>
 
             <button
-              data-testid="button-continue-to-picks"
-              onClick={() => setStep("picks")}
+              data-testid="button-continue-to-avatar"
+              onClick={() => setStep("avatar")}
               className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-colors"
             >
-              Continue to Season Picks
+              Continue
             </button>
+          </div>
+        )}
+
+        {step === "avatar" && (
+          <div className="bg-card border border-border rounded-2xl p-8 space-y-6 text-center">
+            <div>
+              <h2 className="text-xl font-semibold text-foreground mb-1">Add a profile photo</h2>
+              <p className="text-sm text-muted-foreground">
+                Show up next to your name on the leaderboard and in tribe chat. You can skip this and add one later.
+              </p>
+            </div>
+            <div className="flex justify-center">
+              <AvatarUploader
+                avatarPath={me?.avatarPath}
+                name={me?.displayName ?? me?.username}
+                size={128}
+                saving={updateAvatar.isPending}
+                onChange={async (path) => {
+                  try {
+                    await updateAvatar.mutateAsync({ data: { avatarPath: path } });
+                    qc.invalidateQueries({ queryKey: getGetMeQueryKey() });
+                  } catch {
+                    toast({ title: "Could not save photo", variant: "destructive" });
+                  }
+                }}
+              />
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                type="button"
+                data-testid="button-skip-avatar"
+                onClick={() => setStep("picks")}
+                className="flex-1 py-3 rounded-xl font-semibold border border-border text-muted-foreground hover:bg-muted transition-colors"
+              >
+                Skip for now
+              </button>
+              <button
+                type="button"
+                data-testid="button-continue-to-picks"
+                onClick={() => setStep("picks")}
+                disabled={!me?.avatarPath}
+                className="flex-1 py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-colors disabled:opacity-50"
+              >
+                Continue to Picks
+              </button>
+            </div>
           </div>
         )}
 

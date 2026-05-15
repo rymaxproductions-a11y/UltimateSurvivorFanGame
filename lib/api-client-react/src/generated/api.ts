@@ -57,6 +57,7 @@ import type {
   UpdateAdminUserRoleBody,
   UpdateContestantBody,
   UpdateGameBody,
+  UpdateMyAvatarBody,
   UpdateProfileBody,
   UpdateQuestionBody,
   UpdateRoleBody,
@@ -966,6 +967,92 @@ export const useDeleteMyAccount = <
   TContext
 > => {
   return useMutation(getDeleteMyAccountMutationOptions(options));
+};
+
+/**
+ * @summary Set or clear the current user's profile picture
+ */
+export const getUpdateMyAvatarUrl = () => {
+  return `/api/users/me/avatar`;
+};
+
+export const updateMyAvatar = async (
+  updateMyAvatarBody: UpdateMyAvatarBody,
+  options?: RequestInit,
+): Promise<UserProfile> => {
+  return customFetch<UserProfile>(getUpdateMyAvatarUrl(), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateMyAvatarBody),
+  });
+};
+
+export const getUpdateMyAvatarMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateMyAvatar>>,
+    TError,
+    { data: BodyType<UpdateMyAvatarBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateMyAvatar>>,
+  TError,
+  { data: BodyType<UpdateMyAvatarBody> },
+  TContext
+> => {
+  const mutationKey = ["updateMyAvatar"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateMyAvatar>>,
+    { data: BodyType<UpdateMyAvatarBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return updateMyAvatar(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateMyAvatarMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateMyAvatar>>
+>;
+export type UpdateMyAvatarMutationBody = BodyType<UpdateMyAvatarBody>;
+export type UpdateMyAvatarMutationError = ErrorType<void>;
+
+/**
+ * @summary Set or clear the current user's profile picture
+ */
+export const useUpdateMyAvatar = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateMyAvatar>>,
+    TError,
+    { data: BodyType<UpdateMyAvatarBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateMyAvatar>>,
+  TError,
+  { data: BodyType<UpdateMyAvatarBody> },
+  TContext
+> => {
+  return useMutation(getUpdateMyAvatarMutationOptions(options));
 };
 
 /**

@@ -13,6 +13,7 @@ export interface AdminUser {
   clerkId: string;
   username: string;
   displayName?: string | null;
+  avatarPath: string | null;
   email: string | null;
   tribeId: number | null;
   tribeName: string | null;

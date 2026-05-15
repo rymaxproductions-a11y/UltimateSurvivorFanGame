@@ -15,6 +15,9 @@ export const usersTable = pgTable("users", {
   passwordHash: text("password_hash"),
   username: text("username").notNull(),
   displayName: text("display_name"),
+  // Object-storage path for the user's profile picture (e.g. "/objects/uploads/abc.jpg").
+  // Nullable: users without a photo show their initials instead.
+  avatarPath: text("avatar_path"),
   role: roleEnum("role").notNull().default("player"),
   // Tribe membership. Nullable: admin and brand-new users have no tribe yet.
   // Plain integer (no FK) to avoid a circular reference with tribes.created_by_user_id.

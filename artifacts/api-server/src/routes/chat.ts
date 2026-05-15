@@ -57,6 +57,7 @@ router.get("/tribes/me/messages", requireAuth, async (req: any, res: any): Promi
         createdAt: chatMessagesTable.createdAt,
         username: usersTable.username,
         displayName: usersTable.displayName,
+        avatarPath: usersTable.avatarPath,
       })
       .from(chatMessagesTable)
       .leftJoin(usersTable, eq(usersTable.id, chatMessagesTable.userId))
@@ -73,6 +74,7 @@ router.get("/tribes/me/messages", requireAuth, async (req: any, res: any): Promi
         createdAt: chatMessagesTable.createdAt,
         username: usersTable.username,
         displayName: usersTable.displayName,
+        avatarPath: usersTable.avatarPath,
       })
       .from(chatMessagesTable)
       .leftJoin(usersTable, eq(usersTable.id, chatMessagesTable.userId))
@@ -90,6 +92,7 @@ router.get("/tribes/me/messages", requireAuth, async (req: any, res: any): Promi
         userId: r.userId,
         username: r.username ?? "unknown",
         displayName: r.displayName ?? null,
+        avatarPath: r.avatarPath ?? null,
         body: r.body,
         createdAt: r.createdAt,
       }),
@@ -134,6 +137,7 @@ router.post("/tribes/me/messages", requireAuth, async (req: any, res: any): Prom
         userId: inserted.userId,
         username: user.username,
         displayName: user.displayName ?? null,
+        avatarPath: user.avatarPath ?? null,
         body: inserted.body,
         createdAt: inserted.createdAt,
       }),

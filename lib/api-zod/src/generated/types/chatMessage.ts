@@ -13,6 +13,8 @@ export interface ChatMessage {
   username: string;
   /** @nullable */
   displayName: string | null;
+  /** @nullable */
+  avatarPath: string | null;
   body: string;
   createdAt: string;
 }

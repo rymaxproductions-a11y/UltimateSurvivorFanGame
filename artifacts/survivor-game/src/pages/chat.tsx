@@ -9,6 +9,7 @@ import {
   type ChatMessage,
 } from "@workspace/api-client-react";
 import { Nav } from "@/components/nav";
+import { Avatar } from "@/components/avatar";
 
 export default function ChatPage() {
   const { data: me, isLoading: meLoading } = useGetMe();
@@ -91,8 +92,11 @@ export default function ChatPage() {
                 <div
                   key={m.id}
                   data-testid={`chat-message-${m.id}`}
-                  className={`flex ${mine ? "justify-end" : "justify-start"}`}
+                  className={`flex items-end gap-2 ${mine ? "justify-end" : "justify-start"}`}
                 >
+                  {!mine && (
+                    <Avatar avatarPath={m.avatarPath} name={m.displayName ?? m.username} size={28} />
+                  )}
                   <div
                     className={`max-w-[78%] rounded-2xl px-3.5 py-2 ${
                       mine
@@ -114,6 +118,9 @@ export default function ChatPage() {
                       {formatTime(m.createdAt)}
                     </div>
                   </div>
+                  {mine && (
+                    <Avatar avatarPath={m.avatarPath} name={m.displayName ?? m.username} size={28} />
+                  )}
                 </div>
               );
             })

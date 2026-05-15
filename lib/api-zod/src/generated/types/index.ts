@@ -53,6 +53,7 @@ export * from "./updateAdminUserRoleBodyRole";
 export * from "./updateContestantBody";
 export * from "./updateGameBody";
 export * from "./updateGameBodyStatus";
+export * from "./updateMyAvatarBody";
 export * from "./updateProfileBody";
 export * from "./updateQuestionBody";
 export * from "./updateRoleBody";

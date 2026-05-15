@@ -113,6 +113,7 @@ router.get("/games/:gameId/leaderboard", requireAuth, async (req: any, res): Pro
       userId: user.id,
       username: user.username,
       displayName: user.displayName ?? null,
+      avatarPath: user.avatarPath ?? null,
       tribeName: user.tribeId != null ? tribeNameById.get(user.tribeId) ?? null : null,
       totalPoints: totalPoints + survivorPickPoints,
       weeklyPoints,

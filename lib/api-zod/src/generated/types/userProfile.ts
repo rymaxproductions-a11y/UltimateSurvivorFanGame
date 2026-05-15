@@ -12,6 +12,8 @@ export interface UserProfile {
   clerkId: string;
   username: string;
   displayName?: string | null;
+  /** @nullable */
+  avatarPath: string | null;
   role: UserProfileRole;
   /** @nullable */
   tribeId?: number | null;

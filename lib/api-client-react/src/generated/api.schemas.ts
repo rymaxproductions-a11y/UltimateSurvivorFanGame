@@ -22,6 +22,8 @@ export interface UserProfile {
   clerkId: string;
   username: string;
   displayName?: string | null;
+  /** @nullable */
+  avatarPath: string | null;
   role: UserProfileRole;
   /** @nullable */
   tribeId?: number | null;
@@ -52,6 +54,7 @@ export interface AdminUser {
   clerkId: string;
   username: string;
   displayName?: string | null;
+  avatarPath: string | null;
   email: string | null;
   tribeId: number | null;
   tribeName: string | null;
@@ -73,6 +76,11 @@ export const UpdateAdminUserRoleBodyRole = {
 
 export interface UpdateAdminUserRoleBody {
   role: UpdateAdminUserRoleBodyRole;
+}
+
+export interface UpdateMyAvatarBody {
+  /** @nullable */
+  avatarPath: string | null;
 }
 
 export interface SignUpBody {
@@ -347,6 +355,8 @@ export interface LeaderboardEntry {
   username: string;
   displayName?: string | null;
   /** @nullable */
+  avatarPath: string | null;
+  /** @nullable */
   tribeName: string | null;
   totalPoints: number;
   weeklyPoints: WeeklyPoints[];
@@ -390,6 +400,8 @@ export interface ChatMessage {
   username: string;
   /** @nullable */
   displayName: string | null;
+  /** @nullable */
+  avatarPath: string | null;
   body: string;
   createdAt: string;
 }

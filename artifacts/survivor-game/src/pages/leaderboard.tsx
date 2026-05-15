@@ -7,6 +7,7 @@ import {
   getGetLeaderboardQueryKey,
 } from "@workspace/api-client-react";
 import { Nav } from "@/components/nav";
+import { Avatar } from "@/components/avatar";
 
 type Scope = "tribe" | "global";
 
@@ -119,6 +120,7 @@ export default function Leaderboard() {
                     >
                       #{entry.rank}
                     </span>
+                    <Avatar avatarPath={entry.avatarPath} name={entry.displayName ?? entry.username} size={36} />
                     <div>
                       <div className="font-semibold text-foreground">
                         {entry.displayName ?? entry.username}
@@ -173,7 +175,10 @@ export default function Leaderboard() {
                           </span>
                         </td>
                         <td className="px-4 py-3 font-semibold text-foreground">
-                          {entry.displayName ?? entry.username}
+                          <span className="inline-flex items-center gap-2">
+                            <Avatar avatarPath={entry.avatarPath} name={entry.displayName ?? entry.username} size={28} />
+                            <span>{entry.displayName ?? entry.username}</span>
+                          </span>
                         </td>
                         {scope === "global" && (
                           <td className="px-4 py-3 text-sm text-muted-foreground">

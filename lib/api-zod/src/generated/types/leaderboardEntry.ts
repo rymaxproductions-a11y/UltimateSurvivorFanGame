@@ -13,6 +13,8 @@ export interface LeaderboardEntry {
   username: string;
   displayName?: string | null;
   /** @nullable */
+  avatarPath: string | null;
+  /** @nullable */
   tribeName: string | null;
   totalPoints: number;
   weeklyPoints: WeeklyPoints[];

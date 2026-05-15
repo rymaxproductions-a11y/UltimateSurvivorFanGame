@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Pressable, RefreshControl, View } from "react-native";
 
+import { Avatar } from "@/components/Avatar";
 import { Body, Heading } from "@/components/Heading";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { Screen } from "@/components/Screen";
@@ -139,6 +140,7 @@ export default function Leaderboard() {
                 >
                   #{entry.rank}
                 </Body>
+                <Avatar headshotPath={entry.avatarPath} size={36} />
                 <View style={{ flex: 1 }}>
                   <Body style={{ fontFamily: "WorkSans_600SemiBold", fontSize: 15 }}>
                     {entry.displayName ?? entry.username}

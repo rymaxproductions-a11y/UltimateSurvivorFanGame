@@ -12,9 +12,11 @@ import { useColors } from "@/hooks/useColors";
 import {
   useGetMe,
   useUpdateMyProfile,
+  useUpdateMyAvatar,
   useDeleteMyAccount,
   getGetMeQueryKey,
 } from "@workspace/api-client-react";
+import { AvatarPicker } from "@/components/AvatarPicker";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function Profile() {
@@ -25,6 +27,7 @@ export default function Profile() {
   const { user } = useUser();
   const { data: me, isLoading } = useGetMe();
   const update = useUpdateMyProfile();
+  const updateAvatar = useUpdateMyAvatar();
   const deleteAccount = useDeleteMyAccount();
   const [name, setName] = useState("");
   const [editing, setEditing] = useState(false);
@@ -111,6 +114,29 @@ export default function Profile() {
           gap: 16,
         }}
       >
+        <View style={{ alignItems: "center", paddingVertical: 4 }}>
+          <AvatarPicker
+            avatarPath={me?.avatarPath}
+            size={104}
+            disabled={updateAvatar.isPending}
+            onChange={async (path) => {
+              try {
+                await updateAvatar.mutateAsync({ data: { avatarPath: path } });
+                qc.invalidateQueries({ queryKey: getGetMeQueryKey() });
+              } catch {
+                Alert.alert("Could not save photo", "Please try again.");
+              }
+            }}
+          />
+        </View>
+
+        <View
+          style={{
+            height: 1,
+            backgroundColor: colors.border,
+          }}
+        />
+
         <View>
           <Body muted style={{ fontSize: 11, letterSpacing: 1 }}>
             DISPLAY NAME

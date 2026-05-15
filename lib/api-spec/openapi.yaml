@@ -232,6 +232,27 @@ paths:
         "401":
           description: Unauthorized
 
+  /users/me/avatar:
+    patch:
+      operationId: updateMyAvatar
+      tags: [users]
+      summary: Set or clear the current user's profile picture
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMyAvatarBody"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Unauthorized
+
   /users/me/role:
     patch:
       operationId: updateMyRole
@@ -1111,6 +1132,8 @@ components:
         displayName:
           type: string
           nullable: true
+        avatarPath:
+          type: ["string", "null"]
         role:
           type: string
           enum: [admin, player]
@@ -1128,6 +1151,7 @@ components:
         - username
         - role
         - createdAt
+        - avatarPath
 
     AdminUser:
       type: object
@@ -1139,6 +1163,9 @@ components:
         username:
           type: string
         displayName:
+          type: string
+          nullable: true
+        avatarPath:
           type: string
           nullable: true
         email:
@@ -1166,6 +1193,7 @@ components:
         - clerkId
         - username
         - email
+        - avatarPath
         - tribeId
         - tribeName
         - tribeCode
@@ -1186,6 +1214,14 @@ components:
           enum: [admin, player]
       required:
         - role
+
+    UpdateMyAvatarBody:
+      type: object
+      properties:
+        avatarPath:
+          type: ["string", "null"]
+      required:
+        - avatarPath
 
     SignUpBody:
       type: object
@@ -1692,6 +1728,8 @@ components:
         displayName:
           type: string
           nullable: true
+        avatarPath:
+          type: ["string", "null"]
         tribeName:
           type: ["string", "null"]
         totalPoints:
@@ -1706,6 +1744,7 @@ components:
         - rank
         - userId
         - username
+        - avatarPath
         - tribeName
         - totalPoints
         - weeklyPoints
@@ -1777,6 +1816,8 @@ components:
           type: string
         displayName:
           type: ["string", "null"]
+        avatarPath:
+          type: ["string", "null"]
         body:
           type: string
         createdAt:
@@ -1787,6 +1828,7 @@ components:
         - userId
         - username
         - displayName
+        - avatarPath
         - body
         - createdAt
 

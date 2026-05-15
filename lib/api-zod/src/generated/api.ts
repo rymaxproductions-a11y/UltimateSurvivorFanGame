@@ -40,6 +40,7 @@ export const SignInResponse = zod.object({
     clerkId: zod.string(),
     username: zod.string(),
     displayName: zod.string().nullish(),
+    avatarPath: zod.string().nullable(),
     role: zod.enum(["admin", "player"]),
     tribeId: zod.number().nullish(),
     tribeName: zod.string().nullish(),
@@ -83,6 +84,7 @@ export const ResetPasswordResponse = zod.object({
     clerkId: zod.string(),
     username: zod.string(),
     displayName: zod.string().nullish(),
+    avatarPath: zod.string().nullable(),
     role: zod.enum(["admin", "player"]),
     tribeId: zod.number().nullish(),
     tribeName: zod.string().nullish(),
@@ -99,6 +101,7 @@ export const ListAdminUsersResponseItem = zod.object({
   clerkId: zod.string(),
   username: zod.string(),
   displayName: zod.string().nullish(),
+  avatarPath: zod.string().nullable(),
   email: zod.string().nullable(),
   tribeId: zod.number().nullable(),
   tribeName: zod.string().nullable(),
@@ -125,6 +128,7 @@ export const UpdateAdminUserRoleResponse = zod.object({
   clerkId: zod.string(),
   username: zod.string(),
   displayName: zod.string().nullish(),
+  avatarPath: zod.string().nullable(),
   email: zod.string().nullable(),
   tribeId: zod.number().nullable(),
   tribeName: zod.string().nullable(),
@@ -149,6 +153,7 @@ export const GetMeResponse = zod.object({
   clerkId: zod.string(),
   username: zod.string(),
   displayName: zod.string().nullish(),
+  avatarPath: zod.string().nullable(),
   role: zod.enum(["admin", "player"]),
   tribeId: zod.number().nullish(),
   tribeName: zod.string().nullish(),
@@ -168,6 +173,27 @@ export const UpdateMyProfileResponse = zod.object({
   clerkId: zod.string(),
   username: zod.string(),
   displayName: zod.string().nullish(),
+  avatarPath: zod.string().nullable(),
+  role: zod.enum(["admin", "player"]),
+  tribeId: zod.number().nullish(),
+  tribeName: zod.string().nullish(),
+  tribeCode: zod.string().nullish(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Set or clear the current user's profile picture
+ */
+export const UpdateMyAvatarBody = zod.object({
+  avatarPath: zod.string().nullable(),
+});
+
+export const UpdateMyAvatarResponse = zod.object({
+  id: zod.number(),
+  clerkId: zod.string(),
+  username: zod.string(),
+  displayName: zod.string().nullish(),
+  avatarPath: zod.string().nullable(),
   role: zod.enum(["admin", "player"]),
   tribeId: zod.number().nullish(),
   tribeName: zod.string().nullish(),
@@ -187,6 +213,7 @@ export const UpdateMyRoleResponse = zod.object({
   clerkId: zod.string(),
   username: zod.string(),
   displayName: zod.string().nullish(),
+  avatarPath: zod.string().nullable(),
   role: zod.enum(["admin", "player"]),
   tribeId: zod.number().nullish(),
   tribeName: zod.string().nullish(),
@@ -777,6 +804,7 @@ export const GetLeaderboardResponseItem = zod.object({
   userId: zod.number(),
   username: zod.string(),
   displayName: zod.string().nullish(),
+  avatarPath: zod.string().nullable(),
   tribeName: zod.string().nullable(),
   totalPoints: zod.number(),
   weeklyPoints: zod.array(
@@ -862,6 +890,7 @@ export const ListTribeMessagesResponseItem = zod.object({
   userId: zod.number(),
   username: zod.string(),
   displayName: zod.string().nullable(),
+  avatarPath: zod.string().nullable(),
   body: zod.string(),
   createdAt: zod.string(),
 });

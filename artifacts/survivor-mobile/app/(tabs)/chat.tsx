@@ -14,6 +14,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Feather } from "@expo/vector-icons";
 
+import { Avatar } from "@/components/Avatar";
 import { Body, Heading } from "@/components/Heading";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { useColors } from "@/hooks/useColors";
@@ -120,10 +121,9 @@ export default function ChatTab() {
             }
             renderItem={({ item }) => {
               const mine = item.userId === me?.id;
-              return (
+              const bubble = (
                 <View
                   style={{
-                    alignSelf: mine ? "flex-end" : "flex-start",
                     maxWidth: "82%",
                     backgroundColor: mine ? colors.primary : colors.card,
                     borderColor: mine ? colors.primary : colors.border,
@@ -168,6 +168,18 @@ export default function ChatTab() {
                   >
                     {formatTime(item.createdAt)}
                   </Body>
+                </View>
+              );
+              return (
+                <View
+                  style={{
+                    flexDirection: mine ? "row-reverse" : "row",
+                    alignItems: "flex-end",
+                    gap: 6,
+                  }}
+                >
+                  <Avatar headshotPath={item.avatarPath} size={28} />
+                  {bubble}
                 </View>
               );
             }}
