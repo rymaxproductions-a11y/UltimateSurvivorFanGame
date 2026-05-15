@@ -12,6 +12,7 @@ import { useColors } from "@/hooks/useColors";
 import {
   useGetMe,
   useUpdateMyProfile,
+  useDeleteMyAccount,
   getGetMeQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -24,6 +25,7 @@ export default function Profile() {
   const { user } = useUser();
   const { data: me, isLoading } = useGetMe();
   const update = useUpdateMyProfile();
+  const deleteAccount = useDeleteMyAccount();
   const [name, setName] = useState("");
   const [editing, setEditing] = useState(false);
 
@@ -49,6 +51,47 @@ export default function Profile() {
   async function handleSignOut() {
     await signOut();
     router.replace("/sign-in");
+  }
+
+  function handleDeleteAccount() {
+    Alert.alert(
+      "Delete Account?",
+      "This permanently deletes your account, picks, answers, and chat messages. This cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            Alert.alert(
+              "Are you sure?",
+              "This is your last chance. Your account will be permanently removed.",
+              [
+                { text: "Keep Account", style: "cancel" },
+                {
+                  text: "Delete Forever",
+                  style: "destructive",
+                  onPress: () => {
+                    deleteAccount.mutate(undefined, {
+                      onSuccess: async () => {
+                        qc.clear();
+                        await signOut();
+                        router.replace("/sign-in");
+                      },
+                      onError: () =>
+                        Alert.alert(
+                          "Could not delete account",
+                          "Please try again or contact support.",
+                        ),
+                    });
+                  },
+                },
+              ],
+            );
+          },
+        },
+      ],
+    );
   }
 
   return (
@@ -144,8 +187,19 @@ export default function Profile() {
         </View>
       </View>
 
-      <View style={{ marginTop: 24 }}>
+      <View style={{ marginTop: 24, gap: 12 }}>
         <Button label="Sign Out" variant="outline" onPress={handleSignOut} fullWidth />
+        <Button
+          label={deleteAccount.isPending ? "Deleting…" : "Delete Account"}
+          variant="outline"
+          onPress={handleDeleteAccount}
+          disabled={deleteAccount.isPending}
+          fullWidth
+          style={{ borderColor: colors.destructive }}
+        />
+        <Body muted style={{ fontSize: 11, textAlign: "center" }}>
+          Permanently removes your account and all of your picks, answers, and chat messages.
+        </Body>
       </View>
 
       <Body muted style={{ fontSize: 11, marginTop: 24, textAlign: "center" }}>

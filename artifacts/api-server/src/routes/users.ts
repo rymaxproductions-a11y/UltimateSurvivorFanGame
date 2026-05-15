@@ -110,5 +110,15 @@ router.patch("/users/me/role", requireAuth, async (req: any, res: any): Promise<
   res.json(GetMeResponse.parse(serialize(await withTribe(user))));
 });
 
+router.delete("/users/me", requireAuth, async (req: any, res: any): Promise<void> => {
+  const clerkId = getAuthClerkId(req)!;
+  const result = await db.delete(usersTable).where(eq(usersTable.clerkId, clerkId)).returning({ id: usersTable.id });
+  if (result.length === 0) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+  res.status(204).end();
+});
+
 export { requireAuth };
 export default router;
