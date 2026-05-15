@@ -22,6 +22,7 @@ import {
 } from "@workspace/api-zod";
 import { requireAuth } from "./users";
 import { getAuthClerkId } from "../lib/localAuth";
+import { invalidateLeaderboardCache } from "./leaderboard";
 
 const router: IRouter = Router();
 
@@ -219,6 +220,8 @@ router.post("/weeks/:weekId/correct-answers", requireAuth, requireAdmin, async (
     await db.update(gamesTable).set({ currentWeekNumber: week.weekNumber + 1 }).where(eq(gamesTable.id, week.gameId));
   }
 
+  invalidateLeaderboardCache(week.gameId);
+
   const [updatedWeek] = await db.select().from(weeksTable).where(eq(weeksTable.id, week.id));
   res.json(serialize(updatedWeek));
 });
@@ -375,6 +378,8 @@ router.post("/games/:gameId/survivor-winner", requireAuth, async (req: any, res:
     })
     .where(eq(gamesTable.id, params.data.gameId))
     .returning();
+
+  invalidateLeaderboardCache(params.data.gameId);
 
   res.json(serialize(game));
 });

@@ -1,4 +1,4 @@
-import { pgTable, serial, timestamp, integer, boolean } from "drizzle-orm/pg-core";
+import { pgTable, serial, timestamp, integer, boolean, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./users";
@@ -13,15 +13,22 @@ export const correctAnswersTable = pgTable("correct_answers", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-export const playerAnswersTable = pgTable("player_answers", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
-  questionId: integer("question_id").notNull().references(() => questionsTable.id, { onDelete: "cascade" }),
-  contestantId: integer("contestant_id").notNull().references(() => contestantsTable.id, { onDelete: "cascade" }),
-  isCorrect: boolean("is_correct"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
-});
+export const playerAnswersTable = pgTable(
+  "player_answers",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+    questionId: integer("question_id").notNull().references(() => questionsTable.id, { onDelete: "cascade" }),
+    contestantId: integer("contestant_id").notNull().references(() => contestantsTable.id, { onDelete: "cascade" }),
+    isCorrect: boolean("is_correct"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+  },
+  (t) => [
+    index("player_answers_user_id_idx").on(t.userId),
+    index("player_answers_question_id_idx").on(t.questionId),
+  ],
+);
 
 export const survivorPicksTable = pgTable("survivor_picks", {
   id: serial("id").primaryKey(),
