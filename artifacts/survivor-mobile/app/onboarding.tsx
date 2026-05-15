@@ -318,10 +318,12 @@ export default function Onboarding() {
           </Body>
           <Body
             style={{
-              marginTop: 6,
+              marginTop: 8,
               fontFamily: "Oswald_700Bold",
-              fontSize: 56,
-              letterSpacing: 14,
+              fontSize: 40,
+              lineHeight: 52,
+              letterSpacing: 6,
+              textAlign: "center",
               color: colors.foreground,
             }}
           >
