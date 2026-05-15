@@ -12,7 +12,7 @@ export function Logo({ size = 48, style }: { size?: number; style?: StyleProp<Vi
           textTransform: "uppercase",
         }}
       >
-        Fan Game
+        Ultimate Survivor Fan Game
       </Text>
     </View>
   );
