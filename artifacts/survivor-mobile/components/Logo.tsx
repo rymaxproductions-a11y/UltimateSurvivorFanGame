@@ -8,7 +8,7 @@ export function Logo({ size = 48, style }: { size?: number; style?: StyleProp<Vi
         style={{
           fontFamily: "Oswald_700Bold",
           fontSize,
-          lineHeight: fontSize * 1.05,
+          lineHeight: fontSize * 1.25,
           letterSpacing: 2,
           color: "#e08a1e",
           textTransform: "uppercase", textAlign: "center",
@@ -20,7 +20,7 @@ export function Logo({ size = 48, style }: { size?: number; style?: StyleProp<Vi
         style={{
           fontFamily: "Oswald_700Bold",
           fontSize,
-          lineHeight: fontSize * 1.05,
+          lineHeight: fontSize * 1.25,
           letterSpacing: 2,
           color: "#e08a1e",
           textTransform: "uppercase", textAlign: "center",
