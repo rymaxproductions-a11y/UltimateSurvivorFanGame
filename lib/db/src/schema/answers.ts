@@ -8,7 +8,7 @@ import { contestantsTable } from "./contestants";
 
 export const correctAnswersTable = pgTable("correct_answers", {
   id: serial("id").primaryKey(),
-  questionId: integer("question_id").notNull().references(() => questionsTable.id, { onDelete: "cascade" }).unique(),
+  questionId: integer("question_id").notNull().references(() => questionsTable.id, { onDelete: "cascade" }),
   contestantId: integer("contestant_id").notNull().references(() => contestantsTable.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

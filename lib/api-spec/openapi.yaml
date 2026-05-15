@@ -1507,11 +1507,13 @@ components:
       properties:
         questionId:
           type: integer
-        contestantId:
-          type: integer
+        contestantIds:
+          type: array
+          items:
+            type: integer
       required:
         - questionId
-        - contestantId
+        - contestantIds
 
     PlayerAnswer:
       type: object

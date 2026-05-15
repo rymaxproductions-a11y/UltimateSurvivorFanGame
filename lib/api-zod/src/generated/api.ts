@@ -625,7 +625,7 @@ export const SubmitCorrectAnswersBody = zod.object({
   answers: zod.array(
     zod.object({
       questionId: zod.number(),
-      contestantId: zod.number(),
+      contestantIds: zod.array(zod.number()),
     }),
   ),
 });

@@ -558,7 +558,7 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
   const [expanded, setExpanded] = useState(false);
   const [questionText, setQuestionText] = useState("");
   const [pointValue, setPointValue] = useState(1);
-  const [correctAnswers, setCorrectAnswers] = useState<Record<number, number>>({});
+  const [correctAnswers, setCorrectAnswers] = useState<Record<number, number[]>>({});
 
   const { data: questions } = useListQuestions(week.id, {
     query: { enabled: expanded, queryKey: getListQuestionsQueryKey(week.id) },
@@ -628,12 +628,20 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
   }
 
   function handleSubmitAnswers() {
-    const entries = Object.entries(correctAnswers).map(([qId, cId]) => ({
-      questionId: Number(qId),
-      contestantId: Number(cId),
-    }));
+    const existingByQ = new Map<number, number[]>();
+    for (const ca of existingCorrect ?? []) {
+      const list = existingByQ.get(ca.questionId) ?? [];
+      list.push(ca.contestantId);
+      existingByQ.set(ca.questionId, list);
+    }
+    const entries = (questions ?? [])
+      .map((q) => {
+        const ids = correctAnswers[q.id] ?? existingByQ.get(q.id) ?? [];
+        return { questionId: q.id, contestantIds: Array.from(new Set(ids)) };
+      })
+      .filter((e) => e.contestantIds.length > 0);
     if (entries.length === 0) {
-      toast({ title: "Select correct answers for all questions", variant: "destructive" });
+      toast({ title: "Select at least one correct answer", variant: "destructive" });
       return;
     }
     submitAnswers.mutate(
@@ -745,23 +753,51 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
           {questions && questions.length > 0 && !week.isLocked && (
             <div className="border-t border-border pt-4">
               <h4 className="text-sm font-bold text-foreground mb-3">Submit Correct Answers (Locks Episode)</h4>
-              <div className="space-y-3 mb-4">
+              <p className="text-xs text-muted-foreground mb-3">
+                Tick every contestant that should count as correct. Players who picked any of them get the points.
+              </p>
+              <div className="space-y-4 mb-4">
                 {questions.map((q) => {
-                  const existing = existingCorrect?.find((ca: any) => ca.questionId === q.id);
+                  const existingForQ = (existingCorrect ?? []).filter((ca: any) => ca.questionId === q.id).map((ca: any) => ca.contestantId);
+                  const selected = correctAnswers[q.id] ?? existingForQ;
+                  const selectedSet = new Set(selected);
+                  function toggle(cid: number) {
+                    setCorrectAnswers((prev) => {
+                      const current = prev[q.id] ?? existingForQ;
+                      const next = current.includes(cid) ? current.filter((x) => x !== cid) : [...current, cid];
+                      return { ...prev, [q.id]: next };
+                    });
+                  }
                   return (
-                    <div key={q.id} className="flex items-center gap-3">
-                      <span className="text-sm text-foreground flex-1 truncate">{q.text}</span>
-                      <select
-                        data-testid={`select-correct-answer-${q.id}`}
-                        value={correctAnswers[q.id] ?? existing?.contestantId ?? ""}
-                        onChange={(e) => setCorrectAnswers((prev) => ({ ...prev, [q.id]: Number(e.target.value) }))}
-                        className="border border-border rounded-lg px-2 py-1.5 bg-background text-foreground text-sm"
-                      >
-                        <option value="">Select contestant...</option>
-                        {contestants.map((c: any) => (
-                          <option key={c.id} value={c.id}>{c.name}</option>
-                        ))}
-                      </select>
+                    <div key={q.id} className="border border-border rounded-lg p-3 bg-background">
+                      <div className="flex items-center justify-between gap-3 mb-2">
+                        <span className="text-sm font-semibold text-foreground flex-1">{q.text}</span>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          {selectedSet.size} selected
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                        {contestants.map((c: any) => {
+                          const checked = selectedSet.has(c.id);
+                          return (
+                            <label
+                              key={c.id}
+                              data-testid={`checkbox-correct-answer-${q.id}-${c.id}`}
+                              className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer text-sm border transition-colors ${
+                                checked ? "border-primary bg-primary/10 text-foreground" : "border-border hover:bg-muted"
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={() => toggle(c.id)}
+                                className="accent-primary"
+                              />
+                              <span className="truncate">{c.name}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
                     </div>
                   );
                 })}

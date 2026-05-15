@@ -279,7 +279,7 @@ export interface CorrectAnswer {
 
 export interface CorrectAnswerInput {
   questionId: number;
-  contestantId: number;
+  contestantIds: number[];
 }
 
 export interface SubmitCorrectAnswersBody {

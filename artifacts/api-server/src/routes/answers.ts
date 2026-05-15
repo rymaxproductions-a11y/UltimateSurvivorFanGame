@@ -171,24 +171,26 @@ router.post("/weeks/:weekId/correct-answers", requireAuth, async (req: any, res:
   }
 
   await db.delete(correctAnswersTable)
-    .where(inArray(correctAnswersTable.questionId, parsed.data.answers.map((a: any) => a.questionId)));
+    .where(inArray(correctAnswersTable.questionId, parsed.data.answers.map((a) => a.questionId)));
 
-  if (parsed.data.answers.length > 0) {
-    await db.insert(correctAnswersTable).values(
-      parsed.data.answers.map((a: any) => ({
-        questionId: a.questionId,
-        contestantId: a.contestantId,
-      }))
-    );
+  const rows = parsed.data.answers.flatMap((a) =>
+    Array.from(new Set(a.contestantIds)).map((contestantId) => ({
+      questionId: a.questionId,
+      contestantId,
+    }))
+  );
+  if (rows.length > 0) {
+    await db.insert(correctAnswersTable).values(rows);
   }
 
   for (const answer of parsed.data.answers) {
+    const correctSet = new Set(answer.contestantIds);
     const playerAnswers = await db.select().from(playerAnswersTable)
       .where(eq(playerAnswersTable.questionId, answer.questionId));
 
     for (const pa of playerAnswers) {
       await db.update(playerAnswersTable)
-        .set({ isCorrect: pa.contestantId === answer.contestantId })
+        .set({ isCorrect: correctSet.has(pa.contestantId) })
         .where(eq(playerAnswersTable.id, pa.id));
     }
   }

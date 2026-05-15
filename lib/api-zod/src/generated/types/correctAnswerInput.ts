@@ -8,5 +8,5 @@
 
 export interface CorrectAnswerInput {
   questionId: number;
-  contestantId: number;
+  contestantIds: number[];
 }

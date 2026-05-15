@@ -83,10 +83,15 @@ export default function EpisodeScreen() {
     () => new Map((contestants ?? []).map((c) => [c.id, c])),
     [contestants],
   );
-  const correctById = useMemo(
-    () => new Map((correctAnswers ?? []).map((a) => [a.questionId, a.contestantId])),
-    [correctAnswers],
-  );
+  const correctById = useMemo(() => {
+    const map = new Map<number, number[]>();
+    for (const a of correctAnswers ?? []) {
+      const list = map.get(a.questionId) ?? [];
+      list.push(a.contestantId);
+      map.set(a.questionId, list);
+    }
+    return map;
+  }, [correctAnswers]);
 
   if (qLoading || aLoading) return <LoadingScreen />;
 
@@ -164,10 +169,13 @@ export default function EpisodeScreen() {
           sortedQuestions.map((q) => {
             const myPickId = draft[q.id];
             const myPick = myPickId ? contestantsById.get(myPickId) : null;
-            const correctId = correctById.get(q.id);
-            const correctPick = correctId ? contestantsById.get(correctId) : null;
-            const isCorrect = isLocked && myPickId === correctId && correctId != null;
-            const isWrong = isLocked && myPickId != null && myPickId !== correctId;
+            const correctIds = correctById.get(q.id) ?? [];
+            const correctPicks = correctIds
+              .map((id) => contestantsById.get(id))
+              .filter((c): c is NonNullable<typeof c> => !!c);
+            const correctPick = correctPicks[0] ?? null;
+            const isCorrect = isLocked && myPickId != null && correctIds.includes(myPickId);
+            const isWrong = isLocked && myPickId != null && correctIds.length > 0 && !correctIds.includes(myPickId);
 
             return (
               <View
@@ -255,19 +263,20 @@ export default function EpisodeScreen() {
                   ) : null}
                 </Pressable>
 
-                {isLocked && correctPick && (
+                {isLocked && correctPicks.length > 0 && (
                   <View
                     style={{
                       flexDirection: "row",
                       alignItems: "center",
                       gap: 8,
+                      flexWrap: "wrap",
                     }}
                   >
                     <Body muted style={{ fontSize: 12, letterSpacing: 1 }}>
-                      CORRECT:
+                      {correctPicks.length > 1 ? "CORRECT (ANY):" : "CORRECT:"}
                     </Body>
-                    <Body style={{ fontFamily: "WorkSans_600SemiBold" }}>
-                      {correctPick.name}
+                    <Body style={{ fontFamily: "WorkSans_600SemiBold", flexShrink: 1 }}>
+                      {correctPicks.map((c) => c.name).join(", ")}
                     </Body>
                   </View>
                 )}
