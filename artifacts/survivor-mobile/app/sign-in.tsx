@@ -91,7 +91,7 @@ export default function SignInScreen() {
               Ultimate Survivor Fan Game
             </Heading>
             <Body muted style={{ marginTop: 8, textAlign: "center" }}>
-              Predict weekly outcomes, pick your winner, and climb the leaderboard.
+              Outwit, Outplay, and Outlast the competition!
             </Body>
           </View>
 

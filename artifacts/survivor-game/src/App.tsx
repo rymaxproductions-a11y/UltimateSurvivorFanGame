@@ -153,7 +153,7 @@ function LandingPage() {
           ULTIMATE SURVIVOR<br /><span className="text-primary">FAN GAME</span>
         </h1>
         <p className="text-base text-muted-foreground">
-          Predict weekly outcomes, pick your winner, and climb the leaderboard.
+          Outwit, Outplay, and Outlast the competition!
         </p>
       </div>
 
