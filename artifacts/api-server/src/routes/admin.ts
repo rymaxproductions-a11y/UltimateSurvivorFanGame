@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and, ne, count } from "drizzle-orm";
-import { db, usersTable } from "@workspace/db";
+import { db, usersTable, tribesTable } from "@workspace/db";
 import {
   ListAdminUsersResponse,
   UpdateAdminUserRoleParams,
@@ -34,9 +34,15 @@ router.get(
   requireAuth,
   requireAdmin,
   async (_req: any, res: any): Promise<void> => {
-    const users = await db.select().from(usersTable).orderBy(usersTable.createdAt);
-    const enriched = users.map((u) => ({
+    const rows = await db
+      .select({ user: usersTable, tribe: tribesTable })
+      .from(usersTable)
+      .leftJoin(tribesTable, eq(usersTable.tribeId, tribesTable.id))
+      .orderBy(usersTable.createdAt);
+    const enriched = rows.map(({ user: u, tribe: t }) => ({
       ...serialize(u),
+      tribeName: t?.name ?? null,
+      tribeCode: t?.code ?? null,
       authProvider: u.clerkId.startsWith("local:") ? "mobile" : "clerk",
     }));
     res.json(ListAdminUsersResponse.parse(enriched));
@@ -78,9 +84,18 @@ router.patch(
       res.status(404).json({ error: "User not found" });
       return;
     }
+    let tribeName: string | null = null;
+    let tribeCode: string | null = null;
+    if (updated.tribeId) {
+      const [t] = await db.select().from(tribesTable).where(eq(tribesTable.id, updated.tribeId));
+      tribeName = t?.name ?? null;
+      tribeCode = t?.code ?? null;
+    }
     res.json(
       UpdateAdminUserRoleResponse.parse({
         ...serialize(updated),
+        tribeName,
+        tribeCode,
         authProvider: updated.clerkId.startsWith("local:") ? "mobile" : "clerk",
       }),
     );

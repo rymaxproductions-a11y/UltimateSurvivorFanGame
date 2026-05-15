@@ -52,6 +52,10 @@ export interface AdminUser {
   clerkId: string;
   username: string;
   displayName?: string | null;
+  email: string | null;
+  tribeId: number | null;
+  tribeName: string | null;
+  tribeCode: string | null;
   role: AdminUserRole;
   createdAt: string;
   authProvider: AdminUserAuthProvider;

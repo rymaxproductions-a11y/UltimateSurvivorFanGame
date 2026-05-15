@@ -1075,6 +1075,18 @@ components:
         displayName:
           type: string
           nullable: true
+        email:
+          type: string
+          nullable: true
+        tribeId:
+          type: integer
+          nullable: true
+        tribeName:
+          type: string
+          nullable: true
+        tribeCode:
+          type: string
+          nullable: true
         role:
           type: string
           enum: [admin, player]
@@ -1087,6 +1099,10 @@ components:
         - id
         - clerkId
         - username
+        - email
+        - tribeId
+        - tribeName
+        - tribeCode
         - role
         - createdAt
         - authProvider

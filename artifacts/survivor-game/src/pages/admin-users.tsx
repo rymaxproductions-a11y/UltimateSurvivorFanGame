@@ -27,6 +27,10 @@ type AdminUser = {
   clerkId: string;
   username: string;
   displayName?: string | null;
+  email?: string | null;
+  tribeId?: number | null;
+  tribeName?: string | null;
+  tribeCode?: string | null;
   role: "admin" | "player";
   createdAt: string;
   authProvider: "clerk" | "mobile";
@@ -56,6 +60,8 @@ export default function AdminUsers() {
         return (
           u.username.toLowerCase().includes(q) ||
           (u.displayName ?? "").toLowerCase().includes(q) ||
+          (u.email ?? "").toLowerCase().includes(q) ||
+          (u.tribeName ?? "").toLowerCase().includes(q) ||
           u.clerkId.toLowerCase().includes(q)
         );
       });
@@ -141,7 +147,7 @@ export default function AdminUsers() {
             <Search aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search by username, display name, or ID…"
+              placeholder="Search by name, email, tribe, or ID…"
               aria-label="Search users"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -183,6 +189,8 @@ export default function AdminUsers() {
                 <thead className="bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground">
                   <tr>
                     <th className="text-left px-4 py-3">User</th>
+                    <th className="text-left px-4 py-3 hidden md:table-cell">Email</th>
+                    <th className="text-left px-4 py-3 hidden md:table-cell">Tribe</th>
                     <th className="text-left px-4 py-3 hidden md:table-cell">Source</th>
                     <th className="text-left px-4 py-3 hidden lg:table-cell">Joined</th>
                     <th className="text-left px-4 py-3">Role</th>
@@ -208,6 +216,21 @@ export default function AdminUsers() {
                             )}
                           </div>
                           <div className="text-xs text-muted-foreground">@{u.username}</div>
+                        </td>
+                        <td className="px-4 py-3 hidden md:table-cell text-muted-foreground">
+                          {u.email ?? <span className="italic opacity-60">—</span>}
+                        </td>
+                        <td className="px-4 py-3 hidden md:table-cell">
+                          {u.tribeName ? (
+                            <div>
+                              <div className="font-medium text-foreground">{u.tribeName}</div>
+                              {u.tribeCode && (
+                                <div className="text-xs text-muted-foreground font-mono">{u.tribeCode}</div>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground italic opacity-60">No tribe</span>
+                          )}
                         </td>
                         <td className="px-4 py-3 hidden md:table-cell">
                           <ProviderBadge provider={u.authProvider} />
