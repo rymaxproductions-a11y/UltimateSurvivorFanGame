@@ -25,6 +25,20 @@ import { getAuthClerkId } from "../lib/localAuth";
 
 const router: IRouter = Router();
 
+const requireAdmin = async (req: any, res: any, next: any) => {
+  const clerkId = getAuthClerkId(req);
+  if (!clerkId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  const [me] = await db.select().from(usersTable).where(eq(usersTable.clerkId, clerkId));
+  if (!me || me.role !== "admin") {
+    res.status(403).json({ error: "Admin access required" });
+    return;
+  }
+  next();
+};
+
 router.get("/weeks/:weekId/my-answers", requireAuth, async (req: any, res: any): Promise<void> => {
   const params = GetMyAnswersParams.safeParse(req.params);
   if (!params.success) {
@@ -151,7 +165,7 @@ router.get("/weeks/:weekId/correct-answers", async (req, res): Promise<void> => 
   res.json(GetCorrectAnswersResponse.parse(serialize(correctAnswers)));
 });
 
-router.post("/weeks/:weekId/correct-answers", requireAuth, async (req: any, res: any): Promise<void> => {
+router.post("/weeks/:weekId/correct-answers", requireAuth, requireAdmin, async (req: any, res: any): Promise<void> => {
   const params = SubmitCorrectAnswersParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
