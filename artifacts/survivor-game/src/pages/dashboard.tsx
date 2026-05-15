@@ -271,7 +271,7 @@ function GameView({ gameId }: { gameId: number }) {
       weekByNumber.set(w.weekNumber, w);
     }
   }
-  const dedupedWeeks = Array.from(weekByNumber.values()).sort((a, b) => a.weekNumber - b.weekNumber);
+  const dedupedWeeks = Array.from(weekByNumber.values()).sort((a, b) => b.weekNumber - a.weekNumber);
 
   // Current active week: the first open + not-yet-locked week (lowest number)
   const currentActiveWeek = dedupedWeeks.find((w) => w.isOpen && !w.isLocked) ?? null;

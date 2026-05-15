@@ -43,7 +43,11 @@ export default function Leaderboard() {
 
   if (!me) return <Redirect to="/sign-in" />;
 
-  const episodes = leaderboard?.[0]?.weeklyPoints?.map((w) => w.weekNumber) ?? [];
+  const episodes =
+    leaderboard?.[0]?.weeklyPoints
+      ?.map((w) => w.weekNumber)
+      .slice()
+      .sort((a, b) => b - a) ?? [];
   const canShowTribe = !!tribeId;
 
   // For the global view, the server appends the caller's row when they rank

@@ -66,7 +66,7 @@ export default function Dashboard() {
 
   const contestantsById = new Map((contestants ?? []).map((c) => [c.id, c]));
 
-  const sortedWeeks = (weeks ?? []).slice().sort((a, b) => a.weekNumber - b.weekNumber);
+  const sortedWeeks = (weeks ?? []).slice().sort((a, b) => b.weekNumber - a.weekNumber);
   const visibleWeeks = sortedWeeks.filter((w) => w.isOpen || w.isLocked);
   const myEntry = leaderboard?.find((e) => e.userId === me?.id);
 

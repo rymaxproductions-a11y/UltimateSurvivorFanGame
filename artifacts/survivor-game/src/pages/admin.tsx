@@ -842,7 +842,7 @@ function WeeksSection({ gameId }: { gameId: number }) {
 
   const finalThreeContestants = (contestants ?? []).filter((c) => finalThree.includes(c.id));
 
-  const sortedWeeks = (weeks ?? []).sort((a, b) => a.weekNumber - b.weekNumber);
+  const sortedWeeks = (weeks ?? []).sort((a, b) => b.weekNumber - a.weekNumber);
 
   // Deduplicate by weekNumber, keeping the best status (locked > open > neither)
   const weekByNumber = new Map<number, typeof sortedWeeks[0]>();
@@ -852,9 +852,9 @@ function WeeksSection({ gameId }: { gameId: number }) {
       weekByNumber.set(w.weekNumber, w);
     }
   }
-  const dedupedWeeks = Array.from(weekByNumber.values()).sort((a, b) => a.weekNumber - b.weekNumber);
+  const dedupedWeeks = Array.from(weekByNumber.values()).sort((a, b) => b.weekNumber - a.weekNumber);
 
-  const nextWeekNumber = dedupedWeeks.length > 0 ? dedupedWeeks[dedupedWeeks.length - 1].weekNumber + 1 : 1;
+  const nextWeekNumber = dedupedWeeks.length > 0 ? dedupedWeeks[0].weekNumber + 1 : 1;
 
   function handleAddWeek() {
     createWeek.mutate(
