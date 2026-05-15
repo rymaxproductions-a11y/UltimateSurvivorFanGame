@@ -30,7 +30,9 @@ export default function Leaderboard() {
     games?.[0];
 
   const tribeId = me?.tribeId ?? null;
-  const params = scope === "tribe" && tribeId != null ? { tribeId } : undefined;
+  const TOP_N = 100;
+  const params =
+    scope === "tribe" && tribeId != null ? { tribeId } : { limit: TOP_N };
   const canShowTribe = !!tribeId;
 
   const { data: leaderboard, isLoading: lbLoading } = useGetLeaderboard(
@@ -65,7 +67,9 @@ export default function Leaderboard() {
       <Body muted style={{ fontSize: 12, letterSpacing: 1.5 }}>
         {activeGame ? activeGame.name.toUpperCase() : "NO ACTIVE SEASON"}
       </Body>
-      <Heading style={{ marginTop: 4, marginBottom: 16 }}>Leaderboard</Heading>
+      <Heading style={{ marginTop: 4, marginBottom: 16 }}>
+        {scope === "global" ? `Leaderboard — Top ${TOP_N}` : "Leaderboard"}
+      </Heading>
 
       {canShowTribe && (
         <View
@@ -113,8 +117,77 @@ export default function Leaderboard() {
         </View>
       ) : (
         <View style={{ gap: 8 }}>
-          {leaderboard.map((entry) => {
-            const isMe = entry.userId === me?.id;
+          {(() => {
+            const myEntry = me ? leaderboard.find((e) => e.userId === me.id) : undefined;
+            const myRankBelowCutoff =
+              scope === "global" && !!myEntry && myEntry.rank > TOP_N;
+            const visible = myRankBelowCutoff
+              ? leaderboard.filter((e) => e.userId !== me!.id)
+              : leaderboard;
+            return (
+              <>
+                {myRankBelowCutoff && myEntry && (
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      backgroundColor: colors.accent,
+                      borderColor: colors.primary,
+                      borderWidth: 2,
+                      borderRadius: colors.radius,
+                      padding: 14,
+                      gap: 12,
+                      marginBottom: 4,
+                    }}
+                  >
+                    <View style={{ width: 56, alignItems: "center" }}>
+                      <Body
+                        muted
+                        style={{ fontSize: 9, letterSpacing: 1.5, marginBottom: 2 }}
+                      >
+                        YOUR RANK
+                      </Body>
+                      <Body
+                        style={{
+                          fontFamily: "Oswald_700Bold",
+                          fontSize: 22,
+                          lineHeight: 26,
+                          color: colors.primary,
+                        }}
+                      >
+                        #{myEntry.rank}
+                      </Body>
+                    </View>
+                    <Avatar headshotPath={myEntry.avatarPath} size={36} />
+                    <View style={{ flex: 1 }}>
+                      <Body style={{ fontFamily: "WorkSans_600SemiBold", fontSize: 15 }}>
+                        {(myEntry.displayName ?? myEntry.username) + " (you)"}
+                      </Body>
+                      {myEntry.tribeName ? (
+                        <Body muted style={{ fontSize: 12 }}>
+                          {myEntry.tribeName}
+                        </Body>
+                      ) : null}
+                    </View>
+                    <View style={{ alignItems: "flex-end" }}>
+                      <Body
+                        style={{
+                          fontFamily: "Oswald_700Bold",
+                          fontSize: 22,
+                          lineHeight: 30,
+                          color: colors.primary,
+                        }}
+                      >
+                        {myEntry.totalPoints}
+                      </Body>
+                      <Body muted style={{ fontSize: 10, letterSpacing: 1 }}>
+                        PTS
+                      </Body>
+                    </View>
+                  </View>
+                )}
+                {visible.map((entry) => {
+                  const isMe = entry.userId === me?.id;
             return (
               <View
                 key={entry.userId}
@@ -174,7 +247,10 @@ export default function Leaderboard() {
                 </View>
               </View>
             );
-          })}
+                })}
+              </>
+            );
+          })()}
         </View>
       )}
     </Screen>

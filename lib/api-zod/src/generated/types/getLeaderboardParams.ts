@@ -11,4 +11,14 @@ export type GetLeaderboardParams = {
    * When provided, only includes players in this tribe.
    */
   tribeId?: number;
+  /**
+ * Maximum number of top entries to return. The current user's own
+entry is always included even if their rank falls outside the
+top N. Tribe-scoped requests ignore this parameter and always
+return all tribe members.
+
+ * @minimum 1
+ * @maximum 1000
+ */
+  limit?: number;
 };

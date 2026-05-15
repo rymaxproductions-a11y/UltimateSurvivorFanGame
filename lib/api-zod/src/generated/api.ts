@@ -792,11 +792,21 @@ export const GetLeaderboardParams = zod.object({
   gameId: zod.coerce.number(),
 });
 
+export const getLeaderboardQueryLimitMax = 1000;
+
 export const GetLeaderboardQueryParams = zod.object({
   tribeId: zod.coerce
     .number()
     .optional()
     .describe("When provided, only includes players in this tribe."),
+  limit: zod.coerce
+    .number()
+    .min(1)
+    .max(getLeaderboardQueryLimitMax)
+    .optional()
+    .describe(
+      "Maximum number of top entries to return. The current user's own\nentry is always included even if their rank falls outside the\ntop N. Tribe-scoped requests ignore this parameter and always\nreturn all tribe members.\n",
+    ),
 });
 
 export const GetLeaderboardResponseItem = zod.object({

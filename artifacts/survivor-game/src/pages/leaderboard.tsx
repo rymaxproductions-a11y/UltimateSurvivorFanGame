@@ -18,7 +18,9 @@ export default function Leaderboard() {
 
   const activeGame = games?.find((g) => g.status === "active") ?? games?.[0];
   const tribeId = me?.tribeId ?? null;
-  const params = scope === "tribe" && tribeId != null ? { tribeId } : undefined;
+  const TOP_N = 100;
+  const params =
+    scope === "tribe" && tribeId != null ? { tribeId } : { limit: TOP_N };
 
   const { data: leaderboard, isLoading: lbLoading } = useGetLeaderboard(
     activeGame?.id!,
@@ -44,6 +46,17 @@ export default function Leaderboard() {
   const episodes = leaderboard?.[0]?.weeklyPoints?.map((w) => w.weekNumber) ?? [];
   const canShowTribe = !!tribeId;
 
+  // For the global view, the server appends the caller's row when they rank
+  // outside the top N. Pull it out so we can render it as a sticky callout
+  // and avoid duplicating it in the main list.
+  const myEntry = me ? leaderboard?.find((e) => e.userId === me.id) : undefined;
+  const myRankBelowCutoff =
+    scope === "global" && !!myEntry && myEntry.rank > TOP_N;
+  const visibleEntries = myRankBelowCutoff
+    ? leaderboard!.filter((e) => e.userId !== me!.id)
+    : leaderboard ?? [];
+  const heading = scope === "global" ? `LEADERBOARD — TOP ${TOP_N}` : "LEADERBOARD";
+
   return (
     <div className="min-h-screen bg-background">
       <Nav />
@@ -53,7 +66,7 @@ export default function Leaderboard() {
             className="text-3xl md:text-4xl font-bold text-foreground"
             style={{ fontFamily: "'Oswald', sans-serif" }}
           >
-            LEADERBOARD
+            {heading}
           </h1>
           {activeGame && (
             <p className="text-muted-foreground mt-1 text-sm">
@@ -105,8 +118,48 @@ export default function Leaderboard() {
           </div>
         ) : (
           <>
+            {myRankBelowCutoff && myEntry && (
+              <div
+                data-testid="my-rank-callout"
+                className="mb-4 rounded-2xl border-2 border-primary bg-primary/5 px-4 py-3 flex items-center justify-between gap-3"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="text-center">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                      Your rank
+                    </div>
+                    <div className="text-2xl font-black text-primary leading-none">
+                      #{myEntry.rank}
+                    </div>
+                  </div>
+                  <Avatar
+                    avatarPath={myEntry.avatarPath}
+                    name={myEntry.displayName ?? myEntry.username}
+                    size={36}
+                  />
+                  <div>
+                    <div className="font-semibold text-foreground">
+                      {myEntry.displayName ?? myEntry.username}{" "}
+                      <span className="text-xs text-muted-foreground">(you)</span>
+                    </div>
+                    {myEntry.tribeName && (
+                      <div className="text-xs text-muted-foreground">
+                        {myEntry.tribeName}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xl font-black text-primary">
+                    {myEntry.totalPoints}
+                  </div>
+                  <div className="text-xs text-muted-foreground">pts</div>
+                </div>
+              </div>
+            )}
+
             <div className="md:hidden space-y-3">
-              {leaderboard.map((entry) => (
+              {visibleEntries.map((entry) => (
                 <div
                   key={entry.userId}
                   data-testid={`leaderboard-row-${entry.userId}`}
@@ -163,7 +216,7 @@ export default function Leaderboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {leaderboard.map((entry) => (
+                    {visibleEntries.map((entry) => (
                       <tr
                         key={entry.userId}
                         data-testid={`leaderboard-row-${entry.userId}`}
