@@ -1,0 +1,38 @@
+ryanjones@Ryans-MacBook-Pro UltimateSurvivorfangame % rm pnpm-lock.yaml
+pnpm install
+rm: pnpm-lock.yaml: No such file or directory
+Scope: all 11 workspace projects
+✔ The modules directories will be removed and reinstalled from scratch. Proceed? (Y/n) · true
+Recreating /Users/ryanjones/UltimateSurvivorFanGame/node_modules
+artifacts/api-server                     |  WARN  deprecated @types/bcryptjs@3.0.0
+Downloading react-icons@5.6.0: 22.42 MB/22.42 MB, done
+Downloading react-native@0.81.5: 24.77 MB/24.77 MB, done
+ WARN  Request took 13507ms: https://registry.npmjs.org/drizzle-orm
+Downloading @expo/ngrok-bin-darwin-x64@2.3.41: 13.80 MB/13.80 MB, done
+ WARN  9 deprecated subdependencies found: @esbuild-kit/core-utils@3.3.2, @esbuild-kit/esm-loader@2.6.5, glob@7.2.3, inflight@1.0.6, rimraf@3.0.2, uuid@3.4.0, uuid@7.0.3, uuid@8.3.2, uuid@9.0.1
+Packages: +1219
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 1344, reused 0, downloaded 1193, added 1219, done
+node_modules/.pnpm/esbuild@0.27.7/node_modules/esbuild: Running postinstall script, done in 710ms
+node_modules/.pnpm/esbuild@0.18.20/node_modules/esbuild: Running postinstall script, done in 694ms
+node_modules/.pnpm/esbuild@0.28.0/node_modules/esbuild: Running postinstall script, done in 698ms
+node_modules/.pnpm/esbuild@0.25.12/node_modules/esbuild: Running postinstall script, done in 691ms
+. preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *…
+└─ Done in 464ms
+ WARN  Issues with peer dependencies found
+artifacts/api-server
+└─┬ esbuild-plugin-pino 2.3.3
+  └── ✕ unmet peer esbuild@">=0.25.0 <=0.25.8": found 0.27.7
+
+devDependencies:
++ prettier 3.8.3
++ typescript 5.9.3 (6.0.3 is available)
+
+╭ Warning ───────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                            │
+│   Ignored build scripts: @clerk/shared@3.47.5, @clerk/shared@4.11.0.                       │
+│   Run "pnpm approve-builds" to pick which dependencies should be allowed to run scripts.   │
+│                                                                                            │
+╰────────────────────────────────────────────────────────────────────────────────────────────╯
+Done in 59.1s using pnpm v10.26.1
+ryanjones@Ryans-MacBook-Pro UltimateSurvivorfangame % 
