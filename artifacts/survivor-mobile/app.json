@@ -30,7 +30,7 @@
       [
         "expo-router",
         {
-          "origin": "https://replit.com/"
+          "origin": "https://ultimatesurvivorgame.replit.app/"
         }
       ],
       "expo-font",

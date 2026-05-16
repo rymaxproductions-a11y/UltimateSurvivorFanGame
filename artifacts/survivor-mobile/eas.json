@@ -16,6 +16,9 @@
       "pnpm": "10.26.1",
       "cache": {
         "disabled": true
+      },
+      "env": {
+        "EXPO_PUBLIC_DOMAIN": "ultimatesurvivorgame.replit.app"
       }
     }
   },
