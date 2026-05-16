@@ -1,0 +1,38 @@
+ryanjones@Ryans-MacBook-Pro UltimateSurvivorfangame % grep "origin" artifacts/survivor-mobile/app.json
+          "origin": "https://ultimatesurvivorgame.replit.app/"
+ryanjones@Ryans-MacBook-Pro UltimateSurvivorfangame % pnpm install
+cd artifacts/survivor-mobile
+eas build --platform ios --profile production
+eas submit --platform ios --latest
+Scope: all 11 workspace projects
+Lockfile is up to date, resolution step is skipped
+Packages: +246 -127
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------
+Progress: resolved 246, reused 96, downloaded 150, added 160, done
+node_modules/.pnpm/esbuild@0.27.3/node_modules/esbuild: Running postinstall script, done in 723ms
+
+devDependencies:
+- prettier 3.8.3
++ prettier 3.8.1
+
+. preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *…
+└─ Done in 453ms
+╭ Warning ───────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                            │
+│   Ignored build scripts: @clerk/shared@3.47.5, @clerk/shared@4.9.0.                        │
+│   Run "pnpm approve-builds" to pick which dependencies should be allowed to run scripts.   │
+│                                                                                            │
+╰────────────────────────────────────────────────────────────────────────────────────────────╯
+Done in 9.9s using pnpm v10.26.1
+
+⚠️ Detected that your app uses Expo Go for development, this is not recommended when building production apps.
+Learn more: https://expo.fyi/why-not-build-expo-go-for-production
+To suppress this warning, set EAS_BUILD_NO_EXPO_GO_WARNING=true.
+
+Experience with id '3085d843-e9cb-427b-9904-85b23338b669' does not exist.
+Request ID: 3c9c8135-7d3a-4462-88b2-960d78857174
+    Error: GraphQL request failed.
+Experience with id '3085d843-e9cb-427b-9904-85b23338b669' does not exist.
+Request ID: 793a82d4-5820-43a4-81d6-58c23454946c
+    Error: GraphQL request failed.
+ryanjones@Ryans-MacBook-Pro survivor-mobile % 
