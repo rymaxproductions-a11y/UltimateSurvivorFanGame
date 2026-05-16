@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Ultimate Survivor Fan Game",
-    "slug": "survivor-mobile",
+    "slug": "survivor-guessing-game",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
