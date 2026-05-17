@@ -59,3 +59,57 @@ id = "4N6QdXD_5fGkC7f859ejB"
 uri = "file://screenshots/final/09-season-picks.jpg"
 type = "image"
 title = "09 — Season Picks"
+
+[[outputs]]
+id = "KM4VGgLNlCRVc2yK4XRh_"
+uri = "file://screenshots/final-1284x2778/01-signin.jpg"
+type = "image"
+title = "01 — Sign in (1284×2778)"
+
+[[outputs]]
+id = "ivHeGju5MY2dhXTk6z3g3"
+uri = "file://screenshots/final-1284x2778/02-dashboard.jpg"
+type = "image"
+title = "02 — Dashboard (1284×2778)"
+
+[[outputs]]
+id = "XobeR2J7xp9wkimx7sOSZ"
+uri = "file://screenshots/final-1284x2778/03-leaderboard-tribe.jpg"
+type = "image"
+title = "03 — Leaderboard Tribe (1284×2778)"
+
+[[outputs]]
+id = "36hyhzhxoLU_p3VnyM6ld"
+uri = "file://screenshots/final-1284x2778/04-leaderboard-global.jpg"
+type = "image"
+title = "04 — Leaderboard Global (1284×2778)"
+
+[[outputs]]
+id = "H8z4AqLiMEdnXYYjOHID4"
+uri = "file://screenshots/final-1284x2778/05-chat.jpg"
+type = "image"
+title = "05 — Chat (1284×2778)"
+
+[[outputs]]
+id = "Us-pmquv3AWsvjeXzxh2D"
+uri = "file://screenshots/final-1284x2778/06-join-action.jpg"
+type = "image"
+title = "06 — Join Action (1284×2778)"
+
+[[outputs]]
+id = "VYM2I2gosFBuEJCv1dJTf"
+uri = "file://screenshots/final-1284x2778/07-create-tribe.jpg"
+type = "image"
+title = "07 — Create Tribe (1284×2778)"
+
+[[outputs]]
+id = "YlFR3Owai4l4T3s86dqpr"
+uri = "file://screenshots/final-1284x2778/08-tribe-created.jpg"
+type = "image"
+title = "08 — Tribe Created (1284×2778)"
+
+[[outputs]]
+id = "fGADmph1bbDjOzFSpasd0"
+uri = "file://screenshots/final-1284x2778/09-season-picks.jpg"
+type = "image"
+title = "09 — Season Picks (1284×2778)"
