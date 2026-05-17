@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, Platform, RefreshControl, View } from "react-native";
+import { Pressable, RefreshControl, View } from "react-native";
 
 import { Avatar } from "@/components/Avatar";
 import { Body, Heading } from "@/components/Heading";
@@ -20,13 +20,7 @@ export default function Leaderboard() {
   const colors = useColors();
   const qc = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
-  const initialScope: Scope =
-    Platform.OS === "web" &&
-    typeof window !== "undefined" &&
-    new URLSearchParams(window.location.search).get("scope") === "global"
-      ? "global"
-      : "tribe";
-  const [scope, setScope] = useState<Scope>(initialScope);
+  const [scope, setScope] = useState<Scope>("tribe");
 
   const { data: me } = useGetMe();
   const { data: games, isLoading: gamesLoading } = useListGames();

@@ -21,7 +21,6 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthBridge } from "@/components/AuthBridge";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LoadingScreen } from "@/components/LoadingScreen";
-import { WebAuthBootstrap } from "@/components/WebAuthBootstrap";
 import { configureApi } from "@/lib/api";
 import { LocalAuthProvider } from "@/lib/localAuth";
 
@@ -82,7 +81,6 @@ export default function RootLayout() {
         <LocalAuthProvider>
           <QueryClientProvider client={queryClient}>
             <AuthBridge>
-              <WebAuthBootstrap />
               <GestureHandlerRootView style={{ flex: 1 }}>
                 <KeyboardProvider>
                   <RootLayoutNav />
