@@ -1,0 +1,28 @@
+kind = "video"
+previewPath = "/survivor-promo-video/"
+title = "Survivor Fan Game Promo Video"
+description = "A short animated promo video (~45s) for the Ultimate Survivor Fan Game — showcasing the multiplayer guessing game concept, weekly questions, tribe rivalries, leaderboard, and season picks."
+version = "1.0.0"
+id = "artifacts/survivor-promo-video"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/survivor-promo-video/" ]
+localPort = 22322
+
+[services.development]
+run = "pnpm --filter @workspace/survivor-promo-video run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/survivor-promo-video", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/survivor-promo-video/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22322"
+BASE_PATH = "/survivor-promo-video/"
