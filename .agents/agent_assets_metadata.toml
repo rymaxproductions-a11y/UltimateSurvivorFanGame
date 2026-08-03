@@ -113,3 +113,24 @@ id = "fGADmph1bbDjOzFSpasd0"
 uri = "file://screenshots/final-1284x2778/09-season-picks.jpg"
 type = "image"
 title = "09 — Season Picks (1284×2778)"
+
+[[outputs]]
+id = "1rhI-57bNKkyB67eGM4gl"
+uri = "file://attached_assets/Logo_No_Background_1778825530424.png"
+type = "image"
+title = "Logo (No Background)"
+description = "Original logo PNG with transparent background"
+
+[[outputs]]
+id = "-ADAH5gCHOyy2GMLhC0VB"
+uri = "file://artifacts/survivor-game/public/logo-mark.png"
+type = "image"
+title = "Logo Mark (PNG)"
+description = "Logo mark used in the web app"
+
+[[outputs]]
+id = "lLluaQ43mrL9rkHgZsg8x"
+uri = "file://artifacts/survivor-game/public/logo.svg"
+type = "image"
+title = "Logo (SVG)"
+description = "Full logo in SVG format"
