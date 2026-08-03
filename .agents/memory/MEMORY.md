@@ -1,0 +1,1 @@
+- [pnpm override compatibility](pnpm-override-compat.md) — scope transitive-dep security overrides with parent@major selectors; global overrides across incompatible majors break runtime.
