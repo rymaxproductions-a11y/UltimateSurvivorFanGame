@@ -141,3 +141,10 @@ uri = "file://artifacts/survivor-promo-video/public/audio/bg_music.mp3"
 type = "audio"
 title = "Survivor tribal adventure background music"
 description = "Generated music: Tribal percussion driven adventure soundtrack with driving rhythmic urgency, exotic jungle textures, layered hand drums and taiko, building tension and release, 105 BPM, cinematic en…"
+
+[[outputs]]
+id = "hVk5D5976Y10Nyn0siZtR"
+uri = "file://artifacts/survivor-promo-video/public/audio/bg_music_2.mp3"
+type = "audio"
+title = "regenerated 31s background music"
+description = "Generated music: Tribal percussion driven adventure soundtrack with driving rhythmic urgency, exotic jungle textures, layered hand drums and taiko, building tension and release, 105 BPM, cinematic en…"
