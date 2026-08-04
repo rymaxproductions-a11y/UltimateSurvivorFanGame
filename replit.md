@@ -121,3 +121,6 @@ One Clerk identity works on both web and mobile (same Replit-managed tenant):
 ## Codegen Fix
 
 After running Orval, the script overwrites `lib/api-zod/src/index.ts` to only export from `./generated/api` (avoids duplicate export collision between api and types barrels).
+
+## User preferences
+- iOS App Store build numbering is manual (`ios.buildNumber` in `artifacts/survivor-mobile/app.json`, `appVersionSource: local`). When the user asks to prepare/retry an App Store submission, bump the build number for them.
