@@ -1,4 +1,4 @@
-import { useAuth } from "@/lib/localAuth";
+import { useAuth } from "@/lib/auth";
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { Redirect, Tabs } from "expo-router";

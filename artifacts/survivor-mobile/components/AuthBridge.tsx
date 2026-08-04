@@ -3,10 +3,10 @@ import { useEffect } from "react";
 
 import { setAuthTokenGetter } from "@workspace/api-client-react";
 
-import { useAuth } from "@/lib/localAuth";
+import { useAuth } from "@/lib/auth";
 
 /**
- * Wires the locally-stored JWT into the shared API client and clears the
+ * Wires the Clerk session token into the shared API client and clears the
  * React Query cache when the auth state flips.
  */
 export function AuthBridge({ children }: { children: React.ReactNode }) {

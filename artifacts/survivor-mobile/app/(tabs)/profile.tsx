@@ -1,4 +1,4 @@
-import { useAuth, useUser } from "@/lib/localAuth";
+import { useAuth, useUser } from "@/lib/auth";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, View } from "react-native";

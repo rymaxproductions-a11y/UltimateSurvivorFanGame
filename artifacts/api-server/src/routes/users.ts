@@ -39,18 +39,69 @@ router.get("/users/me", requireAuth, async (req: any, res: any): Promise<void> =
   let [user] = await db.select().from(usersTable).where(eq(usersTable.clerkId, clerkId));
 
   if (!user) {
-    // Try to pull a Clerk-style username if present in the session claims.
-    let username: string = clerkId;
-    if (!clerkId.startsWith("local:")) {
-      const { getAuth } = await import("@clerk/express");
-      const clerkAuth = getAuth(req) as any;
-      username = clerkAuth?.sessionClaims?.username || clerkId;
+    // Legacy mobile (local JWT) tokens whose user row no longer exists —
+    // e.g. the account was linked to a Clerk identity or deleted. Do NOT
+    // recreate the row; force the client to sign in again.
+    if (clerkId.startsWith("local:")) {
+      res.status(401).json({ error: "Please sign in again." });
+      return;
     }
-    [user] = await db.insert(usersTable).values({
-      clerkId,
-      username,
-      role: isDesignatedAdmin ? "admin" : "player",
-    }).returning();
+
+    // Clerk user we haven't seen before. Pull their verified email from
+    // Clerk so we can (a) link any pre-existing mobile (local-auth) account
+    // with the same email, and (b) derive a sensible username.
+    let email: string | null = null;
+    let username: string = clerkId;
+    try {
+      const { clerkClient, getAuth } = await import("@clerk/express");
+      const clerkUser = await clerkClient.users.getUser(clerkId);
+      // Only ever consider VERIFIED email addresses — linking a legacy
+      // account by email is destructive, so an unverified address must
+      // never qualify (account-takeover risk otherwise).
+      const verifiedEmails = clerkUser.emailAddresses.filter(
+        (e) => e.verification?.status === "verified",
+      );
+      const primaryVerified = verifiedEmails.find(
+        (e) => e.id === clerkUser.primaryEmailAddressId,
+      );
+      email =
+        (primaryVerified ?? verifiedEmails[0])?.emailAddress?.trim().toLowerCase() ?? null;
+      username =
+        clerkUser.username ||
+        (getAuth(req) as any)?.sessionClaims?.username ||
+        (email ? email.split("@")[0] : clerkId);
+    } catch (err) {
+      req.log?.warn({ err }, "could not fetch Clerk user for provisioning");
+      const { getAuth } = await import("@clerk/express");
+      username = (getAuth(req) as any)?.sessionClaims?.username || clerkId;
+    }
+
+    // Account linking policy: if a legacy mobile account exists with the
+    // same (Clerk-verified) email, adopt that row — the player keeps their
+    // profile, picks, and leaderboard history under their Clerk identity.
+    if (email) {
+      const [legacy] = await db.select().from(usersTable).where(eq(usersTable.email, email));
+      if (legacy && legacy.clerkId.startsWith("local:")) {
+        [user] = await db
+          .update(usersTable)
+          .set({
+            clerkId,
+            passwordHash: null, // local password no longer used
+            role: isDesignatedAdmin ? "admin" : legacy.role,
+          })
+          .where(eq(usersTable.id, legacy.id))
+          .returning();
+      }
+    }
+
+    if (!user) {
+      [user] = await db.insert(usersTable).values({
+        clerkId,
+        email,
+        username,
+        role: isDesignatedAdmin ? "admin" : "player",
+      }).returning();
+    }
   } else if (isDesignatedAdmin && user.role !== "admin") {
     [user] = await db.update(usersTable)
       .set({ role: "admin" })

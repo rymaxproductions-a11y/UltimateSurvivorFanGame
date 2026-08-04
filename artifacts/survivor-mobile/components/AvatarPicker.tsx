@@ -5,7 +5,7 @@ import { Feather } from "@expo/vector-icons";
 import { Avatar } from "./Avatar";
 import { Body } from "./Heading";
 import { useColors } from "@/hooks/useColors";
-import { useAuth } from "@/lib/localAuth";
+import { useAuth } from "@/lib/auth";
 import { pickAndUploadAvatar, type AvatarSource } from "@/lib/uploadImage";
 
 interface Props {

@@ -33,7 +33,7 @@ pnpm monorepo using TypeScript. Each package manages its own dependencies.
 
 Expo (React Native) artifact mirrors the player-facing flows of the web game. Admin features are intentionally web-only.
 
-- Auth: `@clerk/clerk-expo` with `expo-secure-store` token cache. Publishable key wired in via `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` (sourced from `VITE_CLERK_PUBLISHABLE_KEY` in the dev script).
+- Auth: `@clerk/expo` with `expo-secure-store` token cache — same Clerk tenant as web, so one account works on both apps. Publishable key wired in via `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=$CLERK_PUBLISHABLE_KEY` in the dev script; `scripts/build.js` also forwards `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` and `EXPO_PUBLIC_CLERK_PROXY_URL` for production builds.
 - API access: `lib/api.ts` calls `setBaseUrl(https://$EXPO_PUBLIC_DOMAIN)`; `components/AuthBridge.tsx` plugs Clerk's `getToken` into the shared client via `setAuthTokenGetter`. API server middleware (`@clerk/express`) accepts the `Authorization: Bearer` token automatically — no API changes required.
 - Generated React Query hooks/queryKeys come from `@workspace/api-client-react`; mobile screens always pass an explicit `queryKey` in hook options (TanStack Query v5 requirement).
 - Fonts: Oswald (headings) + Work Sans (body) loaded via `@expo-google-fonts/*` in `app/_layout.tsx`.
@@ -111,12 +111,12 @@ Tables: `users`, `games`, `contestants`, `weeks`, `questions`, `choices`, `corre
 
 ## Auth
 
-Two auth systems run side-by-side, unified server-side via a single helper:
+One Clerk identity works on both web and mobile (same Replit-managed tenant):
 
 - **Web (Clerk)** — `ClerkProvider` + `@clerk/express` middleware. `useGetMe` auto-creates the DB user on first authenticated call. Proxy path: `/api/__clerk`.
-- **Mobile (custom email + password)** — `artifacts/survivor-mobile/lib/localAuth.tsx` provides `LocalAuthProvider` + `useAuth/useUser` hooks that mirror Clerk's API so screens stay unchanged. JWT (HS256, 365d, signed with `SESSION_SECRET`) + cached user are stored in `expo-secure-store` and hydrated on boot — users sign in once and stay signed in. The shared API client (`@workspace/api-client-react`) sends the JWT as `Authorization: Bearer …` and auto-clears local auth state on any 401 via `setOnUnauthorized`.
-- **Server unification** — Mobile signups get a synthetic `clerkId = "local:<uuid>"` so every existing route keeps working unchanged. `localAuthMiddleware` (in `artifacts/api-server/src/lib/localAuth.ts`) runs after `clerkMiddleware` and sets `req.localAuthClerkId` when a valid local JWT is present. Every route reads the user via `getAuthClerkId(req)`, which prefers the local JWT and falls back to Clerk. JWT verification pins `algorithms: ["HS256"]` and validates the `sub` matches `local:<uuid-v4>`. Auth endpoints sanitize their responses through `GetMeResponse.parse(...)` so `passwordHash`/`email` never leak.
-- **Endpoints**: `POST /api/auth/signup` ({ email, password, username }) and `POST /api/auth/signin` ({ email, password }) — both return `{ token, user }`. Web does not use these.
+- **Mobile (Clerk via `@clerk/expo`)** — `ClerkProvider` + `ClerkLoaded` in `app/_layout.tsx` with the `expo-secure-store` token cache. `lib/auth.tsx` is a thin adapter exposing `useAuth`/`useUser` for the screens. `app/sign-in.tsx` and `app/forgot-password.tsx` use Clerk Core v3 "futures" custom flows (`signIn.password`, `signUp.password` + email code verification, `signIn.resetPasswordEmailCode`). After sign-up finalizes, the app calls `getMe()` (JIT-provisions the row) then `updateMyProfile({ displayName })` with the chosen nickname. `components/AuthBridge.tsx` plugs Clerk's `getToken` into the shared API client via `setAuthTokenGetter`.
+- **Account linking (server)** — `GET /api/users/me` JIT provisioning: for a first-time Clerk user, the server fetches their verified email via `clerkClient.users.getUser` and, if a legacy mobile row (`clerkId = "local:<uuid>"`) exists with that email, adopts it (sets the Clerk id, clears `passwordHash`) so the player keeps their picks/leaderboard history. Policy for duplicates: the Clerk account wins; linking only happens when no row exists for the Clerk id yet. JIT no longer re-creates rows for `local:` subs — a stale legacy token gets 401 and the old app signs out.
+- **Legacy local auth (backward compat only)** — `POST /api/auth/signup|signin|forgot-password|reset-password` and `localAuthMiddleware` (`artifacts/api-server/src/lib/localAuth.ts`, HS256 JWT signed with `SESSION_SECRET`) remain so already-installed old mobile builds keep working, but the current mobile app no longer calls them. `getAuthClerkId(req)` still prefers a valid local JWT and falls back to Clerk.
 
 ## Codegen Fix
 
