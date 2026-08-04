@@ -21,7 +21,7 @@
     "drizzle-orm": "catalog:",
     "express": "^5",
     "google-auth-library": "^9.15.0",
-    "http-proxy-middleware": "^3.0.5",
+    "http-proxy-middleware": "^3.0.7",
     "jsonwebtoken": "^9.0.3",
     "pino": "^9",
     "pino-http": "^10",
