@@ -17,7 +17,7 @@ import { Logo } from "@/components/Logo";
 import { useColors } from "@/hooks/useColors";
 import { getMe, updateMyProfile } from "@workspace/api-client-react";
 
-type Mode = "landing" | "sign-in" | "sign-up" | "verify";
+type Mode = "landing" | "sign-in" | "sign-up" | "verify" | "signin-code";
 
 export default function SignInScreen() {
   const colors = useColors();
@@ -59,6 +59,12 @@ export default function SignInScreen() {
         password,
       });
       if (err) {
+        // Account exists but has no password (e.g. created on the web with
+        // Google or an emailed code) — fall back to a sign-in code by email.
+        if (isStrategyNotValidError(err)) {
+          await startEmailCodeSignIn();
+          return;
+        }
         setError(clerkErrorMessage(err) ?? "Incorrect email or password.");
         return;
       }
@@ -73,6 +79,60 @@ export default function SignInScreen() {
       }
     } catch (err: any) {
       setError(clerkErrorMessage(err) ?? "Sign-in failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // Password isn't available for this account — email a one-time sign-in
+  // code instead (works for accounts created on the web without a password).
+  async function startEmailCodeSignIn() {
+    const emailAddress = email.trim().toLowerCase();
+    if (!emailAddress) {
+      setError("Please enter your email first.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const { error: err } = await signIn.emailCode.sendCode({ emailAddress });
+      if (err) {
+        setError(clerkErrorMessage(err) ?? "Could not send a sign-in code.");
+        return;
+      }
+      setCode("");
+      setMode("signin-code");
+    } catch (err: any) {
+      setError(clerkErrorMessage(err) ?? "Could not send a sign-in code.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleVerifySignInCode() {
+    if (!code.trim()) {
+      setError("Please enter the code from your email.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const { error: err } = await signIn.emailCode.verifyCode({ code: code.trim() });
+      if (err) {
+        setError(clerkErrorMessage(err) ?? "Invalid or expired code. Please try again.");
+        return;
+      }
+      if (signIn.status === "complete") {
+        await signIn.finalize({
+          navigate: async () => {
+            await completeAndEnter();
+          },
+        });
+      } else {
+        setError("Additional verification is required. Please sign in on the web app.");
+      }
+    } catch (err: any) {
+      setError(clerkErrorMessage(err) ?? "Verification failed.");
     } finally {
       setBusy(false);
     }
@@ -134,9 +194,15 @@ export default function SignInScreen() {
 
   const isSignUp = mode === "sign-up";
   const heading =
-    mode === "verify" ? "Check your email" : isSignUp ? "Join the tribe" : "Welcome back";
+    mode === "verify" || mode === "signin-code"
+      ? "Check your email"
+      : isSignUp
+        ? "Join the tribe"
+        : "Welcome back";
   const subheading =
-    mode === "verify"
+    mode === "signin-code"
+      ? `This account signs in with an emailed code. We sent a 6-digit code to ${email.trim()} — enter it below.`
+      : mode === "verify"
       ? `We sent a 6-digit code to ${email.trim()}. Enter it below to verify your account.`
       : isSignUp
         ? "Create an account to make picks and track your score. One account works on web and mobile."
@@ -203,7 +269,7 @@ export default function SignInScreen() {
             onPress={() => {
               setError(null);
               setCode("");
-              setMode(mode === "verify" ? "sign-up" : "landing");
+              setMode(mode === "verify" ? "sign-up" : mode === "signin-code" ? "sign-in" : "landing");
             }}
             style={{ alignSelf: "flex-start", marginBottom: 16 }}
           >
@@ -219,7 +285,29 @@ export default function SignInScreen() {
             </Body>
           </View>
 
-          {mode === "verify" ? (
+          {mode === "signin-code" ? (
+            <View style={{ gap: 14 }}>
+              <Input
+                label="Sign-in code"
+                placeholder="123456"
+                keyboardType="number-pad"
+                autoCapitalize="none"
+                value={code}
+                onChangeText={setCode}
+              />
+              <Button label="Sign In" loading={busy} onPress={handleVerifySignInCode} fullWidth />
+              <Pressable onPress={startEmailCodeSignIn} style={{ marginTop: 8 }}>
+                <Body muted style={{ textAlign: "center" }}>
+                  Didn't get it? Send a new code
+                </Body>
+              </Pressable>
+              {error ? (
+                <Body style={{ color: colors.destructive, textAlign: "center", marginTop: 4 }}>
+                  {error}
+                </Body>
+              ) : null}
+            </View>
+          ) : mode === "verify" ? (
             <View style={{ gap: 14 }}>
               <Input
                 label="Verification code"
@@ -305,13 +393,20 @@ export default function SignInScreen() {
               </Pressable>
 
               {!isSignUp && (
-                <Link href={"/forgot-password" as any} asChild>
-                  <Pressable style={{ marginTop: 4 }}>
+                <>
+                  <Pressable onPress={startEmailCodeSignIn} style={{ marginTop: 4 }}>
                     <Body muted style={{ textAlign: "center" }}>
-                      Forgot password?
+                      Email me a sign-in code instead
                     </Body>
                   </Pressable>
-                </Link>
+                  <Link href={"/forgot-password" as any} asChild>
+                    <Pressable style={{ marginTop: 4 }}>
+                      <Body muted style={{ textAlign: "center" }}>
+                        Forgot password?
+                      </Body>
+                    </Pressable>
+                  </Link>
+                </>
               )}
 
               {/* Required for sign-up flows — Clerk's bot protection mounts here. */}
@@ -322,6 +417,15 @@ export default function SignInScreen() {
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
+}
+
+// Clerk returns this when the requested first factor (e.g. password) isn't
+// available for the account — typically an account created without a password.
+function isStrategyNotValidError(err: any): boolean {
+  const code = err?.code ?? err?.errors?.[0]?.code;
+  if (code === "strategy_for_user_invalid") return true;
+  const msg = clerkErrorMessage(err) ?? "";
+  return /verification strategy is not valid/i.test(msg);
 }
 
 function clerkErrorMessage(err: any): string | null {
