@@ -29,7 +29,7 @@
       [
         "expo-router",
         {
-          "origin": "https://ultimatesurvivorgame.replit.app/"
+          "origin": "https://ultimate-survivor-fan-game.replit.app/"
         }
       ],
       "expo-font",
