@@ -17,7 +17,8 @@ import { Logo } from "@/components/Logo";
 import { useColors } from "@/hooks/useColors";
 import { getMe, updateMyProfile } from "@workspace/api-client-react";
 
-type Mode = "landing" | "sign-in" | "sign-up" | "verify" | "signin-code";
+type Mode = "landing" | "sign-in" | "sign-up" | "verify" | "signin-code" | "mfa";
+type MfaStrategy = "totp" | "phone_code" | "email_code" | "backup_code";
 
 export default function SignInScreen() {
   const colors = useColors();
@@ -33,6 +34,7 @@ export default function SignInScreen() {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mfaStrategy, setMfaStrategy] = useState<MfaStrategy>("totp");
 
   if (isLoaded && isSignedIn) return <Redirect href="/" />;
 
@@ -74,6 +76,8 @@ export default function SignInScreen() {
             await completeAndEnter();
           },
         });
+      } else if (signIn.status === "needs_second_factor") {
+        await beginSecondFactor();
       } else {
         setError("Additional verification is required. Please sign in on the web app.");
       }
@@ -128,8 +132,81 @@ export default function SignInScreen() {
             await completeAndEnter();
           },
         });
+      } else if (signIn.status === "needs_second_factor") {
+        await beginSecondFactor();
       } else {
         setError("Additional verification is required. Please sign in on the web app.");
+      }
+    } catch (err: any) {
+      setError(clerkErrorMessage(err) ?? "Verification failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // The account has two-factor authentication enabled — pick the best
+  // available second factor and prompt for its code.
+  async function beginSecondFactor() {
+    const factors = signIn.supportedSecondFactors ?? [];
+    const has = (s: string) => factors.some((f: any) => f.strategy === s);
+    let strategy: MfaStrategy = "totp";
+    if (has("totp")) {
+      strategy = "totp";
+    } else if (has("phone_code")) {
+      strategy = "phone_code";
+      const { error: err } = await signIn.mfa.sendPhoneCode();
+      if (err) {
+        setError(clerkErrorMessage(err) ?? "Could not send a verification code.");
+        return;
+      }
+    } else if (has("email_code")) {
+      strategy = "email_code";
+      const { error: err } = await signIn.mfa.sendEmailCode();
+      if (err) {
+        setError(clerkErrorMessage(err) ?? "Could not send a verification code.");
+        return;
+      }
+    } else if (has("backup_code")) {
+      strategy = "backup_code";
+    } else {
+      setError("Additional verification is required. Please sign in on the web app.");
+      return;
+    }
+    setMfaStrategy(strategy);
+    setCode("");
+    setError(null);
+    setMode("mfa");
+  }
+
+  async function handleVerifyMfa() {
+    if (!code.trim()) {
+      setError("Please enter your verification code.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const trimmed = code.trim();
+      const { error: err } =
+        mfaStrategy === "totp"
+          ? await signIn.mfa.verifyTOTP({ code: trimmed })
+          : mfaStrategy === "phone_code"
+            ? await signIn.mfa.verifyPhoneCode({ code: trimmed })
+            : mfaStrategy === "email_code"
+              ? await signIn.mfa.verifyEmailCode({ code: trimmed })
+              : await signIn.mfa.verifyBackupCode({ code: trimmed });
+      if (err) {
+        setError(clerkErrorMessage(err) ?? "Invalid or expired code. Please try again.");
+        return;
+      }
+      if (signIn.status === "complete") {
+        await signIn.finalize({
+          navigate: async () => {
+            await completeAndEnter();
+          },
+        });
+      } else {
+        setError("Verification did not complete. Please try again.");
       }
     } catch (err: any) {
       setError(clerkErrorMessage(err) ?? "Verification failed.");
@@ -194,13 +271,23 @@ export default function SignInScreen() {
 
   const isSignUp = mode === "sign-up";
   const heading =
-    mode === "verify" || mode === "signin-code"
+    mode === "mfa"
+      ? "Two-step verification"
+      : mode === "verify" || mode === "signin-code"
       ? "Check your email"
       : isSignUp
         ? "Join the tribe"
         : "Welcome back";
   const subheading =
-    mode === "signin-code"
+    mode === "mfa"
+      ? mfaStrategy === "totp"
+        ? "Enter the 6-digit code from your authenticator app."
+        : mfaStrategy === "phone_code"
+          ? "We sent a 6-digit code to your phone. Enter it below."
+          : mfaStrategy === "email_code"
+            ? "We sent a 6-digit code to your email. Enter it below."
+            : "Enter one of your backup codes."
+      : mode === "signin-code"
       ? `This account signs in with an emailed code. We sent a 6-digit code to ${email.trim()} — enter it below.`
       : mode === "verify"
       ? `We sent a 6-digit code to ${email.trim()}. Enter it below to verify your account.`
@@ -269,7 +356,13 @@ export default function SignInScreen() {
             onPress={() => {
               setError(null);
               setCode("");
-              setMode(mode === "verify" ? "sign-up" : mode === "signin-code" ? "sign-in" : "landing");
+              setMode(
+                mode === "verify"
+                  ? "sign-up"
+                  : mode === "signin-code" || mode === "mfa"
+                    ? "sign-in"
+                    : "landing",
+              );
             }}
             style={{ alignSelf: "flex-start", marginBottom: 16 }}
           >
@@ -285,7 +378,56 @@ export default function SignInScreen() {
             </Body>
           </View>
 
-          {mode === "signin-code" ? (
+          {mode === "mfa" ? (
+            <View style={{ gap: 14 }}>
+              <Input
+                label={mfaStrategy === "backup_code" ? "Backup code" : "Verification code"}
+                placeholder={mfaStrategy === "backup_code" ? "backup code" : "123456"}
+                keyboardType={mfaStrategy === "backup_code" ? "default" : "number-pad"}
+                autoCapitalize="none"
+                value={code}
+                onChangeText={setCode}
+              />
+              <Button label="Verify & Sign In" loading={busy} onPress={handleVerifyMfa} fullWidth />
+              {mfaStrategy === "phone_code" || mfaStrategy === "email_code" ? (
+                <Pressable
+                  onPress={async () => {
+                    setError(null);
+                    const { error: err } =
+                      mfaStrategy === "phone_code"
+                        ? await signIn.mfa.sendPhoneCode()
+                        : await signIn.mfa.sendEmailCode();
+                    if (err) setError(clerkErrorMessage(err) ?? "Could not resend code.");
+                  }}
+                  style={{ marginTop: 8 }}
+                >
+                  <Body muted style={{ textAlign: "center" }}>
+                    Didn't get it? Send a new code
+                  </Body>
+                </Pressable>
+              ) : null}
+              {mfaStrategy !== "backup_code" &&
+              (signIn.supportedSecondFactors ?? []).some((f: any) => f.strategy === "backup_code") ? (
+                <Pressable
+                  onPress={() => {
+                    setError(null);
+                    setCode("");
+                    setMfaStrategy("backup_code");
+                  }}
+                  style={{ marginTop: 8 }}
+                >
+                  <Body muted style={{ textAlign: "center" }}>
+                    Use a backup code instead
+                  </Body>
+                </Pressable>
+              ) : null}
+              {error ? (
+                <Body style={{ color: colors.destructive, textAlign: "center", marginTop: 4 }}>
+                  {error}
+                </Body>
+              ) : null}
+            </View>
+          ) : mode === "signin-code" ? (
             <View style={{ gap: 14 }}>
               <Input
                 label="Sign-in code"
