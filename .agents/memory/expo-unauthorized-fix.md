@@ -1,9 +1,11 @@
 ---
-name: EXPO_UNAUTHORIZED recurring fix
-description: What to do when Expo Go shows "You need to be authenticated with Expo for this route."
+name: EXPO_UNAUTHORIZED — two distinct causes
+description: How to diagnose "You need to be authenticated with Expo for this route." in dev vs. App Store publishing.
 ---
-The mobile app in Expo Go sometimes shows `{"code":"EXPO_UNAUTHORIZED"}` when loading.
+The error `{"code":"EXPO_UNAUTHORIZED"}` has appeared in two unrelated places:
 
-**Why:** The Expo dev server's session/manifest signing goes stale over long-running sessions in the Replit proxy environment. `EXPO_TOKEN` itself is valid (`expo whoami` succeeds), so it's not a login problem.
+1. **Expo Go / dev preview** — stale dev-server session. Fix: restart the `artifacts/survivor-mobile: expo` workflow; verify `curl -H "expo-platform: ios" https://$REPLIT_EXPO_DEV_DOMAIN` returns a 200 JSON manifest.
 
-**How to apply:** Restart the `artifacts/survivor-mobile: expo` workflow, then verify with `curl -H "expo-platform: ios" https://$REPLIT_EXPO_DEV_DOMAIN` — a 200 with a JSON manifest means it's fixed. The user then reopens/rescans in Expo Go.
+2. **Replit's App Store Publishing flow** — the workspace `EXPO_TOKEN` is valid (verify with `expo whoami` / `npx eas-cli whoami` and `eas build:list`, which have succeeded even while publishing failed). The failure is in the Replit publishing pipeline's own Expo session, which the agent cannot fix — it's a platform-side issue. The user resolved it before via Replit support; direct them there again and note the recurrence.
+
+**How to apply:** Always ask/determine WHERE the error appears before acting — the dev-restart fix does nothing for the publishing case.
