@@ -16,7 +16,12 @@ export interface PushMessage {
  * Never throws — push delivery is best-effort.
  */
 export async function sendPush(tokens: string[], message: PushMessage): Promise<void> {
-  if (tokens.length === 0) return;
+  if (tokens.length === 0) {
+    console.info("[push] sendPush called with 0 tokens — nothing to send");
+    return;
+  }
+
+  console.info(`[push] Sending to ${tokens.length} token(s): title="${message.title}"`);
 
   const staleTokens: string[] = [];
 
@@ -40,17 +45,31 @@ export async function sendPush(tokens: string[], message: PushMessage): Promise<
         ),
       });
       if (!res.ok) {
-        console.error(`Expo push request failed: ${res.status} ${await res.text().catch(() => "")}`);
+        const text = await res.text().catch(() => "");
+        console.error(`[push] Expo push HTTP ${res.status}: ${text}`);
         continue;
       }
-      const json = (await res.json()) as { data?: Array<{ status: string; details?: { error?: string } }> };
+      const json = (await res.json()) as { data?: Array<{ status: string; id?: string; details?: { error?: string; message?: string } }> };
+      console.info(`[push] Expo raw response: ${JSON.stringify(json)}`);
       json.data?.forEach((ticket, idx) => {
-        if (ticket.status === "error" && ticket.details?.error === "DeviceNotRegistered") {
-          staleTokens.push(chunk[idx]);
+        if (ticket.status === "error") {
+          const errCode = ticket.details?.error;
+          console.error(`[push] Ticket error for token ...${chunk[idx].slice(-10)}: error=${errCode} msg=${ticket.details?.message}`);
+          if (errCode === "DeviceNotRegistered") {
+            staleTokens.push(chunk[idx]);
+          }
+          // InvalidCredentials = APNs/FCM creds not configured in EAS project.
+          // Fix: run `eas credentials` in artifacts/survivor-mobile, upload push
+          // credentials, then rebuild the app.
+          if (errCode === "InvalidCredentials") {
+            console.error("[push] ACTION REQUIRED: EAS project missing APNs/FCM credentials. Run `eas credentials` in artifacts/survivor-mobile and rebuild.");
+          }
+        } else {
+          console.info(`[push] Ticket ok for token ...${chunk[idx].slice(-10)}: receiptId=${ticket.id}`);
         }
       });
     } catch (err) {
-      console.error("Expo push request failed:", err);
+      console.error("[push] Expo push request threw:", err);
     }
   }
 
