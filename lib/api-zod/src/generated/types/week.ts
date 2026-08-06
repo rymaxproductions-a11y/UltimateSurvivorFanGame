@@ -12,5 +12,9 @@ export interface Week {
   weekNumber: number;
   isLocked: boolean;
   isOpen: boolean;
+  /** @nullable */
+  airDate: string | null;
+  /** @nullable */
+  reminderSentAt: string | null;
   createdAt: string;
 }

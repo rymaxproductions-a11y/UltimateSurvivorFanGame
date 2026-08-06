@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, pgEnum, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -18,6 +18,11 @@ export const gamesTable = pgTable("games", {
   secondPickPoints: integer("second_pick_points").notNull().default(10),
   firstPickTopThreePoints: integer("first_pick_top_three_points").notNull().default(5),
   secondPickTopThreePoints: integer("second_pick_top_three_points").notNull().default(3),
+  // How many minutes before a week's airDate the automatic reminder push is sent.
+  reminderLeadMinutes: integer("reminder_lead_minutes").notNull().default(60),
+  // When true, the automatic reminder only goes to players who haven't
+  // answered every question of the airing week yet.
+  remindOnlyMissing: boolean("remind_only_missing").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

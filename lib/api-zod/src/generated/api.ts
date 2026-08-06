@@ -294,6 +294,8 @@ export const ListGamesResponseItem = zod.object({
   secondPickPoints: zod.number(),
   firstPickTopThreePoints: zod.number(),
   secondPickTopThreePoints: zod.number(),
+  reminderLeadMinutes: zod.number(),
+  remindOnlyMissing: zod.boolean(),
   createdAt: zod.string(),
 });
 export const ListGamesResponse = zod.array(ListGamesResponseItem);
@@ -327,6 +329,8 @@ export const GetGameResponse = zod.object({
   secondPickPoints: zod.number(),
   firstPickTopThreePoints: zod.number(),
   secondPickTopThreePoints: zod.number(),
+  reminderLeadMinutes: zod.number(),
+  remindOnlyMissing: zod.boolean(),
   createdAt: zod.string(),
 });
 
@@ -344,6 +348,8 @@ export const UpdateGameBody = zod.object({
   secondPickPoints: zod.number().optional(),
   firstPickTopThreePoints: zod.number().optional(),
   secondPickTopThreePoints: zod.number().optional(),
+  reminderLeadMinutes: zod.number().optional(),
+  remindOnlyMissing: zod.boolean().optional(),
 });
 
 export const UpdateGameResponse = zod.object({
@@ -360,6 +366,8 @@ export const UpdateGameResponse = zod.object({
   secondPickPoints: zod.number(),
   firstPickTopThreePoints: zod.number(),
   secondPickTopThreePoints: zod.number(),
+  reminderLeadMinutes: zod.number(),
+  remindOnlyMissing: zod.boolean(),
   createdAt: zod.string(),
 });
 
@@ -596,6 +604,8 @@ export const ListWeeksResponseItem = zod.object({
   weekNumber: zod.number(),
   isLocked: zod.boolean(),
   isOpen: zod.boolean(),
+  airDate: zod.string().nullable(),
+  reminderSentAt: zod.string().nullable(),
   createdAt: zod.string(),
 });
 export const ListWeeksResponse = zod.array(ListWeeksResponseItem);
@@ -624,6 +634,35 @@ export const GetWeekResponse = zod.object({
   weekNumber: zod.number(),
   isLocked: zod.boolean(),
   isOpen: zod.boolean(),
+  airDate: zod.string().nullable(),
+  reminderSentAt: zod.string().nullable(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Update a week's air date (admin only)
+ */
+export const UpdateWeekParams = zod.object({
+  weekId: zod.coerce.number(),
+});
+
+export const UpdateWeekBody = zod.object({
+  airDate: zod
+    .string()
+    .nullish()
+    .describe(
+      "ISO timestamp of when the episode airs, or null to clear it (also resets the reminder).",
+    ),
+});
+
+export const UpdateWeekResponse = zod.object({
+  id: zod.number(),
+  gameId: zod.number(),
+  weekNumber: zod.number(),
+  isLocked: zod.boolean(),
+  isOpen: zod.boolean(),
+  airDate: zod.string().nullable(),
+  reminderSentAt: zod.string().nullable(),
   createdAt: zod.string(),
 });
 
@@ -647,6 +686,8 @@ export const OpenWeekResponse = zod.object({
   weekNumber: zod.number(),
   isLocked: zod.boolean(),
   isOpen: zod.boolean(),
+  airDate: zod.string().nullable(),
+  reminderSentAt: zod.string().nullable(),
   createdAt: zod.string(),
 });
 
@@ -663,6 +704,8 @@ export const CloseWeekResponse = zod.object({
   weekNumber: zod.number(),
   isLocked: zod.boolean(),
   isOpen: zod.boolean(),
+  airDate: zod.string().nullable(),
+  reminderSentAt: zod.string().nullable(),
   createdAt: zod.string(),
 });
 
@@ -683,6 +726,8 @@ export const UnlockWeekResponse = zod.object({
   weekNumber: zod.number(),
   isLocked: zod.boolean(),
   isOpen: zod.boolean(),
+  airDate: zod.string().nullable(),
+  reminderSentAt: zod.string().nullable(),
   createdAt: zod.string(),
 });
 
@@ -821,6 +866,8 @@ export const SubmitCorrectAnswersResponse = zod.object({
   weekNumber: zod.number(),
   isLocked: zod.boolean(),
   isOpen: zod.boolean(),
+  airDate: zod.string().nullable(),
+  reminderSentAt: zod.string().nullable(),
   createdAt: zod.string(),
 });
 
@@ -957,6 +1004,8 @@ export const SubmitSurvivorWinnerResponse = zod.object({
   secondPickPoints: zod.number(),
   firstPickTopThreePoints: zod.number(),
   secondPickTopThreePoints: zod.number(),
+  reminderLeadMinutes: zod.number(),
+  remindOnlyMissing: zod.boolean(),
   createdAt: zod.string(),
 });
 

@@ -772,6 +772,29 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Week"
+    patch:
+      operationId: updateWeek
+      tags: [weeks]
+      summary: Update a week's air date (admin only)
+      parameters:
+        - name: weekId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateWeekBody"
+      responses:
+        "200":
+          description: Updated week
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Week"
     delete:
       operationId: deleteWeek
       tags: [weeks]
@@ -1589,6 +1612,10 @@ components:
           type: integer
         secondPickTopThreePoints:
           type: integer
+        reminderLeadMinutes:
+          type: integer
+        remindOnlyMissing:
+          type: boolean
         createdAt:
           type: string
       required:
@@ -1605,6 +1632,8 @@ components:
         - secondPickPoints
         - firstPickTopThreePoints
         - secondPickTopThreePoints
+        - reminderLeadMinutes
+        - remindOnlyMissing
         - createdAt
 
     CreateGameBody:
@@ -1634,6 +1663,10 @@ components:
           type: integer
         secondPickTopThreePoints:
           type: integer
+        reminderLeadMinutes:
+          type: integer
+        remindOnlyMissing:
+          type: boolean
 
     Contestant:
       type: object
@@ -1763,6 +1796,10 @@ components:
           type: boolean
         isOpen:
           type: boolean
+        airDate:
+          type: ["string", "null"]
+        reminderSentAt:
+          type: ["string", "null"]
         createdAt:
           type: string
       required:
@@ -1771,6 +1808,8 @@ components:
         - weekNumber
         - isLocked
         - isOpen
+        - airDate
+        - reminderSentAt
         - createdAt
 
     CreateWeekBody:
@@ -1780,6 +1819,13 @@ components:
           type: integer
       required:
         - weekNumber
+
+    UpdateWeekBody:
+      type: object
+      properties:
+        airDate:
+          type: ["string", "null"]
+          description: ISO timestamp of when the episode airs, or null to clear it (also resets the reminder).
 
     Choice:
       type: object

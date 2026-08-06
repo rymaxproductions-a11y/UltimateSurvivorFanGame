@@ -14,4 +14,6 @@ export interface UpdateGameBody {
   secondPickPoints?: number;
   firstPickTopThreePoints?: number;
   secondPickTopThreePoints?: number;
+  reminderLeadMinutes?: number;
+  remindOnlyMissing?: boolean;
 }

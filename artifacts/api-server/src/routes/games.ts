@@ -17,7 +17,9 @@ import {
   ClearGameParams,
 } from "@workspace/api-zod";
 import { requireAuth } from "./users";
+import { requireAdmin } from "./answers";
 import { serialize } from "../lib/serialize";
+import { isValidReminderLead } from "../lib/reminderValidation";
 
 const router: IRouter = Router();
 
@@ -58,7 +60,7 @@ router.get("/games/:gameId", async (req, res): Promise<void> => {
   res.json(GetGameResponse.parse(serialize(game)));
 });
 
-router.patch("/games/:gameId", requireAuth, async (req: any, res: any): Promise<void> => {
+router.patch("/games/:gameId", requireAuth, requireAdmin, async (req: any, res: any): Promise<void> => {
   const params = UpdateGameParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -68,6 +70,11 @@ router.patch("/games/:gameId", requireAuth, async (req: any, res: any): Promise<
   const parsed = UpdateGameBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  if (parsed.data.reminderLeadMinutes !== undefined && !isValidReminderLead(parsed.data.reminderLeadMinutes)) {
+    res.status(400).json({ error: "reminderLeadMinutes must be an integer between 1 and 1440." });
     return;
   }
 

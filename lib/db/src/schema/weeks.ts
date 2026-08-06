@@ -9,6 +9,11 @@ export const weeksTable = pgTable("weeks", {
   weekNumber: integer("week_number").notNull(),
   isLocked: boolean("is_locked").notNull().default(false),
   isOpen: boolean("is_open").notNull().default(false),
+  // When the episode airs. Nullable: admin may not have scheduled it yet.
+  airDate: timestamp("air_date", { withTimezone: true }),
+  // Set once the automatic pre-air reminder push has been sent (or claimed),
+  // so the scheduler never double-sends for the same week.
+  reminderSentAt: timestamp("reminder_sent_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

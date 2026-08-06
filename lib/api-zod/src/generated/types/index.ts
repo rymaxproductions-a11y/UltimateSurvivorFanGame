@@ -67,6 +67,7 @@ export * from "./updateQuestionBody";
 export * from "./updateQuestionBodyAnswerType";
 export * from "./updateRoleBody";
 export * from "./updateRoleBodyRole";
+export * from "./updateWeekBody";
 export * from "./uploadUrlRequest";
 export * from "./uploadUrlResponse";
 export * from "./userProfile";

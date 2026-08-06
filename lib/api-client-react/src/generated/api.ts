@@ -67,6 +67,7 @@ import type {
   UpdateProfileBody,
   UpdateQuestionBody,
   UpdateRoleBody,
+  UpdateWeekBody,
   UploadUrlRequest,
   UploadUrlResponse,
   UserProfile,
@@ -3179,6 +3180,93 @@ export function useGetWeek<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Update a week's air date (admin only)
+ */
+export const getUpdateWeekUrl = (weekId: number) => {
+  return `/api/weeks/${weekId}`;
+};
+
+export const updateWeek = async (
+  weekId: number,
+  updateWeekBody: UpdateWeekBody,
+  options?: RequestInit,
+): Promise<Week> => {
+  return customFetch<Week>(getUpdateWeekUrl(weekId), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateWeekBody),
+  });
+};
+
+export const getUpdateWeekMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateWeek>>,
+    TError,
+    { weekId: number; data: BodyType<UpdateWeekBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateWeek>>,
+  TError,
+  { weekId: number; data: BodyType<UpdateWeekBody> },
+  TContext
+> => {
+  const mutationKey = ["updateWeek"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateWeek>>,
+    { weekId: number; data: BodyType<UpdateWeekBody> }
+  > = (props) => {
+    const { weekId, data } = props ?? {};
+
+    return updateWeek(weekId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateWeekMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateWeek>>
+>;
+export type UpdateWeekMutationBody = BodyType<UpdateWeekBody>;
+export type UpdateWeekMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update a week's air date (admin only)
+ */
+export const useUpdateWeek = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateWeek>>,
+    TError,
+    { weekId: number; data: BodyType<UpdateWeekBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateWeek>>,
+  TError,
+  { weekId: number; data: BodyType<UpdateWeekBody> },
+  TContext
+> => {
+  return useMutation(getUpdateWeekMutationOptions(options));
+};
 
 /**
  * @summary Delete a week and all its questions/answers (admin only)

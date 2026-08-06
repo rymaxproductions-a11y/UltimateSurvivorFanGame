@@ -25,5 +25,7 @@ export interface Game {
   secondPickPoints: number;
   firstPickTopThreePoints: number;
   secondPickTopThreePoints: number;
+  reminderLeadMinutes: number;
+  remindOnlyMissing: boolean;
   createdAt: string;
 }

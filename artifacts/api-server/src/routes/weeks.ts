@@ -8,6 +8,7 @@ import {
   CreateWeekBody,
   GetWeekParams,
   GetWeekResponse,
+  UpdateWeekBody,
 } from "@workspace/api-zod";
 import { requireAuth } from "./users";
 import { serialize } from "../lib/serialize";
@@ -72,6 +73,44 @@ router.post("/games/:gameId/weeks", requireAuth, async (req: any, res: any): Pro
   }
 
   res.status(201).json(serialize(week));
+});
+
+router.patch("/weeks/:weekId", requireAuth, requireAdmin, async (req: any, res: any): Promise<void> => {
+  const params = GetWeekParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const parsed = UpdateWeekBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  if (parsed.data.airDate === undefined) {
+    res.status(400).json({ error: "airDate is required (a timestamp or null)." });
+    return;
+  }
+
+  const airDate = parsed.data.airDate === null ? null : new Date(parsed.data.airDate);
+  if (airDate !== null && Number.isNaN(airDate.getTime())) {
+    res.status(400).json({ error: "airDate must be a valid ISO timestamp or null." });
+    return;
+  }
+
+  // Changing (or clearing) the air date re-arms the reminder.
+  const [week] = await db.update(weeksTable)
+    .set({ airDate, reminderSentAt: null })
+    .where(eq(weeksTable.id, params.data.weekId))
+    .returning();
+
+  if (!week) {
+    res.status(404).json({ error: "Week not found" });
+    return;
+  }
+
+  res.json(serialize(week));
 });
 
 router.post("/weeks/:weekId/open", requireAuth, async (req: any, res: any): Promise<void> => {

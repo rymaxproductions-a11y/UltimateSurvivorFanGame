@@ -33,6 +33,7 @@ import {
   useSeedGame,
   useClearGame,
   useSendBroadcast,
+  useUpdateWeek,
   getListGamesQueryKey,
   getListContestantsQueryKey,
   getListShowTribesQueryKey,
@@ -766,6 +767,79 @@ function QuestionCard({ question, weekId, weekLocked }: { question: any; weekId:
   );
 }
 
+// Convert an ISO timestamp to the value a <input type="datetime-local"> expects (local time).
+function toDatetimeLocal(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function AirDateEditor({ gameId, week }: { gameId: number; week: any }) {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const updateWeek = useUpdateWeek();
+  const [value, setValue] = useState<string | null>(null);
+
+  const current = value ?? toDatetimeLocal(week.airDate);
+  const dirty = value !== null && value !== toDatetimeLocal(week.airDate);
+
+  function save(airDate: string | null) {
+    updateWeek.mutate(
+      { weekId: week.id, data: { airDate } },
+      {
+        onSuccess: () => {
+          qc.invalidateQueries({ queryKey: getListWeeksQueryKey(gameId) });
+          setValue(null);
+          toast({ title: airDate ? "Air date saved — reminder scheduled." : "Air date cleared." });
+        },
+        onError: () => toast({ title: "Failed to save air date", variant: "destructive" }),
+      },
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
+      <p className="text-xs font-semibold text-foreground uppercase tracking-wide mb-2">Episode Air Date</p>
+      <div className="flex gap-2 flex-wrap items-center">
+        <input
+          data-testid={`input-air-date-week-${week.weekNumber}`}
+          type="datetime-local"
+          value={current}
+          onChange={(e) => setValue(e.target.value)}
+          className="border border-border rounded-lg px-3 py-2 bg-card text-foreground text-sm"
+        />
+        <button
+          data-testid={`button-save-air-date-week-${week.weekNumber}`}
+          onClick={() => current && save(new Date(current).toISOString())}
+          disabled={updateWeek.isPending || !dirty || !current}
+          className="px-3 py-2 bg-primary text-primary-foreground rounded-lg font-semibold text-xs hover:bg-primary/90 disabled:opacity-50"
+        >
+          {updateWeek.isPending ? "Saving..." : "Save"}
+        </button>
+        {week.airDate && (
+          <button
+            data-testid={`button-clear-air-date-week-${week.weekNumber}`}
+            onClick={() => save(null)}
+            disabled={updateWeek.isPending}
+            className="px-3 py-2 bg-muted text-muted-foreground border border-border rounded-lg font-semibold text-xs hover:bg-muted/80 disabled:opacity-50"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+      <p className="text-xs text-muted-foreground mt-2">
+        {week.reminderSentAt
+          ? `Reminder sent ${new Date(week.reminderSentAt).toLocaleString()}. Changing the air date re-arms it.`
+          : week.airDate
+            ? "Players get an automatic push reminder before airtime (lead time set in Episode Reminders below)."
+            : "Set when this episode airs to send players an automatic reminder push."}
+      </p>
+    </div>
+  );
+}
+
 function WeekSection({ gameId, week, contestants }: { gameId: number; week: any; contestants: any[] }) {
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -952,6 +1026,7 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
 
       {expanded && (
         <div className="px-5 py-4 bg-background border-t border-border space-y-4">
+          <AirDateEditor gameId={gameId} week={week} />
           {week.isLocked && (
             <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 flex items-center justify-between gap-3">
               <div className="text-sm text-amber-900">
@@ -1400,6 +1475,73 @@ function StatsBar({ gameId }: { gameId: number }) {
   );
 }
 
+function EpisodeRemindersSection({ gameId }: { gameId: number }) {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const { data: game } = useGetGame(gameId);
+  const updateGame = useUpdateGame();
+  const [lead, setLead] = useState<number | null>(null);
+  const [onlyMissing, setOnlyMissing] = useState<boolean | null>(null);
+
+  const currentLead = lead ?? game?.reminderLeadMinutes ?? 60;
+  const currentOnlyMissing = onlyMissing ?? game?.remindOnlyMissing ?? false;
+
+  function handleSave() {
+    updateGame.mutate(
+      { gameId, data: { reminderLeadMinutes: currentLead, remindOnlyMissing: currentOnlyMissing } },
+      {
+        onSuccess: () => {
+          qc.invalidateQueries({ queryKey: getListGamesQueryKey() });
+          toast({ title: "Reminder settings saved!" });
+        },
+        onError: () => toast({ title: "Failed to save reminder settings", variant: "destructive" }),
+      },
+    );
+  }
+
+  return (
+    <div className="bg-card border border-border rounded-xl p-6">
+      <h2 className="text-lg font-bold text-foreground mb-1" style={{ fontFamily: "'Oswald', sans-serif" }}>EPISODE REMINDERS</h2>
+      <p className="text-xs text-muted-foreground mb-4">
+        Players automatically get a push reminder before each episode airs.
+        Set the air date on each episode in the Weekly Questions section.
+      </p>
+      <div className="space-y-3">
+        <div>
+          <label className="block text-xs text-muted-foreground mb-1">Send reminder this many minutes before airtime</label>
+          <input
+            data-testid="input-reminder-lead-minutes"
+            type="number"
+            min={1}
+            max={1440}
+            value={currentLead}
+            onChange={(e) => setLead(Math.max(1, Math.min(1440, Number(e.target.value) || 1)))}
+            className="w-full border border-border rounded-lg px-3 py-2 bg-background text-foreground"
+          />
+        </div>
+        <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+          <input
+            data-testid="checkbox-remind-only-missing"
+            type="checkbox"
+            checked={currentOnlyMissing}
+            onChange={(e) => setOnlyMissing(e.target.checked)}
+            className="w-4 h-4 accent-primary"
+          />
+          Only remind players who haven't answered all of this week's questions
+        </label>
+        <button
+          data-testid="button-save-reminder-settings"
+          onClick={handleSave}
+          disabled={updateGame.isPending}
+          className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 disabled:opacity-50 text-sm"
+        >
+          {updateGame.isPending ? "Saving..." : "Save Reminder Settings"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function SendNotificationSection() {
   const { toast } = useToast();
   const sendBroadcast = useSendBroadcast();
@@ -1523,6 +1665,7 @@ export default function Admin() {
 
           <div className="grid lg:grid-cols-2 gap-6 mt-6">
             <SendNotificationSection />
+            {selectedGameId && <EpisodeRemindersSection gameId={selectedGameId} />}
           </div>
         </div>
       </div>

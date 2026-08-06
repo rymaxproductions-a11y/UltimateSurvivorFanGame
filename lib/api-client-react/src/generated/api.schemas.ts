@@ -186,6 +186,8 @@ export interface Game {
   secondPickPoints: number;
   firstPickTopThreePoints: number;
   secondPickTopThreePoints: number;
+  reminderLeadMinutes: number;
+  remindOnlyMissing: boolean;
   createdAt: string;
 }
 
@@ -210,6 +212,8 @@ export interface UpdateGameBody {
   secondPickPoints?: number;
   firstPickTopThreePoints?: number;
   secondPickTopThreePoints?: number;
+  reminderLeadMinutes?: number;
+  remindOnlyMissing?: boolean;
 }
 
 export interface Contestant {
@@ -281,11 +285,23 @@ export interface Week {
   weekNumber: number;
   isLocked: boolean;
   isOpen: boolean;
+  /** @nullable */
+  airDate: string | null;
+  /** @nullable */
+  reminderSentAt: string | null;
   createdAt: string;
 }
 
 export interface CreateWeekBody {
   weekNumber: number;
+}
+
+export interface UpdateWeekBody {
+  /**
+   * ISO timestamp of when the episode airs, or null to clear it (also resets the reminder).
+   * @nullable
+   */
+  airDate?: string | null;
 }
 
 export interface Choice {
