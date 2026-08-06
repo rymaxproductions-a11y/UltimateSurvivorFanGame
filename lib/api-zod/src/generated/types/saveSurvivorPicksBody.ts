@@ -9,4 +9,6 @@
 export interface SaveSurvivorPicksBody {
   firstChoiceContestantId: number;
   secondChoiceContestantId: number;
+  /** When true, the picks are permanently locked and can no longer be changed. */
+  lock?: boolean;
 }

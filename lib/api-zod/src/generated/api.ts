@@ -352,6 +352,8 @@ export const ListContestantsResponseItem = zod.object({
   gameId: zod.number(),
   name: zod.string(),
   headshotPath: zod.string().nullable(),
+  showTribeId: zod.number().nullable(),
+  showTribeName: zod.string().nullable(),
   isActive: zod
     .boolean()
     .describe(
@@ -370,6 +372,7 @@ export const CreateContestantParams = zod.object({
 
 export const CreateContestantBody = zod.object({
   name: zod.string(),
+  showTribeId: zod.number().nullish(),
 });
 
 /**
@@ -382,6 +385,7 @@ export const UpdateContestantParams = zod.object({
 export const UpdateContestantBody = zod.object({
   name: zod.string().optional(),
   headshotPath: zod.string().nullish(),
+  showTribeId: zod.number().nullish(),
 });
 
 export const UpdateContestantResponse = zod.object({
@@ -389,6 +393,8 @@ export const UpdateContestantResponse = zod.object({
   gameId: zod.number(),
   name: zod.string(),
   headshotPath: zod.string().nullable(),
+  showTribeId: zod.number().nullable(),
+  showTribeName: zod.string().nullable(),
   isActive: zod
     .boolean()
     .describe(
@@ -434,12 +440,66 @@ export const RestoreContestantResponse = zod.object({
   gameId: zod.number(),
   name: zod.string(),
   headshotPath: zod.string().nullable(),
+  showTribeId: zod.number().nullable(),
+  showTribeName: zod.string().nullable(),
   isActive: zod
     .boolean()
     .describe(
       "When false, the contestant is archived and excluded from new picks but kept for historical scoring.",
     ),
   createdAt: zod.string(),
+});
+
+/**
+ * @summary List show tribes for a game
+ */
+export const ListShowTribesParams = zod.object({
+  gameId: zod.coerce.number(),
+});
+
+export const ListShowTribesResponseItem = zod.object({
+  id: zod.number(),
+  gameId: zod.number(),
+  name: zod.string(),
+  createdAt: zod.string(),
+});
+export const ListShowTribesResponse = zod.array(ListShowTribesResponseItem);
+
+/**
+ * @summary Add a show tribe to a game (admin only)
+ */
+export const CreateShowTribeParams = zod.object({
+  gameId: zod.coerce.number(),
+});
+
+export const CreateShowTribeBody = zod.object({
+  name: zod.string().min(1),
+});
+
+/**
+ * @summary Rename a show tribe (admin only)
+ */
+export const UpdateShowTribeParams = zod.object({
+  showTribeId: zod.coerce.number(),
+});
+
+export const UpdateShowTribeBody = zod.object({
+  name: zod.string().min(1),
+});
+
+export const UpdateShowTribeResponse = zod.object({
+  id: zod.number(),
+  gameId: zod.number(),
+  name: zod.string(),
+  createdAt: zod.string(),
+});
+
+/**
+ * Contestants assigned to the tribe keep playing; their tribe simply becomes unassigned.
+ * @summary Delete a show tribe (admin only)
+ */
+export const DeleteShowTribeParams = zod.object({
+  showTribeId: zod.coerce.number(),
 });
 
 /**
@@ -582,6 +642,11 @@ export const ListQuestionsResponseItem = zod.object({
   weekId: zod.number(),
   text: zod.string(),
   pointValue: zod.number(),
+  answerType: zod
+    .enum(["cast", "tribe"])
+    .describe(
+      "Which answer bank this question uses — contestants (cast) or show tribes.",
+    ),
 });
 export const ListQuestionsResponse = zod.array(ListQuestionsResponseItem);
 
@@ -592,9 +657,14 @@ export const CreateQuestionParams = zod.object({
   weekId: zod.coerce.number(),
 });
 
+export const createQuestionBodyAnswerTypeDefault = `cast`;
+
 export const CreateQuestionBody = zod.object({
   text: zod.string(),
   pointValue: zod.number(),
+  answerType: zod
+    .enum(["cast", "tribe"])
+    .default(createQuestionBodyAnswerTypeDefault),
   choices: zod.array(zod.string()).optional(),
 });
 
@@ -608,6 +678,7 @@ export const UpdateQuestionParams = zod.object({
 export const UpdateQuestionBody = zod.object({
   text: zod.string().optional(),
   pointValue: zod.number().optional(),
+  answerType: zod.enum(["cast", "tribe"]).optional(),
 });
 
 export const UpdateQuestionResponse = zod.object({
@@ -615,6 +686,11 @@ export const UpdateQuestionResponse = zod.object({
   weekId: zod.number(),
   text: zod.string(),
   pointValue: zod.number(),
+  answerType: zod
+    .enum(["cast", "tribe"])
+    .describe(
+      "Which answer bank this question uses — contestants (cast) or show tribes.",
+    ),
 });
 
 /**
@@ -652,8 +728,13 @@ export const GetCorrectAnswersParams = zod.object({
 export const GetCorrectAnswersResponseItem = zod.object({
   id: zod.number(),
   questionId: zod.number(),
-  contestantId: zod.number(),
-  contestantName: zod.string(),
+  contestantId: zod.number().nullable(),
+  contestantName: zod.string().nullable(),
+  showTribeId: zod.number().nullable(),
+  showTribeName: zod.string().nullable(),
+  answerName: zod
+    .string()
+    .describe("Display name of the correct answer (contestant or show tribe)."),
   questionText: zod.string(),
   pointValue: zod.number(),
 });
@@ -672,7 +753,8 @@ export const SubmitCorrectAnswersBody = zod.object({
   answers: zod.array(
     zod.object({
       questionId: zod.number(),
-      contestantIds: zod.array(zod.number()),
+      contestantIds: zod.array(zod.number()).optional(),
+      showTribeIds: zod.array(zod.number()).optional(),
     }),
   ),
 });
@@ -697,8 +779,13 @@ export const GetMyAnswersResponseItem = zod.object({
   id: zod.number(),
   userId: zod.number(),
   questionId: zod.number(),
-  contestantId: zod.number(),
-  contestantName: zod.string(),
+  contestantId: zod.number().nullable(),
+  contestantName: zod.string().nullable(),
+  showTribeId: zod.number().nullable(),
+  showTribeName: zod.string().nullable(),
+  answerName: zod
+    .string()
+    .describe("Display name of the chosen answer (contestant or show tribe)."),
   isCorrect: zod.boolean().nullable(),
 });
 export const GetMyAnswersResponse = zod.array(GetMyAnswersResponseItem);
@@ -714,7 +801,8 @@ export const SaveMyAnswersBody = zod.object({
   answers: zod.array(
     zod.object({
       questionId: zod.number(),
-      contestantId: zod.number(),
+      contestantId: zod.number().optional(),
+      showTribeId: zod.number().optional(),
     }),
   ),
 });
@@ -723,8 +811,13 @@ export const SaveMyAnswersResponseItem = zod.object({
   id: zod.number(),
   userId: zod.number(),
   questionId: zod.number(),
-  contestantId: zod.number(),
-  contestantName: zod.string(),
+  contestantId: zod.number().nullable(),
+  contestantName: zod.string().nullable(),
+  showTribeId: zod.number().nullable(),
+  showTribeName: zod.string().nullable(),
+  answerName: zod
+    .string()
+    .describe("Display name of the chosen answer (contestant or show tribe)."),
   isCorrect: zod.boolean().nullable(),
 });
 export const SaveMyAnswersResponse = zod.array(SaveMyAnswersResponseItem);
@@ -757,6 +850,12 @@ export const SaveSurvivorPicksParams = zod.object({
 export const SaveSurvivorPicksBody = zod.object({
   firstChoiceContestantId: zod.number(),
   secondChoiceContestantId: zod.number(),
+  lock: zod
+    .boolean()
+    .optional()
+    .describe(
+      "When true, the picks are permanently locked and can no longer be changed.",
+    ),
 });
 
 export const SaveSurvivorPicksResponse = zod.object({

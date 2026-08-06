@@ -12,6 +12,7 @@ import {
   DeleteQuestionParams,
 } from "@workspace/api-zod";
 import { requireAuth } from "./users";
+import { requireAdmin } from "./answers";
 import { serialize } from "../lib/serialize";
 
 const router: IRouter = Router();
@@ -30,7 +31,7 @@ router.get("/weeks/:weekId/questions", async (req, res): Promise<void> => {
   res.json(ListQuestionsResponse.parse(questions.map(q => serialize(q))));
 });
 
-router.post("/weeks/:weekId/questions", requireAuth, async (req: any, res: any): Promise<void> => {
+router.post("/weeks/:weekId/questions", requireAuth, requireAdmin, async (req: any, res: any): Promise<void> => {
   const params = CreateQuestionParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -47,12 +48,13 @@ router.post("/weeks/:weekId/questions", requireAuth, async (req: any, res: any):
     weekId: params.data.weekId,
     text: parsed.data.text,
     pointValue: parsed.data.pointValue,
+    answerType: parsed.data.answerType ?? "cast",
   }).returning();
 
   res.status(201).json(serialize(question));
 });
 
-router.patch("/questions/:questionId", requireAuth, async (req: any, res: any): Promise<void> => {
+router.patch("/questions/:questionId", requireAuth, requireAdmin, async (req: any, res: any): Promise<void> => {
   const params = UpdateQuestionParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -74,7 +76,7 @@ router.patch("/questions/:questionId", requireAuth, async (req: any, res: any): 
   res.json(UpdateQuestionResponse.parse(serialize(updated)));
 });
 
-router.delete("/questions/:questionId", requireAuth, async (req: any, res: any): Promise<void> => {
+router.delete("/questions/:questionId", requireAuth, requireAdmin, async (req: any, res: any): Promise<void> => {
   const params = DeleteQuestionParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });

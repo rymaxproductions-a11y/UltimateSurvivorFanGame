@@ -10,8 +10,16 @@ export interface PlayerAnswer {
   id: number;
   userId: number;
   questionId: number;
-  contestantId: number;
-  contestantName: string;
+  /** @nullable */
+  contestantId: number | null;
+  /** @nullable */
+  contestantName: string | null;
+  /** @nullable */
+  showTribeId: number | null;
+  /** @nullable */
+  showTribeName: string | null;
+  /** Display name of the chosen answer (contestant or show tribe). */
+  answerName: string;
   /** @nullable */
   isCorrect: boolean | null;
 }

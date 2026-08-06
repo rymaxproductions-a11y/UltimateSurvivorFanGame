@@ -5,10 +5,13 @@
  * Survivor Guessing Game API
  * OpenAPI spec version: 0.1.0
  */
+import type { QuestionWithChoicesAnswerType } from "./questionWithChoicesAnswerType";
 
 export interface QuestionWithChoices {
   id: number;
   weekId: number;
   text: string;
   pointValue: number;
+  /** Which answer bank this question uses — contestants (cast) or show tribes. */
+  answerType: QuestionWithChoicesAnswerType;
 }

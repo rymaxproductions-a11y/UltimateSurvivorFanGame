@@ -10,4 +10,6 @@ export interface UpdateContestantBody {
   name?: string;
   /** @nullable */
   headshotPath?: string | null;
+  /** @nullable */
+  showTribeId?: number | null;
 }

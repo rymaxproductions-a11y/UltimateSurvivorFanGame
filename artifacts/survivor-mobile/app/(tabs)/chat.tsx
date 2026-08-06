@@ -135,18 +135,20 @@ export default function ChatTab() {
                     paddingVertical: 8,
                   }}
                 >
-                  {!mine && (
-                    <Body
-                      style={{
-                        fontFamily: "WorkSans_600SemiBold",
-                        fontSize: 11,
-                        color: colors.mutedForeground,
-                        marginBottom: 2,
-                      }}
-                    >
-                      {item.displayName ?? item.username}
-                    </Body>
-                  )}
+                  <Body
+                    style={{
+                      fontFamily: "WorkSans_600SemiBold",
+                      fontSize: 11,
+                      color: mine
+                        ? colors.primaryForeground
+                        : colors.mutedForeground,
+                      opacity: mine ? 0.85 : 1,
+                      marginBottom: 2,
+                      textAlign: mine ? "right" : "left",
+                    }}
+                  >
+                    {item.displayName ?? item.username}
+                  </Body>
                   <Body
                     style={{
                       color: mine ? colors.primaryForeground : colors.foreground,

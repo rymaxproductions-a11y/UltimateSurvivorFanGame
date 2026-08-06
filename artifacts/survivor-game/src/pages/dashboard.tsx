@@ -14,11 +14,13 @@ import {
   useGetLeaderboard,
   useGetMySurvivorPicks,
   useSaveSurvivorPicks,
+  useListShowTribes,
   getGetMeQueryKey,
   getGetMyAnswersQueryKey,
   getGetLeaderboardQueryKey,
   getListContestantsQueryKey,
   getGetMySurvivorPicksQueryKey,
+  getListShowTribesQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -44,26 +46,35 @@ function EpisodeTab({
   const { data: contestants } = useListContestants(gameId, {
     query: { queryKey: getListContestantsQueryKey(gameId) },
   });
+  const { data: showTribes } = useListShowTribes(gameId, {
+    query: { queryKey: getListShowTribesQueryKey(gameId) },
+  });
   const saveAnswers = useSaveMyAnswers();
 
+  // selections: keyed by questionId -> selected option id (contestant id or show tribe id)
   const [selections, setSelections] = useState<Record<number, number>>({});
   const lockedAnswers = !!myAnswers && myAnswers.length > 0;
 
-  function getAnswerForQuestion(questionId: number): number | undefined {
+  function getAnswerForQuestion(questionId: number, answerType: string): number | undefined {
     const saved = myAnswers?.find((a) => a.questionId === questionId);
-    return selections[questionId] ?? saved?.contestantId ?? undefined;
+    const savedId = answerType === "tribe" ? saved?.showTribeId : saved?.contestantId;
+    return selections[questionId] ?? savedId ?? undefined;
   }
 
-  function handleSelect(questionId: number, contestantId: number) {
+  function handleSelect(questionId: number, optionId: number) {
     if (!isOpen || isLocked || lockedAnswers) return;
-    setSelections((prev) => ({ ...prev, [questionId]: contestantId }));
+    setSelections((prev) => ({ ...prev, [questionId]: optionId }));
   }
 
   function handleSave() {
-    const answersToSave = Object.entries(selections).map(([qId, cId]) => ({
-      questionId: Number(qId),
-      contestantId: Number(cId),
-    }));
+    const answersToSave = Object.entries(selections).map(([qId, optionId]) => {
+      const q = questions?.find((x) => x.id === Number(qId));
+      const questionId = Number(qId);
+      if (q?.answerType === "tribe") {
+        return { questionId, showTribeId: Number(optionId) };
+      }
+      return { questionId, contestantId: Number(optionId) };
+    });
     if (answersToSave.length === 0) {
       toast({ title: "No new selections to save" });
       return;
@@ -100,9 +111,15 @@ function EpisodeTab({
       )}
       {questions.map((q) => {
         const savedAnswer = myAnswers?.find((a) => a.questionId === q.id);
-        const currentSelection = getAnswerForQuestion(q.id);
+        const currentSelection = getAnswerForQuestion(q.id, q.answerType);
         const isCorrect = isLocked && savedAnswer?.isCorrect;
         const isWrong = isLocked && savedAnswer && !savedAnswer.isCorrect;
+        const isTribe = q.answerType === "tribe";
+        const options: { id: number; name: string }[] = isTribe
+          ? (showTribes ?? []).map((t) => ({ id: t.id, name: t.name }))
+          : (contestants ?? [])
+              .filter((c) => c.isActive || c.id === currentSelection)
+              .map((c) => ({ id: c.id, name: c.name }));
 
         return (
           <div
@@ -125,14 +142,14 @@ function EpisodeTab({
               disabled={!isOpen || isLocked || lockedAnswers}
               className="w-full border border-border rounded-lg px-3 py-2 bg-background text-foreground disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <option value="">Select a contestant...</option>
-              {(contestants ?? []).filter((c) => c.isActive || c.id === currentSelection).map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
+              <option value="">{isTribe ? "Select a tribe..." : "Select a contestant..."}</option>
+              {options.map((o) => (
+                <option key={o.id} value={o.id}>{o.name}</option>
               ))}
             </select>
             {isLocked && savedAnswer && (
               <div className={`mt-2 text-sm font-medium ${isCorrect ? "text-green-600" : "text-red-600"}`}>
-                {isCorrect ? "Correct! +" + q.pointValue + " pts" : `Incorrect — you picked ${savedAnswer.contestantName}`}
+                {isCorrect ? "Correct! +" + q.pointValue + " pts" : `Incorrect — you picked ${savedAnswer.answerName}`}
               </div>
             )}
           </div>
@@ -173,8 +190,11 @@ function SeasonPicksGate({ gameId, onComplete }: { gameId: number; onComplete: (
 
   function handleSubmit() {
     if (!firstPickId || !secondPickId) return;
+    if (!window.confirm("Are you sure you want to save your selections? You cannot change this later.")) {
+      return;
+    }
     savePicks.mutate(
-      { gameId, data: { firstChoiceContestantId: firstPickId, secondChoiceContestantId: secondPickId } },
+      { gameId, data: { firstChoiceContestantId: firstPickId, secondChoiceContestantId: secondPickId, lock: true } },
       {
         onSuccess: () => {
           qc.invalidateQueries({ queryKey: getGetMySurvivorPicksQueryKey(gameId) });

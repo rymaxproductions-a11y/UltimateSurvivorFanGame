@@ -27,6 +27,7 @@ import type {
   CreateContestantBody,
   CreateGameBody,
   CreateQuestionBody,
+  CreateShowTribeBody,
   CreateTribeBody,
   CreateWeekBody,
   DeleteContestantResponse,
@@ -48,6 +49,7 @@ import type {
   SaveAnswersBody,
   SaveSurvivorPicksBody,
   SendTribeMessageBody,
+  ShowTribe,
   SignInBody,
   SignUpBody,
   SubmitCorrectAnswersBody,
@@ -2143,6 +2145,352 @@ export const useRestoreContestant = <
   TContext
 > => {
   return useMutation(getRestoreContestantMutationOptions(options));
+};
+
+/**
+ * @summary List show tribes for a game
+ */
+export const getListShowTribesUrl = (gameId: number) => {
+  return `/api/games/${gameId}/show-tribes`;
+};
+
+export const listShowTribes = async (
+  gameId: number,
+  options?: RequestInit,
+): Promise<ShowTribe[]> => {
+  return customFetch<ShowTribe[]>(getListShowTribesUrl(gameId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListShowTribesQueryKey = (gameId: number) => {
+  return [`/api/games/${gameId}/show-tribes`] as const;
+};
+
+export const getListShowTribesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listShowTribes>>,
+  TError = ErrorType<unknown>,
+>(
+  gameId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listShowTribes>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListShowTribesQueryKey(gameId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listShowTribes>>> = ({
+    signal,
+  }) => listShowTribes(gameId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!gameId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listShowTribes>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListShowTribesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listShowTribes>>
+>;
+export type ListShowTribesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List show tribes for a game
+ */
+
+export function useListShowTribes<
+  TData = Awaited<ReturnType<typeof listShowTribes>>,
+  TError = ErrorType<unknown>,
+>(
+  gameId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listShowTribes>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListShowTribesQueryOptions(gameId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Add a show tribe to a game (admin only)
+ */
+export const getCreateShowTribeUrl = (gameId: number) => {
+  return `/api/games/${gameId}/show-tribes`;
+};
+
+export const createShowTribe = async (
+  gameId: number,
+  createShowTribeBody: CreateShowTribeBody,
+  options?: RequestInit,
+): Promise<ShowTribe> => {
+  return customFetch<ShowTribe>(getCreateShowTribeUrl(gameId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createShowTribeBody),
+  });
+};
+
+export const getCreateShowTribeMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createShowTribe>>,
+    TError,
+    { gameId: number; data: BodyType<CreateShowTribeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createShowTribe>>,
+  TError,
+  { gameId: number; data: BodyType<CreateShowTribeBody> },
+  TContext
+> => {
+  const mutationKey = ["createShowTribe"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createShowTribe>>,
+    { gameId: number; data: BodyType<CreateShowTribeBody> }
+  > = (props) => {
+    const { gameId, data } = props ?? {};
+
+    return createShowTribe(gameId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateShowTribeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createShowTribe>>
+>;
+export type CreateShowTribeMutationBody = BodyType<CreateShowTribeBody>;
+export type CreateShowTribeMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Add a show tribe to a game (admin only)
+ */
+export const useCreateShowTribe = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createShowTribe>>,
+    TError,
+    { gameId: number; data: BodyType<CreateShowTribeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createShowTribe>>,
+  TError,
+  { gameId: number; data: BodyType<CreateShowTribeBody> },
+  TContext
+> => {
+  return useMutation(getCreateShowTribeMutationOptions(options));
+};
+
+/**
+ * @summary Rename a show tribe (admin only)
+ */
+export const getUpdateShowTribeUrl = (showTribeId: number) => {
+  return `/api/show-tribes/${showTribeId}`;
+};
+
+export const updateShowTribe = async (
+  showTribeId: number,
+  createShowTribeBody: CreateShowTribeBody,
+  options?: RequestInit,
+): Promise<ShowTribe> => {
+  return customFetch<ShowTribe>(getUpdateShowTribeUrl(showTribeId), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createShowTribeBody),
+  });
+};
+
+export const getUpdateShowTribeMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateShowTribe>>,
+    TError,
+    { showTribeId: number; data: BodyType<CreateShowTribeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateShowTribe>>,
+  TError,
+  { showTribeId: number; data: BodyType<CreateShowTribeBody> },
+  TContext
+> => {
+  const mutationKey = ["updateShowTribe"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateShowTribe>>,
+    { showTribeId: number; data: BodyType<CreateShowTribeBody> }
+  > = (props) => {
+    const { showTribeId, data } = props ?? {};
+
+    return updateShowTribe(showTribeId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateShowTribeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateShowTribe>>
+>;
+export type UpdateShowTribeMutationBody = BodyType<CreateShowTribeBody>;
+export type UpdateShowTribeMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Rename a show tribe (admin only)
+ */
+export const useUpdateShowTribe = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateShowTribe>>,
+    TError,
+    { showTribeId: number; data: BodyType<CreateShowTribeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateShowTribe>>,
+  TError,
+  { showTribeId: number; data: BodyType<CreateShowTribeBody> },
+  TContext
+> => {
+  return useMutation(getUpdateShowTribeMutationOptions(options));
+};
+
+/**
+ * Contestants assigned to the tribe keep playing; their tribe simply becomes unassigned.
+ * @summary Delete a show tribe (admin only)
+ */
+export const getDeleteShowTribeUrl = (showTribeId: number) => {
+  return `/api/show-tribes/${showTribeId}`;
+};
+
+export const deleteShowTribe = async (
+  showTribeId: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteShowTribeUrl(showTribeId), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteShowTribeMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteShowTribe>>,
+    TError,
+    { showTribeId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteShowTribe>>,
+  TError,
+  { showTribeId: number },
+  TContext
+> => {
+  const mutationKey = ["deleteShowTribe"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteShowTribe>>,
+    { showTribeId: number }
+  > = (props) => {
+    const { showTribeId } = props ?? {};
+
+    return deleteShowTribe(showTribeId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteShowTribeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteShowTribe>>
+>;
+
+export type DeleteShowTribeMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Delete a show tribe (admin only)
+ */
+export const useDeleteShowTribe = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteShowTribe>>,
+    TError,
+    { showTribeId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteShowTribe>>,
+  TError,
+  { showTribeId: number },
+  TContext
+> => {
+  return useMutation(getDeleteShowTribeMutationOptions(options));
 };
 
 /**

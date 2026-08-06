@@ -83,6 +83,14 @@ export default function Contestants() {
                   >
                     {c.name.toUpperCase()}
                   </p>
+                  {c.showTribeName && (
+                    <span
+                      data-testid={`contestant-tribe-${c.id}`}
+                      className="inline-block mt-1.5 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary"
+                    >
+                      {c.showTribeName}
+                    </span>
+                  )}
                 </div>
               </div>
             ))}

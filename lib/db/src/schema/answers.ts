@@ -5,11 +5,14 @@ import { usersTable } from "./users";
 import { questionsTable } from "./questions";
 import { gamesTable } from "./games";
 import { contestantsTable } from "./contestants";
+import { showTribesTable } from "./showTribes";
 
 export const correctAnswersTable = pgTable("correct_answers", {
   id: serial("id").primaryKey(),
   questionId: integer("question_id").notNull().references(() => questionsTable.id, { onDelete: "cascade" }),
-  contestantId: integer("contestant_id").notNull().references(() => contestantsTable.id, { onDelete: "cascade" }),
+  // Exactly one of contestantId / showTribeId is set, depending on the question's answerType.
+  contestantId: integer("contestant_id").references(() => contestantsTable.id, { onDelete: "cascade" }),
+  showTribeId: integer("show_tribe_id").references(() => showTribesTable.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -19,7 +22,9 @@ export const playerAnswersTable = pgTable(
     id: serial("id").primaryKey(),
     userId: integer("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
     questionId: integer("question_id").notNull().references(() => questionsTable.id, { onDelete: "cascade" }),
-    contestantId: integer("contestant_id").notNull().references(() => contestantsTable.id, { onDelete: "cascade" }),
+    // Exactly one of contestantId / showTribeId is set, depending on the question's answerType.
+    contestantId: integer("contestant_id").references(() => contestantsTable.id, { onDelete: "cascade" }),
+    showTribeId: integer("show_tribe_id").references(() => showTribesTable.id, { onDelete: "cascade" }),
     isCorrect: boolean("is_correct"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),

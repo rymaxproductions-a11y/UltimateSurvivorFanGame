@@ -2,6 +2,7 @@ export * from "./users";
 export * from "./passwordResetTokens";
 export * from "./tribes";
 export * from "./games";
+export * from "./showTribes";
 export * from "./contestants";
 export * from "./weeks";
 export * from "./questions";

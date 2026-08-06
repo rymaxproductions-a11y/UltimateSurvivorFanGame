@@ -105,6 +105,31 @@ export default function Contestants() {
                 >
                   {c.name}
                 </Body>
+                {c.showTribeName ? (
+                  <View
+                    style={{
+                      marginTop: 8,
+                      paddingHorizontal: 10,
+                      paddingVertical: 3,
+                      borderRadius: 999,
+                      backgroundColor: colors.accent,
+                      borderWidth: 1,
+                      borderColor: colors.primary,
+                    }}
+                  >
+                    <Body
+                      numberOfLines={1}
+                      style={{
+                        fontFamily: "WorkSans_600SemiBold",
+                        fontSize: 11,
+                        letterSpacing: 0.5,
+                        color: colors.primary,
+                      }}
+                    >
+                      {c.showTribeName}
+                    </Body>
+                  </View>
+                ) : null}
               </View>
             </View>
           ))}

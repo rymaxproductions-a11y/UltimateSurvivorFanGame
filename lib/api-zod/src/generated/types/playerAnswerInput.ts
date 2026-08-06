@@ -8,5 +8,6 @@
 
 export interface PlayerAnswerInput {
   questionId: number;
-  contestantId: number;
+  contestantId?: number;
+  showTribeId?: number;
 }

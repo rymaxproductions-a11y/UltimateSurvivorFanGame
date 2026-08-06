@@ -5,9 +5,11 @@
  * Survivor Guessing Game API
  * OpenAPI spec version: 0.1.0
  */
+import type { CreateQuestionBodyAnswerType } from "./createQuestionBodyAnswerType";
 
 export interface CreateQuestionBody {
   text: string;
   pointValue: number;
+  answerType?: CreateQuestionBodyAnswerType;
   choices?: string[];
 }

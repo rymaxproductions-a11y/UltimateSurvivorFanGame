@@ -1,3 +1,4 @@
+import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { Alert, Modal, Pressable, View } from "react-native";
@@ -13,13 +14,16 @@ import {
   useGetMyAnswers,
   useListContestants,
   useListQuestions,
+  useListShowTribes,
   useListWeeks,
   useSaveMyAnswers,
   getGetCorrectAnswersQueryKey,
   getGetMyAnswersQueryKey,
   getListContestantsQueryKey,
   getListQuestionsQueryKey,
+  getListShowTribesQueryKey,
   getListWeeksQueryKey,
+  type PlayerAnswerInput,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -50,6 +54,9 @@ export default function EpisodeScreen() {
   const { data: contestants } = useListContestants(gameId, {
     query: { enabled: !!gameId, queryKey: getListContestantsQueryKey(gameId) },
   });
+  const { data: showTribes } = useListShowTribes(gameId, {
+    query: { enabled: !!gameId, queryKey: getListShowTribesQueryKey(gameId) },
+  });
   const { data: myAnswers, isLoading: aLoading } = useGetMyAnswers(weekId, {
     query: { enabled: !!weekId, queryKey: getGetMyAnswersQueryKey(weekId) },
   });
@@ -66,7 +73,10 @@ export default function EpisodeScreen() {
   useEffect(() => {
     if (myAnswers) {
       const next: Record<number, number> = {};
-      for (const a of myAnswers) next[a.questionId] = a.contestantId;
+      for (const a of myAnswers) {
+        const id = a.contestantId ?? a.showTribeId;
+        if (id != null) next[a.questionId] = id;
+      }
       setDraft(next);
     }
   }, [myAnswers]);
@@ -83,11 +93,39 @@ export default function EpisodeScreen() {
     () => new Map((contestants ?? []).map((c) => [c.id, c])),
     [contestants],
   );
+  const sortedTribes = useMemo(
+    () =>
+      (showTribes ?? [])
+        .slice()
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    [showTribes],
+  );
+  const tribesById = useMemo(
+    () => new Map((showTribes ?? []).map((t) => [t.id, t])),
+    [showTribes],
+  );
+  // Map of questionId -> saved answer (for display of chosen answerName).
+  const myAnswerByQuestion = useMemo(
+    () => new Map((myAnswers ?? []).map((a) => [a.questionId, a])),
+    [myAnswers],
+  );
   const correctById = useMemo(() => {
-    const map = new Map<number, number[]>();
+    const map = new Map<number, string[]>();
     for (const a of correctAnswers ?? []) {
       const list = map.get(a.questionId) ?? [];
-      list.push(a.contestantId);
+      list.push(a.answerName);
+      map.set(a.questionId, list);
+    }
+    return map;
+  }, [correctAnswers]);
+  // Track the selected answer ids per question for correctness comparison.
+  const correctIdsById = useMemo(() => {
+    const map = new Map<number, number[]>();
+    for (const a of correctAnswers ?? []) {
+      const id = a.contestantId ?? a.showTribeId;
+      if (id == null) continue;
+      const list = map.get(a.questionId) ?? [];
+      list.push(id);
       map.set(a.questionId, list);
     }
     return map;
@@ -100,12 +138,16 @@ export default function EpisodeScreen() {
   const answeredCount = sortedQuestions.filter((q) => draft[q.id]).length;
 
   function handleSave() {
-    const answers = Object.entries(draft)
-      .filter(([, contestantId]) => !!contestantId)
-      .map(([qid, contestantId]) => ({
-        questionId: Number(qid),
-        contestantId,
-      }));
+    const answers: PlayerAnswerInput[] = Object.entries(draft)
+      .filter(([, answerId]) => !!answerId)
+      .map(([qid, answerId]) => {
+        const questionId = Number(qid);
+        const q = (questions ?? []).find((x) => x.id === questionId);
+        if (q?.answerType === "tribe") {
+          return { questionId, showTribeId: answerId };
+        }
+        return { questionId, contestantId: answerId };
+      });
     if (answers.length === 0) {
       Alert.alert("Nothing to save", "Pick at least one answer first.");
       return;
@@ -167,13 +209,21 @@ export default function EpisodeScreen() {
           </View>
         ) : (
           sortedQuestions.map((q) => {
+            const isTribe = q.answerType === "tribe";
             const myPickId = draft[q.id];
-            const myPick = myPickId ? contestantsById.get(myPickId) : null;
-            const correctIds = correctById.get(q.id) ?? [];
-            const correctPicks = correctIds
-              .map((id) => contestantsById.get(id))
-              .filter((c): c is NonNullable<typeof c> => !!c);
-            const correctPick = correctPicks[0] ?? null;
+            const myPickContestant =
+              !isTribe && myPickId ? contestantsById.get(myPickId) : null;
+            const myPickTribe =
+              isTribe && myPickId ? tribesById.get(myPickId) : null;
+            const savedAnswer = myAnswerByQuestion.get(q.id);
+            // Prefer the server-provided display name when available.
+            const myPickName =
+              savedAnswer?.answerName ??
+              myPickContestant?.name ??
+              myPickTribe?.name ??
+              null;
+            const correctNames = correctById.get(q.id) ?? [];
+            const correctIds = correctIdsById.get(q.id) ?? [];
             const isCorrect = isLocked && myPickId != null && correctIds.includes(myPickId);
             const isWrong = isLocked && myPickId != null && correctIds.length > 0 && !correctIds.includes(myPickId);
 
@@ -246,15 +296,24 @@ export default function EpisodeScreen() {
                     opacity: !canEdit ? 0.7 : 1,
                   }}
                 >
-                  <Avatar headshotPath={myPick?.headshotPath ?? null} size={40} />
+                  {isTribe ? (
+                    <TribeGlyph active={!!myPickTribe} />
+                  ) : (
+                    <Avatar headshotPath={myPickContestant?.headshotPath ?? null} size={40} />
+                  )}
                   <Body
                     style={{
                       flex: 1,
-                      fontFamily: myPick ? "Oswald_700Bold" : "WorkSans_400Regular",
-                      color: myPick ? colors.foreground : colors.mutedForeground,
+                      fontFamily: myPickName ? "Oswald_700Bold" : "WorkSans_400Regular",
+                      color: myPickName ? colors.foreground : colors.mutedForeground,
                     }}
                   >
-                    {myPick?.name ?? (canEdit ? "Tap to choose a contestant" : "—")}
+                    {myPickName ??
+                      (canEdit
+                        ? isTribe
+                          ? "Tap to choose a tribe"
+                          : "Tap to choose a contestant"
+                        : "—")}
                   </Body>
                   {canEdit ? (
                     <Body muted style={{ fontSize: 12 }}>
@@ -263,7 +322,7 @@ export default function EpisodeScreen() {
                   ) : null}
                 </Pressable>
 
-                {isLocked && correctPicks.length > 0 && (
+                {isLocked && correctNames.length > 0 && (
                   <View
                     style={{
                       flexDirection: "row",
@@ -273,10 +332,10 @@ export default function EpisodeScreen() {
                     }}
                   >
                     <Body muted style={{ fontSize: 12, letterSpacing: 1 }}>
-                      {correctPicks.length > 1 ? "CORRECT (ANY):" : "CORRECT:"}
+                      {correctNames.length > 1 ? "CORRECT (ANY):" : "CORRECT:"}
                     </Body>
                     <Body style={{ fontFamily: "WorkSans_600SemiBold", flexShrink: 1 }}>
-                      {correctPicks.map((c) => c.name).join(", ")}
+                      {correctNames.join(", ")}
                     </Body>
                   </View>
                 )}
@@ -297,9 +356,15 @@ export default function EpisodeScreen() {
         </View>
       )}
 
-      <ContestantPickerModal
+      <AnswerPickerModal
         visible={pickerForQuestion != null}
+        isTribe={
+          pickerForQuestion != null &&
+          (questions ?? []).find((x) => x.id === pickerForQuestion)?.answerType ===
+            "tribe"
+        }
         contestants={sortedContestants}
+        tribes={sortedTribes}
         selectedId={pickerForQuestion ? draft[pickerForQuestion] ?? null : null}
         onClose={() => setPickerForQuestion(null)}
         onSelect={(id) => {
@@ -313,15 +378,43 @@ export default function EpisodeScreen() {
   );
 }
 
-function ContestantPickerModal({
+function TribeGlyph({ active }: { active: boolean }) {
+  const colors = useColors();
+  return (
+    <View
+      style={{
+        width: 40,
+        height: 40,
+        borderRadius: colors.radius,
+        backgroundColor: active ? colors.accent : colors.muted,
+        borderWidth: active ? 1 : 0,
+        borderColor: colors.primary,
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Feather
+        name="users"
+        size={20}
+        color={active ? colors.primary : colors.mutedForeground}
+      />
+    </View>
+  );
+}
+
+function AnswerPickerModal({
   visible,
+  isTribe,
   contestants,
+  tribes,
   selectedId,
   onClose,
   onSelect,
 }: {
   visible: boolean;
+  isTribe: boolean;
   contestants: { id: number; name: string; headshotPath: string | null }[];
+  tribes: { id: number; name: string }[];
   selectedId: number | null;
   onClose: () => void;
   onSelect: (id: number) => void;
@@ -343,55 +436,93 @@ function ContestantPickerModal({
             marginBottom: 16,
           }}
         >
-          <Heading level={2}>Choose contestant</Heading>
+          <Heading level={2}>{isTribe ? "Choose tribe" : "Choose contestant"}</Heading>
           <Pressable onPress={onClose}>
             <Body style={{ fontFamily: "WorkSans_600SemiBold", color: colors.primary }}>
               Cancel
             </Body>
           </Pressable>
         </View>
-        <View
-          style={{
-            flexDirection: "row",
-            flexWrap: "wrap",
-            marginHorizontal: -6,
-          }}
-        >
-          {contestants.map((c) => {
-            const selected = c.id === selectedId;
-            return (
-              <View
-                key={c.id}
-                style={{ width: "33.333%", paddingHorizontal: 6, marginBottom: 12 }}
-              >
+        {isTribe ? (
+          <View style={{ gap: 10 }}>
+            {tribes.map((t) => {
+              const selected = t.id === selectedId;
+              return (
                 <Pressable
-                  onPress={() => onSelect(c.id)}
+                  key={t.id}
+                  onPress={() => onSelect(t.id)}
                   style={{
+                    flexDirection: "row",
                     alignItems: "center",
-                    padding: 10,
+                    gap: 12,
+                    padding: 14,
                     borderRadius: colors.radius,
                     borderWidth: 2,
                     borderColor: selected ? colors.primary : colors.border,
                     backgroundColor: selected ? colors.accent : colors.card,
                   }}
                 >
-                  <Avatar headshotPath={c.headshotPath} size={64} />
+                  <TribeGlyph active={selected} />
                   <Body
-                    numberOfLines={1}
                     style={{
-                      marginTop: 8,
-                      fontFamily: "WorkSans_600SemiBold",
-                      fontSize: 12,
-                      textAlign: "center",
+                      flex: 1,
+                      fontFamily: "Oswald_700Bold",
+                      fontSize: 16,
                     }}
                   >
-                    {c.name}
+                    {t.name}
                   </Body>
+                  {selected ? (
+                    <Feather name="check" size={20} color={colors.primary} />
+                  ) : null}
                 </Pressable>
-              </View>
-            );
-          })}
-        </View>
+              );
+            })}
+          </View>
+        ) : (
+          <View
+            style={{
+              flexDirection: "row",
+              flexWrap: "wrap",
+              marginHorizontal: -6,
+            }}
+          >
+            {contestants.map((c) => {
+              const selected = c.id === selectedId;
+              return (
+                <View
+                  key={c.id}
+                  style={{ width: "33.333%", paddingHorizontal: 6, marginBottom: 12 }}
+                >
+                  <Pressable
+                    onPress={() => onSelect(c.id)}
+                    style={{
+                      alignItems: "center",
+                      padding: 10,
+                      borderRadius: colors.radius,
+                      borderWidth: 2,
+                      borderColor: selected ? colors.primary : colors.border,
+                      backgroundColor: selected ? colors.accent : colors.card,
+                    }}
+                  >
+                    <Avatar headshotPath={c.headshotPath} size={64} />
+                    <Body
+                      numberOfLines={1}
+                      style={{
+                        marginTop: 8,
+                        fontFamily: "WorkSans_600SemiBold",
+                        fontSize: 12,
+                        textAlign: "center",
+                      }}
+                    >
+                      {c.name}
+                    </Body>
+                  </Pressable>
+                </View>
+              );
+            })}
+          </View>
+        )}
       </Screen>
     </Modal>
   );

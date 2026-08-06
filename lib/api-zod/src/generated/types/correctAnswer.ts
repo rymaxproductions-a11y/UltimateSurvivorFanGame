@@ -9,8 +9,16 @@
 export interface CorrectAnswer {
   id: number;
   questionId: number;
-  contestantId: number;
-  contestantName: string;
+  /** @nullable */
+  contestantId: number | null;
+  /** @nullable */
+  contestantName: string | null;
+  /** @nullable */
+  showTribeId: number | null;
+  /** @nullable */
+  showTribeName: string | null;
+  /** Display name of the correct answer (contestant or show tribe). */
+  answerName: string;
   questionText: string;
   pointValue: number;
 }

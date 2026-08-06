@@ -1,6 +1,7 @@
+import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Pressable, TextInput, View } from "react-native";
+import { Alert, Modal, Pressable, ScrollView, TextInput, View } from "react-native";
 
 import { Avatar } from "@/components/Avatar";
 import { AvatarPicker } from "@/components/AvatarPicker";
@@ -71,6 +72,7 @@ export default function Onboarding() {
   const [createdTribeName, setCreatedTribeName] = useState<string | null>(null);
   const [firstPickId, setFirstPickId] = useState<number | null>(null);
   const [secondPickId, setSecondPickId] = useState<number | null>(null);
+  const [pickerSlot, setPickerSlot] = useState<"winner" | "runnerUp" | null>(null);
 
   // Derive starting step.
   useEffect(() => {
@@ -81,6 +83,7 @@ export default function Onboarding() {
     } else if (!me.avatarPath) {
       setStep("avatar");
     } else if (
+      existingPicks?.isLocked &&
       existingPicks?.firstChoiceContestantId &&
       existingPicks?.secondChoiceContestantId
     ) {
@@ -145,24 +148,39 @@ export default function Onboarding() {
 
   function handleSavePicks() {
     if (!gameId || !firstPickId || !secondPickId) {
-      Alert.alert("Pick two", "Choose your winner and second choice.");
+      Alert.alert("Pick two", "Choose your Season Winner and Runner Up.");
       return;
     }
-    savePicks.mutate(
-      {
-        gameId,
-        data: {
-          firstChoiceContestantId: firstPickId,
-          secondChoiceContestantId: secondPickId,
+    Alert.alert(
+      "Save your selections?",
+      "Are you sure you want to save your selections? You cannot change this later.",
+      [
+        { text: "No", style: "cancel" },
+        {
+          text: "Yes",
+          style: "destructive",
+          onPress: () => {
+            savePicks.mutate(
+              {
+                gameId,
+                data: {
+                  firstChoiceContestantId: firstPickId,
+                  secondChoiceContestantId: secondPickId,
+                  lock: true,
+                },
+              },
+              {
+                onSuccess: () => {
+                  qc.invalidateQueries();
+                  router.replace("/");
+                },
+                onError: () =>
+                  Alert.alert("Could not save picks", "Please try again."),
+              },
+            );
+          },
         },
-      },
-      {
-        onSuccess: () => {
-          qc.invalidateQueries();
-          router.replace("/");
-        },
-        onError: () => Alert.alert("Could not save picks", "Please try again."),
-      },
+      ],
     );
   }
 
@@ -411,6 +429,15 @@ export default function Onboarding() {
     );
   }
 
+  const winnerContestant =
+    firstPickId != null
+      ? sortedContestants.find((c) => c.id === firstPickId) ?? null
+      : null;
+  const runnerUpContestant =
+    secondPickId != null
+      ? sortedContestants.find((c) => c.id === secondPickId) ?? null
+      : null;
+
   return (
     <Screen>
       <Body muted style={{ fontSize: 12, letterSpacing: 1.5 }}>
@@ -418,113 +445,236 @@ export default function Onboarding() {
       </Body>
       <Heading style={{ marginTop: 4 }}>Season picks</Heading>
       <Body muted style={{ marginTop: 8 }}>
-        Lock in your winner and second choice. Required to access the dashboard.
+        Pick the 2 cast members you think will be the Season Winner and Runner
+        Up. You can't change these once you save.
       </Body>
 
-      <View style={{ marginTop: 20, gap: 14 }}>
-        <PickerSection
-          title="Who will WIN?"
+      <View style={{ marginTop: 24, gap: 16 }}>
+        <PickSlot
+          label="Season Winner"
           subtitle={`${activeGame.firstPickPoints ?? 20} pts if winner · ${activeGame.firstPickTopThreePoints ?? 5} pts if Final 3`}
-          contestants={sortedContestants}
-          selectedId={firstPickId}
-          disabledId={secondPickId}
-          onSelect={setFirstPickId}
+          contestant={winnerContestant}
+          onPress={() => setPickerSlot("winner")}
         />
-        <PickerSection
-          title="Second choice to win"
+        <PickSlot
+          label="Runner Up"
           subtitle={`${activeGame.secondPickPoints ?? 10} pts if winner · ${activeGame.secondPickTopThreePoints ?? 3} pts if Final 3`}
-          contestants={sortedContestants}
-          selectedId={secondPickId}
-          disabledId={firstPickId}
-          onSelect={setSecondPickId}
+          contestant={runnerUpContestant}
+          onPress={() => setPickerSlot("runnerUp")}
         />
       </View>
 
-      <View style={{ marginTop: 24 }}>
+      <View style={{ marginTop: 28 }}>
         <Button
-          label="Lock in my picks"
+          label="Save"
           loading={savePicks.isPending}
           disabled={!firstPickId || !secondPickId}
           onPress={handleSavePicks}
           fullWidth
         />
       </View>
+
+      <CastPickerModal
+        visible={pickerSlot != null}
+        title={pickerSlot === "winner" ? "Pick your Season Winner" : "Pick your Runner Up"}
+        contestants={sortedContestants}
+        selectedId={pickerSlot === "winner" ? firstPickId : secondPickId}
+        disabledId={pickerSlot === "winner" ? secondPickId : firstPickId}
+        onClose={() => setPickerSlot(null)}
+        onSelect={(id) => {
+          if (pickerSlot === "winner") setFirstPickId(id);
+          else if (pickerSlot === "runnerUp") setSecondPickId(id);
+          setPickerSlot(null);
+        }}
+      />
     </Screen>
   );
 }
 
-function PickerSection({
-  title,
+function PickSlot({
+  label,
   subtitle,
-  contestants,
-  selectedId,
-  disabledId,
-  onSelect,
+  contestant,
+  onPress,
 }: {
-  title: string;
+  label: string;
   subtitle: string;
-  contestants: { id: number; name: string; headshotPath: string | null }[];
-  selectedId: number | null;
-  disabledId: number | null;
-  onSelect: (id: number) => void;
+  contestant: { id: number; name: string; headshotPath: string | null } | null;
+  onPress: () => void;
 }) {
   const colors = useColors();
+  const chosen = !!contestant;
   return (
-    <View
-      style={{
-        backgroundColor: colors.card,
-        borderColor: colors.border,
-        borderWidth: 1,
-        borderRadius: colors.radius,
-        padding: 14,
-        gap: 12,
-      }}
-    >
+    <View style={{ gap: 8 }}>
       <View>
-        <Body style={{ fontFamily: "Oswald_700Bold", fontSize: 16 }}>{title}</Body>
+        <Body style={{ fontFamily: "Oswald_700Bold", fontSize: 18 }}>{label}</Body>
         <Body muted style={{ fontSize: 12, marginTop: 2 }}>
           {subtitle}
         </Body>
       </View>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", marginHorizontal: -4 }}>
-        {contestants.map((c) => {
-          const selected = c.id === selectedId;
-          const disabled = c.id === disabledId;
-          return (
-            <View
-              key={c.id}
-              style={{ width: "33.333%", paddingHorizontal: 4, marginBottom: 8 }}
-            >
-              <Pressable
-                onPress={() => !disabled && onSelect(c.id)}
-                disabled={disabled}
+      <Pressable
+        onPress={onPress}
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 16,
+          minHeight: 88,
+          padding: 16,
+          borderRadius: colors.radius,
+          borderWidth: 2,
+          borderColor: chosen ? colors.primary : colors.border,
+          backgroundColor: chosen ? colors.accent : colors.card,
+        }}
+      >
+        {chosen ? (
+          <>
+            <Avatar headshotPath={contestant!.headshotPath} size={64} />
+            <View style={{ flex: 1 }}>
+              <Body
                 style={{
-                  alignItems: "center",
-                  padding: 8,
-                  borderRadius: colors.radius,
-                  borderWidth: 2,
-                  borderColor: selected ? colors.primary : "transparent",
-                  backgroundColor: selected ? colors.accent : "transparent",
-                  opacity: disabled ? 0.35 : 1,
+                  fontFamily: "Oswald_700Bold",
+                  fontSize: 22,
+                  color: colors.foreground,
                 }}
               >
-                <Avatar headshotPath={c.headshotPath} size={56} />
-                <Body
-                  numberOfLines={1}
-                  style={{
-                    marginTop: 6,
-                    fontFamily: "WorkSans_600SemiBold",
-                    fontSize: 12,
-                    textAlign: "center",
-                  }}
-                >
-                  {c.name}
-                </Body>
-              </Pressable>
+                {contestant!.name}
+              </Body>
+              <Body
+                style={{
+                  marginTop: 2,
+                  fontFamily: "WorkSans_600SemiBold",
+                  fontSize: 12,
+                  color: colors.primary,
+                }}
+              >
+                Tap to change
+              </Body>
             </View>
-          );
-        })}
-      </View>
+          </>
+        ) : (
+          <>
+            <View
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: 32,
+                backgroundColor: colors.muted,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Feather name="plus" size={28} color={colors.mutedForeground} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Body
+                style={{
+                  fontFamily: "Oswald_700Bold",
+                  fontSize: 20,
+                  color: colors.mutedForeground,
+                }}
+              >
+                Choose {label}
+              </Body>
+              <Body muted style={{ marginTop: 2, fontSize: 12 }}>
+                Tap to pick a cast member
+              </Body>
+            </View>
+          </>
+        )}
+      </Pressable>
     </View>
+  );
+}
+
+function CastPickerModal({
+  visible,
+  title,
+  contestants,
+  selectedId,
+  disabledId,
+  onClose,
+  onSelect,
+}: {
+  visible: boolean;
+  title: string;
+  contestants: { id: number; name: string; headshotPath: string | null }[];
+  selectedId: number | null;
+  disabledId: number | null;
+  onClose: () => void;
+  onSelect: (id: number) => void;
+}) {
+  const colors = useColors();
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
+      <Screen>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 16,
+          }}
+        >
+          <Heading level={2}>{title}</Heading>
+          <Pressable onPress={onClose}>
+            <Body style={{ fontFamily: "WorkSans_600SemiBold", color: colors.primary }}>
+              Cancel
+            </Body>
+          </Pressable>
+        </View>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <View
+            style={{
+              flexDirection: "row",
+              flexWrap: "wrap",
+              marginHorizontal: -6,
+            }}
+          >
+            {contestants.map((c) => {
+              const selected = c.id === selectedId;
+              const disabled = c.id === disabledId;
+              return (
+                <View
+                  key={c.id}
+                  style={{ width: "33.333%", paddingHorizontal: 6, marginBottom: 12 }}
+                >
+                  <Pressable
+                    onPress={() => !disabled && onSelect(c.id)}
+                    disabled={disabled}
+                    style={{
+                      alignItems: "center",
+                      padding: 10,
+                      borderRadius: colors.radius,
+                      borderWidth: 2,
+                      borderColor: selected ? colors.primary : colors.border,
+                      backgroundColor: selected ? colors.accent : colors.card,
+                      opacity: disabled ? 0.35 : 1,
+                    }}
+                  >
+                    <Avatar headshotPath={c.headshotPath} size={64} />
+                    <Body
+                      numberOfLines={1}
+                      style={{
+                        marginTop: 8,
+                        fontFamily: "WorkSans_600SemiBold",
+                        fontSize: 12,
+                        textAlign: "center",
+                      }}
+                    >
+                      {c.name}
+                    </Body>
+                  </Pressable>
+                </View>
+              );
+            })}
+          </View>
+        </ScrollView>
+      </Screen>
+    </Modal>
   );
 }

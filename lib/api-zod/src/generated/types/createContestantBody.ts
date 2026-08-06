@@ -8,4 +8,6 @@
 
 export interface CreateContestantBody {
   name: string;
+  /** @nullable */
+  showTribeId?: number | null;
 }

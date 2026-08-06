@@ -6,8 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface CorrectAnswerInput {
-  questionId: number;
-  contestantIds?: number[];
-  showTribeIds?: number[];
+export interface CreateShowTribeBody {
+  /** @minLength 1 */
+  name: string;
 }

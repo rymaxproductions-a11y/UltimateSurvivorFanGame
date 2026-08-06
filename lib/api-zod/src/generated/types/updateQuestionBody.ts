@@ -5,8 +5,10 @@
  * Survivor Guessing Game API
  * OpenAPI spec version: 0.1.0
  */
+import type { UpdateQuestionBodyAnswerType } from "./updateQuestionBodyAnswerType";
 
 export interface UpdateQuestionBody {
   text?: string;
   pointValue?: number;
+  answerType?: UpdateQuestionBodyAnswerType;
 }

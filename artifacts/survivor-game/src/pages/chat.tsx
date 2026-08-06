@@ -104,11 +104,9 @@ export default function ChatPage() {
                         : "bg-muted text-foreground rounded-bl-sm"
                     }`}
                   >
-                    {!mine && (
-                      <div className="text-[11px] font-semibold opacity-80 mb-0.5">
-                        {m.displayName ?? m.username}
-                      </div>
-                    )}
+                    <div className="text-[11px] font-semibold opacity-80 mb-0.5">
+                      {mine ? `${m.displayName ?? m.username} (you)` : (m.displayName ?? m.username)}
+                    </div>
                     <div className="whitespace-pre-wrap break-words text-sm leading-snug">
                       {m.body}
                     </div>

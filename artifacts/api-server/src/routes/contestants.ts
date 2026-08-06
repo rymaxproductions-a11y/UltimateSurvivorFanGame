@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, getTableColumns } from "drizzle-orm";
 import {
   db,
   contestantsTable,
@@ -7,6 +7,7 @@ import {
   correctAnswersTable,
   survivorPicksTable,
   gamesTable,
+  showTribesTable,
 } from "@workspace/db";
 import {
   ListContestantsParams,
@@ -18,6 +19,7 @@ import {
   DeleteContestantParams,
 } from "@workspace/api-zod";
 import { requireAuth } from "./users";
+import { requireAdmin } from "./answers";
 import { serialize } from "../lib/serialize";
 
 const router: IRouter = Router();
@@ -30,15 +32,19 @@ router.get("/games/:gameId/contestants", async (req, res): Promise<void> => {
   }
 
   const contestants = await db
-    .select()
+    .select({
+      ...getTableColumns(contestantsTable),
+      showTribeName: showTribesTable.name,
+    })
     .from(contestantsTable)
+    .leftJoin(showTribesTable, eq(contestantsTable.showTribeId, showTribesTable.id))
     .where(eq(contestantsTable.gameId, params.data.gameId))
     .orderBy(contestantsTable.name);
 
   res.json(ListContestantsResponse.parse(serialize(contestants)));
 });
 
-router.post("/games/:gameId/contestants", requireAuth, async (req: any, res: any): Promise<void> => {
+router.post("/games/:gameId/contestants", requireAuth, requireAdmin, async (req: any, res: any): Promise<void> => {
   const params = CreateContestantParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -56,13 +62,14 @@ router.post("/games/:gameId/contestants", requireAuth, async (req: any, res: any
     .values({
       gameId: params.data.gameId,
       name: parsed.data.name,
+      showTribeId: parsed.data.showTribeId ?? null,
     })
     .returning();
 
-  res.status(201).json(serialize(contestant));
+  res.status(201).json(serialize(await withShowTribeName(contestant)));
 });
 
-router.patch("/contestants/:contestantId", requireAuth, async (req: any, res: any): Promise<void> => {
+router.patch("/contestants/:contestantId", requireAuth, requireAdmin, async (req: any, res: any): Promise<void> => {
   const params = UpdateContestantParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -75,9 +82,10 @@ router.patch("/contestants/:contestantId", requireAuth, async (req: any, res: an
     return;
   }
 
-  const updates: { name?: string; headshotPath?: string | null } = {};
+  const updates: { name?: string; headshotPath?: string | null; showTribeId?: number | null } = {};
   if (parsed.data.name !== undefined) updates.name = parsed.data.name;
   if (parsed.data.headshotPath !== undefined) updates.headshotPath = parsed.data.headshotPath;
+  if (parsed.data.showTribeId !== undefined) updates.showTribeId = parsed.data.showTribeId;
 
   if (Object.keys(updates).length === 0) {
     res.status(400).json({ error: "No fields to update" });
@@ -95,10 +103,10 @@ router.patch("/contestants/:contestantId", requireAuth, async (req: any, res: an
     return;
   }
 
-  res.json(serialize(updated));
+  res.json(serialize(await withShowTribeName(updated)));
 });
 
-router.delete("/contestants/:contestantId", requireAuth, async (req: any, res: any): Promise<void> => {
+router.delete("/contestants/:contestantId", requireAuth, requireAdmin, async (req: any, res: any): Promise<void> => {
   const params = DeleteContestantParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -154,7 +162,7 @@ router.delete("/contestants/:contestantId", requireAuth, async (req: any, res: a
   res.json({ deleted: true, archived: false });
 });
 
-router.post("/contestants/:contestantId/restore", requireAuth, async (req: any, res: any): Promise<void> => {
+router.post("/contestants/:contestantId/restore", requireAuth, requireAdmin, async (req: any, res: any): Promise<void> => {
   const params = DeleteContestantParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -172,7 +180,16 @@ router.post("/contestants/:contestantId/restore", requireAuth, async (req: any, 
     return;
   }
 
-  res.json(serialize(restored));
+  res.json(serialize(await withShowTribeName(restored)));
 });
+
+async function withShowTribeName<T extends { showTribeId: number | null }>(contestant: T) {
+  let showTribeName: string | null = null;
+  if (contestant.showTribeId != null) {
+    const [tribe] = await db.select().from(showTribesTable).where(eq(showTribesTable.id, contestant.showTribeId));
+    showTribeName = tribe?.name ?? null;
+  }
+  return { ...contestant, showTribeName };
+}
 
 export default router;

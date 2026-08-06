@@ -3,6 +3,7 @@ import { useLocation, Redirect } from "wouter";
 import { useUser } from "@clerk/react";
 import {
   useGetMe,
+  useUpdateMyProfile,
   useListGames,
   useListContestants,
   useSaveSurvivorPicks,
@@ -13,12 +14,14 @@ import {
   getListContestantsQueryKey,
   getGetMeQueryKey,
   getGetMySurvivorPicksQueryKey,
+  type Contestant,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { AvatarUploader } from "@/components/avatar-uploader";
+import { User } from "lucide-react";
 
-type Step = "tribe" | "code-shown" | "avatar" | "picks";
+type Step = "nickname" | "tribe" | "code-shown" | "avatar" | "picks";
 
 export default function Onboarding() {
   const { user } = useUser();
@@ -46,8 +49,10 @@ export default function Onboarding() {
   const joinTribe = useJoinTribe();
   const savePicks = useSaveSurvivorPicks();
   const updateAvatar = useUpdateMyAvatar();
+  const updateProfile = useUpdateMyProfile();
 
   const [step, setStep] = useState<Step | null>(null);
+  const [nickname, setNickname] = useState("");
   const [tribeChoice, setTribeChoice] = useState<"create" | "join" | null>(null);
   const [tribeName, setTribeName] = useState("");
   const [joinCode, setJoinCode] = useState("");
@@ -55,21 +60,23 @@ export default function Onboarding() {
   const [createdTribeName, setCreatedTribeName] = useState<string | null>(null);
   const [firstPickId, setFirstPickId] = useState<number | null>(null);
   const [secondPickId, setSecondPickId] = useState<number | null>(null);
+  // Which slot's cast picker is open ("first" = winner, "second" = runner-up).
+  const [pickerOpen, setPickerOpen] = useState<"first" | "second" | null>(null);
+  const [confirmSave, setConfirmSave] = useState(false);
 
   // Derive starting step from user state.
   useEffect(() => {
     if (step != null) return;
     if (!me) return;
     if (me.role === "admin") return; // handled by redirect below
-    if (!me.tribeId) {
+    if (!me.displayName) {
+      setStep("nickname");
+    } else if (!me.tribeId) {
       setStep("tribe");
     } else if (!me.avatarPath) {
       setStep("avatar");
-    } else if (
-      existingPicks?.firstChoiceContestantId &&
-      existingPicks?.secondChoiceContestantId
-    ) {
-      // Already complete — go to dashboard.
+    } else if (existingPicks?.isLocked) {
+      // Picks are permanently locked — go to dashboard.
       setLocation("/dashboard");
     } else {
       setStep("picks");
@@ -94,6 +101,25 @@ export default function Onboarding() {
     );
   }
   if (me?.role === "admin") return <Redirect to="/admin" />;
+
+  function handleSaveNickname() {
+    const trimmed = nickname.trim();
+    if (!trimmed) {
+      toast({ title: "Please enter a nickname", variant: "destructive" });
+      return;
+    }
+    updateProfile.mutate(
+      { data: { displayName: trimmed } },
+      {
+        onSuccess: () => {
+          qc.invalidateQueries({ queryKey: getGetMeQueryKey() });
+          setStep(me?.tribeId ? (me?.avatarPath ? "picks" : "avatar") : "tribe");
+        },
+        onError: () =>
+          toast({ title: "Could not save your nickname", variant: "destructive" }),
+      },
+    );
+  }
 
   async function handleCreateTribe() {
     const name = tribeName.trim();
@@ -141,9 +167,9 @@ export default function Onboarding() {
     );
   }
 
-  async function handlePicksSubmit() {
+  function handlePicksSubmit() {
     if (!gameId || !firstPickId || !secondPickId) {
-      toast({ title: "Pick a winner and a second choice", variant: "destructive" });
+      toast({ title: "Pick a winner and a runner-up", variant: "destructive" });
       return;
     }
     savePicks.mutate(
@@ -152,6 +178,7 @@ export default function Onboarding() {
         data: {
           firstChoiceContestantId: firstPickId,
           secondChoiceContestantId: secondPickId,
+          lock: true,
         },
       },
       {
@@ -160,7 +187,10 @@ export default function Onboarding() {
           qc.invalidateQueries();
           setLocation("/dashboard");
         },
-        onError: () => toast({ title: "Failed to save picks", variant: "destructive" }),
+        onError: () => {
+          setConfirmSave(false);
+          toast({ title: "Failed to save picks", variant: "destructive" });
+        },
       },
     );
   }
@@ -182,6 +212,41 @@ export default function Onboarding() {
           </h1>
           <p className="text-muted-foreground mt-2">Let's get you into the game.</p>
         </div>
+
+        {step === "nickname" && (
+          <div className="bg-card border border-border rounded-2xl p-8 space-y-6">
+            <div>
+              <h2 className="text-xl font-semibold text-foreground mb-1">Choose your player nickname</h2>
+              <p className="text-sm text-muted-foreground">
+                This is how you'll appear to other players — on the leaderboard and in tribe chat.
+              </p>
+            </div>
+            <div className="space-y-3">
+              <label className="block text-sm font-semibold text-foreground">
+                Player nickname <span className="text-destructive">*</span>
+              </label>
+              <input
+                data-testid="input-nickname"
+                type="text"
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSaveNickname()}
+                placeholder="e.g. Jeff Probst"
+                maxLength={50}
+                autoFocus
+                className="w-full border border-border rounded-lg px-3 py-2 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              <button
+                data-testid="button-save-nickname"
+                onClick={handleSaveNickname}
+                disabled={updateProfile.isPending}
+                className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-colors disabled:opacity-50"
+              >
+                {updateProfile.isPending ? "Saving..." : "Continue"}
+              </button>
+            </div>
+          </div>
+        )}
 
         {step === "tribe" && (
           <div className="bg-card border border-border rounded-2xl p-8 space-y-6">
@@ -359,9 +424,10 @@ export default function Onboarding() {
 
         {step === "picks" && (
           <div className="bg-card border border-border rounded-2xl p-8">
-            <h2 className="text-xl font-semibold text-foreground mb-2">Season Predictions</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-2">Make your season picks</h2>
             <p className="text-muted-foreground mb-6 text-sm">
-              Lock in your winner and second choice. Required before you can access the dashboard.
+              Pick the 2 cast members you think will be the Season Winner and the Runner-Up.
+              These lock in for the whole season and can't be changed later.
             </p>
 
             {!activeGame ? (
@@ -373,98 +439,197 @@ export default function Onboarding() {
                 Contestants haven't been added yet. Check back soon.
               </p>
             ) : (
-              <div className="space-y-5">
-                {(() => {
-                  const firstPts = activeGame.firstPickPoints ?? 20;
-                  const secondPts = activeGame.secondPickPoints ?? 10;
-                  const activeContestants = contestants.filter((c) => c.isActive);
-                  return (
-                    <>
-                      <PickField
-                        label="Who will be the winner of this season?"
-                        points={firstPts}
+              (() => {
+                const activeContestants = contestants.filter((c) => c.isActive);
+                const first = contestants.find((c) => c.id === firstPickId) ?? null;
+                const second = contestants.find((c) => c.id === secondPickId) ?? null;
+                return (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-2 gap-3">
+                      <PickSlot
+                        label="Season Winner"
                         emphasis
-                        contestants={activeContestants}
-                        value={firstPickId}
-                        otherSelected={secondPickId}
-                        onChange={setFirstPickId}
-                        testId="select-first-pick"
+                        contestant={first}
+                        onClick={() => setPickerOpen("first")}
+                        testId="slot-first-pick"
                       />
-                      <PickField
-                        label="Who is your second choice to win?"
-                        points={secondPts}
+                      <PickSlot
+                        label="Runner Up"
                         emphasis={false}
-                        contestants={activeContestants}
-                        value={secondPickId}
-                        otherSelected={firstPickId}
-                        onChange={setSecondPickId}
-                        testId="select-second-pick"
+                        contestant={second}
+                        onClick={() => setPickerOpen("second")}
+                        testId="slot-second-pick"
                       />
-                      <button
-                        data-testid="button-submit-picks"
-                        onClick={handlePicksSubmit}
-                        disabled={savePicks.isPending || !firstPickId || !secondPickId}
-                        className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold text-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
-                      >
-                        {savePicks.isPending ? "Saving..." : "Submit My Predictions"}
-                      </button>
-                    </>
-                  );
-                })()}
-              </div>
+                    </div>
+
+                    {pickerOpen && (
+                      <div className="border border-border rounded-xl p-4 bg-background">
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="text-sm font-bold text-foreground">
+                            Choose your {pickerOpen === "first" ? "Season Winner" : "Runner Up"}
+                          </h3>
+                          <button
+                            data-testid="button-close-picker"
+                            onClick={() => setPickerOpen(null)}
+                            className="text-xs font-semibold text-muted-foreground hover:text-foreground"
+                          >
+                            Close
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-72 overflow-y-auto">
+                          {activeContestants.map((c) => {
+                            const takenByOther =
+                              pickerOpen === "first" ? c.id === secondPickId : c.id === firstPickId;
+                            const selected =
+                              pickerOpen === "first" ? c.id === firstPickId : c.id === secondPickId;
+                            return (
+                              <button
+                                key={c.id}
+                                data-testid={`pick-option-${c.id}`}
+                                disabled={takenByOther}
+                                onClick={() => {
+                                  if (pickerOpen === "first") setFirstPickId(c.id);
+                                  else setSecondPickId(c.id);
+                                  setPickerOpen(null);
+                                }}
+                                className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                                  selected
+                                    ? "border-primary bg-primary/10"
+                                    : "border-border hover:bg-muted"
+                                }`}
+                              >
+                                <Headshot contestant={c} size={56} />
+                                <span className="text-xs font-semibold text-foreground text-center leading-tight truncate w-full">
+                                  {c.name}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    <button
+                      data-testid="button-submit-picks"
+                      onClick={() => setConfirmSave(true)}
+                      disabled={savePicks.isPending || !firstPickId || !secondPickId}
+                      className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold text-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+                    >
+                      Save
+                    </button>
+                  </div>
+                );
+              })()
             )}
           </div>
         )}
       </div>
+
+      {confirmSave && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <h3 className="text-lg font-bold text-foreground mb-2" style={{ fontFamily: "'Oswald', sans-serif" }}>
+              CONFIRM YOUR PICKS
+            </h3>
+            <p className="text-sm text-muted-foreground mb-6">
+              Are you sure you want to save your selections? You cannot change this later.
+            </p>
+            <div className="flex gap-3">
+              <button
+                data-testid="button-confirm-no"
+                onClick={() => setConfirmSave(false)}
+                disabled={savePicks.isPending}
+                className="flex-1 py-2.5 rounded-xl font-semibold border border-border text-muted-foreground hover:bg-muted transition-colors disabled:opacity-50"
+              >
+                No
+              </button>
+              <button
+                data-testid="button-confirm-yes"
+                onClick={handlePicksSubmit}
+                disabled={savePicks.isPending}
+                className="flex-1 py-2.5 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-colors disabled:opacity-50"
+              >
+                {savePicks.isPending ? "Saving..." : "Yes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function PickField({
+function Headshot({ contestant, size }: { contestant: Contestant; size: number }) {
+  return (
+    <div
+      className="rounded-full bg-muted overflow-hidden flex items-center justify-center border border-border"
+      style={{ width: size, height: size }}
+    >
+      {contestant.headshotPath ? (
+        <img
+          src={`/api/storage${contestant.headshotPath}`}
+          alt={contestant.name}
+          className="w-full h-full object-cover"
+        />
+      ) : (
+        <User className="text-muted-foreground/50" style={{ width: size * 0.5, height: size * 0.5 }} />
+      )}
+    </div>
+  );
+}
+
+function PickSlot({
   label,
-  points,
   emphasis,
-  contestants,
-  value,
-  otherSelected,
-  onChange,
+  contestant,
+  onClick,
   testId,
 }: {
   label: string;
-  points: number;
   emphasis: boolean;
-  contestants: { id: number; name: string }[];
-  value: number | null;
-  otherSelected: number | null;
-  onChange: (id: number) => void;
+  contestant: Contestant | null;
+  onClick: () => void;
   testId: string;
 }) {
   return (
-    <div className="border border-border rounded-xl p-4 bg-background">
-      <div className="flex items-center justify-between mb-3">
-        <label className="font-semibold text-foreground text-sm">{label}</label>
-        <span
-          className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-            emphasis ? "text-primary bg-primary/10" : "text-muted-foreground bg-muted"
-          }`}
-        >
-          {points} pts
-        </span>
-      </div>
-      <select
-        data-testid={testId}
-        value={value ?? ""}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full border border-border rounded-lg px-3 py-2 bg-card text-foreground"
-      >
-        <option value="">Select a contestant...</option>
-        {contestants.map((c) => (
-          <option key={c.id} value={c.id} disabled={c.id === otherSelected}>
-            {c.name}
-          </option>
-        ))}
-      </select>
-    </div>
+    <button
+      type="button"
+      data-testid={testId}
+      onClick={onClick}
+      className={`flex flex-col items-center justify-center gap-2 rounded-2xl border-2 p-4 min-h-[10rem] transition-colors ${
+        emphasis
+          ? "border-primary/60 bg-primary/5 hover:bg-primary/10"
+          : "border-border bg-background hover:bg-muted"
+      }`}
+    >
+      {contestant ? (
+        <>
+          <Headshot contestant={contestant} size={72} />
+          <span className="font-bold text-foreground text-sm text-center leading-tight">
+            {contestant.name}
+          </span>
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            {label} · Tap to change
+          </span>
+        </>
+      ) : (
+        <>
+          <div
+            className="rounded-full bg-muted flex items-center justify-center border border-dashed border-border"
+            style={{ width: 72, height: 72 }}
+          >
+            <User className="w-8 h-8 text-muted-foreground/50" />
+          </div>
+          <span
+            className={`font-bold text-sm ${emphasis ? "text-primary" : "text-foreground"}`}
+            style={{ fontFamily: "'Oswald', sans-serif" }}
+          >
+            {label.toUpperCase()}
+          </span>
+          <span className="text-[10px] text-muted-foreground">Tap to choose</span>
+        </>
+      )}
+    </button>
   );
 }
 

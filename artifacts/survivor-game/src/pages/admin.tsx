@@ -12,6 +12,10 @@ import {
   useUpdateContestant,
   useDeleteContestant,
   useRestoreContestant,
+  useListShowTribes,
+  useCreateShowTribe,
+  useUpdateShowTribe,
+  useDeleteShowTribe,
   useListWeeks,
   useCreateWeek,
   useListQuestions,
@@ -30,10 +34,12 @@ import {
   useClearGame,
   getListGamesQueryKey,
   getListContestantsQueryKey,
+  getListShowTribesQueryKey,
   getListWeeksQueryKey,
   getListQuestionsQueryKey,
   getGetCorrectAnswersQueryKey,
   getGetGameStatsQueryKey,
+  CreateQuestionBodyAnswerType,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -255,23 +261,180 @@ function GameSetupSection({ onGameCreated, selectedGameId }: { onGameCreated: (i
   );
 }
 
+type ShowTribeLite = { id: number; name: string };
+
+function TribesSection({ gameId }: { gameId: number }) {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const { data: tribes } = useListShowTribes(gameId, {
+    query: { queryKey: getListShowTribesQueryKey(gameId) },
+  });
+  const createTribe = useCreateShowTribe();
+  const updateTribe = useUpdateShowTribe();
+  const deleteTribe = useDeleteShowTribe();
+  const [name, setName] = useState("");
+  const [editing, setEditing] = useState<{ id: number; name: string } | null>(null);
+
+  function invalidate() {
+    qc.invalidateQueries({ queryKey: getListShowTribesQueryKey(gameId) });
+    qc.invalidateQueries({ queryKey: getListContestantsQueryKey(gameId) });
+  }
+
+  function handleAdd() {
+    if (!name.trim()) return;
+    createTribe.mutate(
+      { gameId, data: { name: name.trim() } },
+      {
+        onSuccess: () => {
+          invalidate();
+          setName("");
+        },
+        onError: () => toast({ title: "Failed to add tribe", variant: "destructive" }),
+      },
+    );
+  }
+
+  function handleRename() {
+    if (!editing || !editing.name.trim()) return;
+    updateTribe.mutate(
+      { showTribeId: editing.id, data: { name: editing.name.trim() } },
+      {
+        onSuccess: () => {
+          invalidate();
+          setEditing(null);
+        },
+        onError: () => toast({ title: "Failed to rename tribe", variant: "destructive" }),
+      },
+    );
+  }
+
+  function handleDelete(tribeId: number, tribeName: string) {
+    if (!window.confirm(`Delete tribe "${tribeName}"? Contestants in it will be set to no tribe.`)) return;
+    deleteTribe.mutate(
+      { showTribeId: tribeId },
+      {
+        onSuccess: () => {
+          invalidate();
+          toast({ title: `Tribe "${tribeName}" deleted` });
+        },
+        onError: () => toast({ title: "Failed to delete tribe", variant: "destructive" }),
+      },
+    );
+  }
+
+  const list = tribes ?? [];
+
+  return (
+    <div className="bg-card border border-border rounded-xl p-6">
+      <h2 className="text-lg font-bold text-foreground mb-4" style={{ fontFamily: "'Oswald', sans-serif" }}>TRIBES</h2>
+      <p className="text-xs text-muted-foreground mb-3">
+        The show's tribes (e.g. Tagi, Pagong). Assign contestants to a tribe in the Contestants section.
+      </p>
+      <div className="flex gap-3 mb-4">
+        <input
+          data-testid="input-tribe-name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+          placeholder="Tribe name"
+          className="flex-1 border border-border rounded-lg px-3 py-2 bg-background text-foreground"
+        />
+        <button
+          data-testid="button-add-tribe"
+          onClick={handleAdd}
+          disabled={createTribe.isPending}
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 disabled:opacity-50"
+        >
+          <Plus className="w-4 h-4 inline mr-1" />
+          Add
+        </button>
+      </div>
+      <div className="space-y-2">
+        {list.map((t) => (
+          <div
+            key={t.id}
+            data-testid={`tribe-item-${t.id}`}
+            className="flex items-center gap-3 px-3 py-2 rounded-lg bg-muted/40"
+          >
+            {editing?.id === t.id ? (
+              <>
+                <input
+                  data-testid={`input-rename-tribe-${t.id}`}
+                  value={editing.name}
+                  onChange={(e) => setEditing({ id: t.id, name: e.target.value })}
+                  onKeyDown={(e) => e.key === "Enter" && handleRename()}
+                  autoFocus
+                  className="flex-1 border border-border rounded-lg px-2 py-1 bg-background text-foreground text-sm"
+                />
+                <button
+                  data-testid={`button-save-tribe-${t.id}`}
+                  onClick={handleRename}
+                  disabled={updateTribe.isPending}
+                  className="text-xs font-semibold text-primary hover:underline"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => setEditing(null)}
+                  className="text-xs font-semibold text-muted-foreground hover:underline"
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <>
+                <span className="text-foreground font-medium flex-1 truncate">{t.name}</span>
+                <button
+                  data-testid={`button-rename-tribe-${t.id}`}
+                  onClick={() => setEditing({ id: t.id, name: t.name })}
+                  className="text-xs font-semibold text-primary hover:underline"
+                >
+                  Rename
+                </button>
+                <button
+                  data-testid={`button-delete-tribe-${t.id}`}
+                  onClick={() => handleDelete(t.id, t.name)}
+                  title="Delete tribe"
+                  className="text-destructive hover:text-destructive/80 transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </>
+            )}
+          </div>
+        ))}
+        {list.length === 0 && (
+          <p className="text-sm text-muted-foreground text-center py-4">No tribes yet</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ContestantsSection({ gameId }: { gameId: number }) {
   const { toast } = useToast();
   const qc = useQueryClient();
   const { data: contestants } = useListContestants(gameId);
+  const { data: tribes } = useListShowTribes(gameId, {
+    query: { queryKey: getListShowTribesQueryKey(gameId) },
+  });
   const createContestant = useCreateContestant();
   const deleteContestant = useDeleteContestant();
   const restoreContestant = useRestoreContestant();
   const [name, setName] = useState("");
+  const [newTribeId, setNewTribeId] = useState<number | "">("");
+
+  const tribeList: ShowTribeLite[] = tribes ?? [];
 
   function handleAdd() {
     if (!name.trim()) return;
     createContestant.mutate(
-      { gameId, data: { name: name.trim() } },
+      { gameId, data: { name: name.trim(), showTribeId: newTribeId === "" ? null : Number(newTribeId) } },
       {
         onSuccess: () => {
           qc.invalidateQueries({ queryKey: getListContestantsQueryKey(gameId) });
           setName("");
+          setNewTribeId("");
         },
         onError: () => toast({ title: "Failed to add contestant", variant: "destructive" }),
       }
@@ -322,15 +485,26 @@ function ContestantsSection({ gameId }: { gameId: number }) {
   return (
     <div className="bg-card border border-border rounded-xl p-6">
       <h2 className="text-lg font-bold text-foreground mb-4" style={{ fontFamily: "'Oswald', sans-serif" }}>CONTESTANTS</h2>
-      <div className="flex gap-3 mb-4">
+      <div className="flex gap-3 mb-4 flex-wrap">
         <input
           data-testid="input-contestant-name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleAdd()}
           placeholder="Contestant name"
-          className="flex-1 border border-border rounded-lg px-3 py-2 bg-background text-foreground"
+          className="flex-1 min-w-[8rem] border border-border rounded-lg px-3 py-2 bg-background text-foreground"
         />
+        <select
+          data-testid="select-new-contestant-tribe"
+          value={newTribeId}
+          onChange={(e) => setNewTribeId(e.target.value === "" ? "" : Number(e.target.value))}
+          className="border border-border rounded-lg px-3 py-2 bg-background text-foreground"
+        >
+          <option value="">No tribe</option>
+          {tribeList.map((t) => (
+            <option key={t.id} value={t.id}>{t.name}</option>
+          ))}
+        </select>
         <button
           data-testid="button-add-contestant"
           onClick={handleAdd}
@@ -351,6 +525,7 @@ function ContestantsSection({ gameId }: { gameId: number }) {
             key={c.id}
             contestant={c}
             gameId={gameId}
+            tribes={tribeList}
             onDelete={() => handleDelete(c.id, c.name)}
           />
         ))}
@@ -367,6 +542,7 @@ function ContestantsSection({ gameId }: { gameId: number }) {
                 key={c.id}
                 contestant={c}
                 gameId={gameId}
+                tribes={tribeList}
                 onDelete={() => handleDelete(c.id, c.name)}
                 onRestore={() => handleRestore(c.id, c.name)}
               />
@@ -381,11 +557,13 @@ function ContestantsSection({ gameId }: { gameId: number }) {
 function ContestantRow({
   contestant,
   gameId,
+  tribes,
   onDelete,
   onRestore,
 }: {
-  contestant: { id: number; name: string; headshotPath: string | null; isActive: boolean };
+  contestant: { id: number; name: string; headshotPath: string | null; isActive: boolean; showTribeId: number | null; showTribeName: string | null };
   gameId: number;
+  tribes: ShowTribeLite[];
   onDelete: () => void;
   onRestore?: () => void;
 }) {
@@ -437,6 +615,18 @@ function ContestantRow({
     );
   }
 
+  function handleTribeChange(value: number | null) {
+    updateContestant.mutate(
+      { contestantId: contestant.id, data: { showTribeId: value } },
+      {
+        onSuccess: () => {
+          qc.invalidateQueries({ queryKey: getListContestantsQueryKey(gameId) });
+        },
+        onError: () => toast({ title: "Failed to update tribe", variant: "destructive" }),
+      }
+    );
+  }
+
   const busy = isUploading || updateContestant.isPending;
 
   return (
@@ -457,7 +647,7 @@ function ContestantRow({
           <UserIcon className="w-5 h-5 text-muted-foreground/60" />
         )}
       </div>
-      <span className="text-foreground font-medium flex-1 truncate">
+      <span className="text-foreground font-medium flex-1 truncate min-w-[5rem]">
         {contestant.name}
         {!contestant.isActive && (
           <span className="ml-2 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -465,6 +655,23 @@ function ContestantRow({
           </span>
         )}
       </span>
+      <select
+        data-testid={`select-contestant-tribe-${contestant.id}`}
+        value={contestant.showTribeId ?? ""}
+        onChange={(e) => handleTribeChange(e.target.value === "" ? null : Number(e.target.value))}
+        disabled={busy}
+        title="Assign tribe"
+        className="border border-border rounded-md px-2 py-1 bg-background text-foreground text-xs max-w-[7rem] disabled:opacity-50"
+      >
+        <option value="">No tribe</option>
+        {tribes.map((t) => (
+          <option key={t.id} value={t.id}>{t.name}</option>
+        ))}
+        {/* keep current tribe visible even if it was deleted */}
+        {contestant.showTribeId != null && !tribes.some((t) => t.id === contestant.showTribeId) && (
+          <option value={contestant.showTribeId}>{contestant.showTribeName ?? "Tribe"}</option>
+        )}
+      </select>
       <label
         data-testid={`button-upload-headshot-${contestant.id}`}
         className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-colors ${
@@ -537,7 +744,12 @@ function QuestionCard({ question, weekId, weekLocked }: { question: any; weekId:
       <div className="flex items-start justify-between">
         <div>
           <p className="font-semibold text-foreground">{question.text}</p>
-          <span className="text-xs text-primary font-bold">{question.pointValue} pt{question.pointValue !== 1 ? "s" : ""}</span>
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className="text-xs text-primary font-bold">{question.pointValue} pt{question.pointValue !== 1 ? "s" : ""}</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+              {question.answerType === "tribe" ? "Tribes" : "Cast"}
+            </span>
+          </div>
         </div>
         {!weekLocked && (
           <button
@@ -559,7 +771,12 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
   const [expanded, setExpanded] = useState(false);
   const [questionText, setQuestionText] = useState("");
   const [pointValue, setPointValue] = useState(1);
+  const [answerType, setAnswerType] = useState<"cast" | "tribe">("cast");
   const [correctAnswers, setCorrectAnswers] = useState<Record<number, number[]>>({});
+
+  const { data: showTribes } = useListShowTribes(gameId, {
+    query: { queryKey: getListShowTribesQueryKey(gameId) },
+  });
 
   const { data: questions } = useListQuestions(week.id, {
     query: { enabled: expanded, queryKey: getListQuestionsQueryKey(week.id) },
@@ -636,12 +853,20 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
   function handleAddQuestion() {
     if (!questionText.trim()) return;
     createQuestion.mutate(
-      { weekId: week.id, data: { text: questionText.trim(), pointValue } },
+      {
+        weekId: week.id,
+        data: {
+          text: questionText.trim(),
+          pointValue,
+          answerType: answerType as CreateQuestionBodyAnswerType,
+        },
+      },
       {
         onSuccess: () => {
           qc.invalidateQueries({ queryKey: getListQuestionsQueryKey(week.id) });
           setQuestionText("");
           setPointValue(1);
+          setAnswerType("cast");
         },
         onError: () => toast({ title: "Failed to add question", variant: "destructive" }),
       }
@@ -649,18 +874,25 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
   }
 
   function handleSubmitAnswers() {
+    // Existing correct answers keyed by question, storing the id matching the
+    // question's answer type (contestantId for cast, showTribeId for tribe).
     const existingByQ = new Map<number, number[]>();
     for (const ca of existingCorrect ?? []) {
+      const id = ca.showTribeId ?? ca.contestantId;
+      if (id == null) continue;
       const list = existingByQ.get(ca.questionId) ?? [];
-      list.push(ca.contestantId);
+      list.push(id);
       existingByQ.set(ca.questionId, list);
     }
     const entries = (questions ?? [])
       .map((q) => {
-        const ids = correctAnswers[q.id] ?? existingByQ.get(q.id) ?? [];
-        return { questionId: q.id, contestantIds: Array.from(new Set(ids)) };
+        const ids = Array.from(new Set(correctAnswers[q.id] ?? existingByQ.get(q.id) ?? []));
+        if (q.answerType === "tribe") {
+          return { questionId: q.id, showTribeIds: ids };
+        }
+        return { questionId: q.id, contestantIds: ids };
       })
-      .filter((e) => e.contestantIds.length > 0);
+      .filter((e) => ("showTribeIds" in e ? (e.showTribeIds?.length ?? 0) > 0 : (e.contestantIds?.length ?? 0) > 0));
     if (entries.length === 0) {
       toast({ title: "Select at least one correct answer", variant: "destructive" });
       return;
@@ -767,14 +999,29 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
             </div>
           )}
           {!week.isLocked && (
-            <div className="flex gap-3">
+            <div className="flex gap-3 flex-wrap items-end">
               <input
                 data-testid={`input-question-text-week-${week.weekNumber}`}
                 value={questionText}
                 onChange={(e) => setQuestionText(e.target.value)}
                 placeholder="Question text..."
-                className="flex-1 border border-border rounded-lg px-3 py-2 bg-card text-foreground text-sm"
+                className="flex-1 min-w-[10rem] border border-border rounded-lg px-3 py-2 bg-card text-foreground text-sm"
               />
+              <div>
+                <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                  Answers come from
+                </label>
+                <select
+                  data-testid={`select-answer-type-week-${week.weekNumber}`}
+                  value={answerType}
+                  onChange={(e) => setAnswerType(e.target.value as "cast" | "tribe")}
+                  className="border border-border rounded-lg px-3 py-2 bg-card text-foreground text-sm"
+                  title="Which answer bank this question uses"
+                >
+                  <option value="cast">Cast</option>
+                  <option value="tribe">Tribes</option>
+                </select>
+              </div>
               <input
                 data-testid={`input-point-value-week-${week.weekNumber}`}
                 type="number"
@@ -809,13 +1056,20 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
             <div className="border-t border-border pt-4">
               <h4 className="text-sm font-bold text-foreground mb-3">Submit Correct Answers (Locks Episode)</h4>
               <p className="text-xs text-muted-foreground mb-3">
-                Tick every contestant that should count as correct. Players who picked any of them get the points.
+                Tick every option that should count as correct. Players who picked any of them get the points.
               </p>
               <div className="space-y-4 mb-4">
                 {questions.map((q) => {
-                  const existingForQ = (existingCorrect ?? []).filter((ca: any) => ca.questionId === q.id).map((ca: any) => ca.contestantId);
+                  const isTribe = q.answerType === "tribe";
+                  const existingForQ = (existingCorrect ?? [])
+                    .filter((ca: any) => ca.questionId === q.id)
+                    .map((ca: any) => (isTribe ? ca.showTribeId : ca.contestantId))
+                    .filter((id: number | null): id is number => id != null);
                   const selected = correctAnswers[q.id] ?? existingForQ;
                   const selectedSet = new Set(selected);
+                  const options: { id: number; name: string }[] = isTribe
+                    ? (showTribes ?? []).map((t) => ({ id: t.id, name: t.name }))
+                    : (contestants ?? []).map((c: any) => ({ id: c.id, name: c.name }));
                   function toggle(cid: number) {
                     setCorrectAnswers((prev) => {
                       const current = prev[q.id] ?? existingForQ;
@@ -826,33 +1080,44 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
                   return (
                     <div key={q.id} className="border border-border rounded-lg p-3 bg-background">
                       <div className="flex items-center justify-between gap-3 mb-2">
-                        <span className="text-sm font-semibold text-foreground flex-1">{q.text}</span>
+                        <span className="text-sm font-semibold text-foreground flex-1">
+                          {q.text}
+                          <span className="ml-2 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                            {isTribe ? "Tribes" : "Cast"}
+                          </span>
+                        </span>
                         <span className="text-xs text-muted-foreground whitespace-nowrap">
                           {selectedSet.size} selected
                         </span>
                       </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-                        {contestants.map((c: any) => {
-                          const checked = selectedSet.has(c.id);
-                          return (
-                            <label
-                              key={c.id}
-                              data-testid={`checkbox-correct-answer-${q.id}-${c.id}`}
-                              className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer text-sm border transition-colors ${
-                                checked ? "border-primary bg-primary/10 text-foreground" : "border-border hover:bg-muted"
-                              }`}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={checked}
-                                onChange={() => toggle(c.id)}
-                                className="accent-primary"
-                              />
-                              <span className="truncate">{c.name}</span>
-                            </label>
-                          );
-                        })}
-                      </div>
+                      {options.length === 0 ? (
+                        <p className="text-xs text-muted-foreground">
+                          {isTribe ? "No tribes yet — add them in the Tribes section." : "No contestants yet."}
+                        </p>
+                      ) : (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                          {options.map((o) => {
+                            const checked = selectedSet.has(o.id);
+                            return (
+                              <label
+                                key={o.id}
+                                data-testid={`checkbox-correct-answer-${q.id}-${o.id}`}
+                                className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer text-sm border transition-colors ${
+                                  checked ? "border-primary bg-primary/10 text-foreground" : "border-border hover:bg-muted"
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={() => toggle(o.id)}
+                                  className="accent-primary"
+                                />
+                                <span className="truncate">{o.name}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -1171,6 +1436,12 @@ export default function Admin() {
             <GameSetupSection onGameCreated={handleGameSelected} selectedGameId={selectedGameId} />
             {selectedGameId && <ContestantsSection gameId={selectedGameId} />}
           </div>
+
+          {selectedGameId && (
+            <div className="grid lg:grid-cols-2 gap-6 mb-6">
+              <TribesSection gameId={selectedGameId} />
+            </div>
+          )}
 
           {selectedGameId && (
             <div className="grid lg:grid-cols-2 gap-6 mb-6">

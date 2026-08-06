@@ -20,6 +20,8 @@ tags:
     description: Game management
   - name: contestants
     description: Contestant management
+  - name: show-tribes
+    description: Show tribes (the cast's tribes on the show)
   - name: weeks
     description: Week management
   - name: questions
@@ -520,6 +522,89 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Contestant"
+
+  /games/{gameId}/show-tribes:
+    get:
+      operationId: listShowTribes
+      tags: [show-tribes]
+      summary: List show tribes for a game
+      parameters:
+        - name: gameId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of show tribes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ShowTribe"
+    post:
+      operationId: createShowTribe
+      tags: [show-tribes]
+      summary: Add a show tribe to a game (admin only)
+      parameters:
+        - name: gameId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateShowTribeBody"
+      responses:
+        "201":
+          description: Created show tribe
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShowTribe"
+
+  /show-tribes/{showTribeId}:
+    patch:
+      operationId: updateShowTribe
+      tags: [show-tribes]
+      summary: Rename a show tribe (admin only)
+      parameters:
+        - name: showTribeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateShowTribeBody"
+      responses:
+        "200":
+          description: Updated show tribe
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShowTribe"
+    delete:
+      operationId: deleteShowTribe
+      tags: [show-tribes]
+      summary: Delete a show tribe (admin only)
+      description: Contestants assigned to the tribe keep playing; their tribe simply becomes unassigned.
+      parameters:
+        - name: showTribeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
 
   /storage/uploads/request-url:
     post:
@@ -1445,6 +1530,10 @@ components:
           type: string
         headshotPath:
           type: ["string", "null"]
+        showTribeId:
+          type: ["integer", "null"]
+        showTribeName:
+          type: ["string", "null"]
         isActive:
           type: boolean
           description: When false, the contestant is archived and excluded from new picks but kept for historical scoring.
@@ -1455,8 +1544,36 @@ components:
         - gameId
         - name
         - headshotPath
+        - showTribeId
+        - showTribeName
         - isActive
         - createdAt
+
+    ShowTribe:
+      type: object
+      properties:
+        id:
+          type: integer
+        gameId:
+          type: integer
+        name:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - gameId
+        - name
+        - createdAt
+
+    CreateShowTribeBody:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+      required:
+        - name
 
     DeleteContestantResponse:
       type: object
@@ -1476,6 +1593,8 @@ components:
       properties:
         name:
           type: string
+        showTribeId:
+          type: ["integer", "null"]
       required:
         - name
 
@@ -1486,6 +1605,8 @@ components:
           type: string
         headshotPath:
           type: ["string", "null"]
+        showTribeId:
+          type: ["integer", "null"]
 
     UploadUrlRequest:
       type: object
@@ -1569,11 +1690,16 @@ components:
           type: string
         pointValue:
           type: integer
+        answerType:
+          type: string
+          enum: [cast, tribe]
+          description: Which answer bank this question uses — contestants (cast) or show tribes.
       required:
         - id
         - weekId
         - text
         - pointValue
+        - answerType
 
     CreateQuestionBody:
       type: object
@@ -1582,6 +1708,10 @@ components:
           type: string
         pointValue:
           type: integer
+        answerType:
+          type: string
+          enum: [cast, tribe]
+          default: cast
         choices:
           type: array
           items:
@@ -1597,6 +1727,9 @@ components:
           type: string
         pointValue:
           type: integer
+        answerType:
+          type: string
+          enum: [cast, tribe]
 
     CreateChoiceBody:
       type: object
@@ -1614,9 +1747,16 @@ components:
         questionId:
           type: integer
         contestantId:
-          type: integer
+          type: ["integer", "null"]
         contestantName:
+          type: ["string", "null"]
+        showTribeId:
+          type: ["integer", "null"]
+        showTribeName:
+          type: ["string", "null"]
+        answerName:
           type: string
+          description: Display name of the correct answer (contestant or show tribe).
         questionText:
           type: string
         pointValue:
@@ -1626,6 +1766,9 @@ components:
         - questionId
         - contestantId
         - contestantName
+        - showTribeId
+        - showTribeName
+        - answerName
         - questionText
         - pointValue
 
@@ -1648,9 +1791,12 @@ components:
           type: array
           items:
             type: integer
+        showTribeIds:
+          type: array
+          items:
+            type: integer
       required:
         - questionId
-        - contestantIds
 
     PlayerAnswer:
       type: object
@@ -1662,9 +1808,16 @@ components:
         questionId:
           type: integer
         contestantId:
-          type: integer
+          type: ["integer", "null"]
         contestantName:
+          type: ["string", "null"]
+        showTribeId:
+          type: ["integer", "null"]
+        showTribeName:
+          type: ["string", "null"]
+        answerName:
           type: string
+          description: Display name of the chosen answer (contestant or show tribe).
         isCorrect:
           type: ["boolean", "null"]
       required:
@@ -1673,6 +1826,9 @@ components:
         - questionId
         - contestantId
         - contestantName
+        - showTribeId
+        - showTribeName
+        - answerName
         - isCorrect
 
     SaveAnswersBody:
@@ -1692,9 +1848,10 @@ components:
           type: integer
         contestantId:
           type: integer
+        showTribeId:
+          type: integer
       required:
         - questionId
-        - contestantId
 
     SurvivorPicks:
       type: object
@@ -1732,6 +1889,9 @@ components:
           type: integer
         secondChoiceContestantId:
           type: integer
+        lock:
+          type: boolean
+          description: When true, the picks are permanently locked and can no longer be changed.
       required:
         - firstChoiceContestantId
         - secondChoiceContestantId

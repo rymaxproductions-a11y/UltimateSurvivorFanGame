@@ -198,9 +198,25 @@ export interface Contestant {
   name: string;
   /** @nullable */
   headshotPath: string | null;
+  /** @nullable */
+  showTribeId: number | null;
+  /** @nullable */
+  showTribeName: string | null;
   /** When false, the contestant is archived and excluded from new picks but kept for historical scoring. */
   isActive: boolean;
   createdAt: string;
+}
+
+export interface ShowTribe {
+  id: number;
+  gameId: number;
+  name: string;
+  createdAt: string;
+}
+
+export interface CreateShowTribeBody {
+  /** @minLength 1 */
+  name: string;
 }
 
 export interface DeleteContestantResponse {
@@ -212,12 +228,16 @@ export interface DeleteContestantResponse {
 
 export interface CreateContestantBody {
   name: string;
+  /** @nullable */
+  showTribeId?: number | null;
 }
 
 export interface UpdateContestantBody {
   name?: string;
   /** @nullable */
   headshotPath?: string | null;
+  /** @nullable */
+  showTribeId?: number | null;
 }
 
 export interface UploadUrlRequest {
@@ -254,22 +274,53 @@ export interface Choice {
   choiceText: string;
 }
 
+/**
+ * Which answer bank this question uses — contestants (cast) or show tribes.
+ */
+export type QuestionWithChoicesAnswerType =
+  (typeof QuestionWithChoicesAnswerType)[keyof typeof QuestionWithChoicesAnswerType];
+
+export const QuestionWithChoicesAnswerType = {
+  cast: "cast",
+  tribe: "tribe",
+} as const;
+
 export interface QuestionWithChoices {
   id: number;
   weekId: number;
   text: string;
   pointValue: number;
+  /** Which answer bank this question uses — contestants (cast) or show tribes. */
+  answerType: QuestionWithChoicesAnswerType;
 }
+
+export type CreateQuestionBodyAnswerType =
+  (typeof CreateQuestionBodyAnswerType)[keyof typeof CreateQuestionBodyAnswerType];
+
+export const CreateQuestionBodyAnswerType = {
+  cast: "cast",
+  tribe: "tribe",
+} as const;
 
 export interface CreateQuestionBody {
   text: string;
   pointValue: number;
+  answerType?: CreateQuestionBodyAnswerType;
   choices?: string[];
 }
+
+export type UpdateQuestionBodyAnswerType =
+  (typeof UpdateQuestionBodyAnswerType)[keyof typeof UpdateQuestionBodyAnswerType];
+
+export const UpdateQuestionBodyAnswerType = {
+  cast: "cast",
+  tribe: "tribe",
+} as const;
 
 export interface UpdateQuestionBody {
   text?: string;
   pointValue?: number;
+  answerType?: UpdateQuestionBodyAnswerType;
 }
 
 export interface CreateChoiceBody {
@@ -279,15 +330,24 @@ export interface CreateChoiceBody {
 export interface CorrectAnswer {
   id: number;
   questionId: number;
-  contestantId: number;
-  contestantName: string;
+  /** @nullable */
+  contestantId: number | null;
+  /** @nullable */
+  contestantName: string | null;
+  /** @nullable */
+  showTribeId: number | null;
+  /** @nullable */
+  showTribeName: string | null;
+  /** Display name of the correct answer (contestant or show tribe). */
+  answerName: string;
   questionText: string;
   pointValue: number;
 }
 
 export interface CorrectAnswerInput {
   questionId: number;
-  contestantIds: number[];
+  contestantIds?: number[];
+  showTribeIds?: number[];
 }
 
 export interface SubmitCorrectAnswersBody {
@@ -298,15 +358,24 @@ export interface PlayerAnswer {
   id: number;
   userId: number;
   questionId: number;
-  contestantId: number;
-  contestantName: string;
+  /** @nullable */
+  contestantId: number | null;
+  /** @nullable */
+  contestantName: string | null;
+  /** @nullable */
+  showTribeId: number | null;
+  /** @nullable */
+  showTribeName: string | null;
+  /** Display name of the chosen answer (contestant or show tribe). */
+  answerName: string;
   /** @nullable */
   isCorrect: boolean | null;
 }
 
 export interface PlayerAnswerInput {
   questionId: number;
-  contestantId: number;
+  contestantId?: number;
+  showTribeId?: number;
 }
 
 export interface SaveAnswersBody {
@@ -333,6 +402,8 @@ export interface SurvivorPicks {
 export interface SaveSurvivorPicksBody {
   firstChoiceContestantId: number;
   secondChoiceContestantId: number;
+  /** When true, the picks are permanently locked and can no longer be changed. */
+  lock?: boolean;
 }
 
 export interface SubmitSurvivorWinnerBody {
