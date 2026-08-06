@@ -45,6 +45,7 @@ export const SignInResponse = zod.object({
     tribeId: zod.number().nullish(),
     tribeName: zod.string().nullish(),
     tribeCode: zod.string().nullish(),
+    notifyChat: zod.boolean().optional(),
     createdAt: zod.string(),
   }),
 });
@@ -89,6 +90,7 @@ export const ResetPasswordResponse = zod.object({
     tribeId: zod.number().nullish(),
     tribeName: zod.string().nullish(),
     tribeCode: zod.string().nullish(),
+    notifyChat: zod.boolean().optional(),
     createdAt: zod.string(),
   }),
 });
@@ -158,6 +160,7 @@ export const GetMeResponse = zod.object({
   tribeId: zod.number().nullish(),
   tribeName: zod.string().nullish(),
   tribeCode: zod.string().nullish(),
+  notifyChat: zod.boolean().optional(),
   createdAt: zod.string(),
 });
 
@@ -178,7 +181,58 @@ export const UpdateMyProfileResponse = zod.object({
   tribeId: zod.number().nullish(),
   tribeName: zod.string().nullish(),
   tribeCode: zod.string().nullish(),
+  notifyChat: zod.boolean().optional(),
   createdAt: zod.string(),
+});
+
+/**
+ * @summary Register (or re-register) an Expo push token for the current user's device
+ */
+
+export const RegisterPushTokenBody = zod.object({
+  token: zod.string().min(1),
+});
+
+/**
+ * @summary Remove an Expo push token (user turned notifications off on this device)
+ */
+
+export const UnregisterPushTokenBody = zod.object({
+  token: zod.string().min(1),
+});
+
+/**
+ * @summary Update the current user's notification preferences
+ */
+export const UpdateNotificationSettingsBody = zod.object({
+  notifyChat: zod.boolean(),
+});
+
+export const UpdateNotificationSettingsResponse = zod.object({
+  id: zod.number(),
+  clerkId: zod.string(),
+  username: zod.string(),
+  displayName: zod.string().nullish(),
+  avatarPath: zod.string().nullable(),
+  role: zod.enum(["admin", "player"]),
+  tribeId: zod.number().nullish(),
+  tribeName: zod.string().nullish(),
+  tribeCode: zod.string().nullish(),
+  notifyChat: zod.boolean().optional(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Admin: send a custom push notification to all players with notifications enabled
+ */
+
+export const SendBroadcastBody = zod.object({
+  title: zod.string().optional(),
+  body: zod.string().min(1),
+});
+
+export const SendBroadcastResponse = zod.object({
+  recipients: zod.number(),
 });
 
 /**
@@ -198,6 +252,7 @@ export const UpdateMyAvatarResponse = zod.object({
   tribeId: zod.number().nullish(),
   tribeName: zod.string().nullish(),
   tribeCode: zod.string().nullish(),
+  notifyChat: zod.boolean().optional(),
   createdAt: zod.string(),
 });
 
@@ -218,6 +273,7 @@ export const UpdateMyRoleResponse = zod.object({
   tribeId: zod.number().nullish(),
   tribeName: zod.string().nullish(),
   tribeCode: zod.string().nullish(),
+  notifyChat: zod.boolean().optional(),
   createdAt: zod.string(),
 });
 

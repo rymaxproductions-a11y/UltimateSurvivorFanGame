@@ -32,6 +32,7 @@ import {
   useDeleteGame,
   useSeedGame,
   useClearGame,
+  useSendBroadcast,
   getListGamesQueryKey,
   getListContestantsQueryKey,
   getListShowTribesQueryKey,
@@ -44,7 +45,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Nav } from "@/components/nav";
-import { Trash2, Plus, ChevronDown, ChevronUp, DatabaseZap, Eraser, PlayCircle, CheckCircle, RotateCcw, Upload, User as UserIcon, X, ArchiveRestore, Archive } from "lucide-react";
+import { Trash2, Plus, ChevronDown, ChevronUp, DatabaseZap, Eraser, PlayCircle, CheckCircle, RotateCcw, Upload, User as UserIcon, X, ArchiveRestore, Archive, Bell } from "lucide-react";
 import { useUpload } from "@workspace/object-storage-web";
 
 function GameSetupSection({ onGameCreated, selectedGameId }: { onGameCreated: (id: number | null) => void; selectedGameId: number | null }) {
@@ -1399,6 +1400,75 @@ function StatsBar({ gameId }: { gameId: number }) {
   );
 }
 
+function SendNotificationSection() {
+  const { toast } = useToast();
+  const sendBroadcast = useSendBroadcast();
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+
+  function handleSend() {
+    if (!body.trim()) {
+      toast({ title: "Enter a message", variant: "destructive" });
+      return;
+    }
+    if (!window.confirm("Send this notification to all players with notifications turned on?")) {
+      return;
+    }
+    sendBroadcast.mutate(
+      { data: { title: title.trim() || undefined, body: body.trim() } },
+      {
+        onSuccess: (result) => {
+          toast({ title: `Notification sent to ${result.recipients} player(s)` });
+          setTitle("");
+          setBody("");
+        },
+        onError: () => toast({ title: "Failed to send notification", variant: "destructive" }),
+      },
+    );
+  }
+
+  return (
+    <div className="bg-card border border-border rounded-xl p-6">
+      <h2 className="text-lg font-bold text-foreground mb-1" style={{ fontFamily: "'Oswald', sans-serif" }}>SEND NOTIFICATION</h2>
+      <p className="text-xs text-muted-foreground mb-4">
+        Only players who enabled notifications in the mobile app will receive it.
+      </p>
+      <div className="space-y-3">
+        <div>
+          <label className="block text-xs text-muted-foreground mb-1">Title (optional)</label>
+          <input
+            data-testid="input-notification-title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Ultimate Survivor Fan Game"
+            className="w-full border border-border rounded-lg px-3 py-2 bg-background text-foreground"
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-muted-foreground mb-1">Message</label>
+          <textarea
+            data-testid="input-notification-body"
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            placeholder="What do you want to tell players?"
+            rows={3}
+            className="w-full border border-border rounded-lg px-3 py-2 bg-background text-foreground resize-none"
+          />
+        </div>
+        <button
+          data-testid="button-send-notification"
+          onClick={handleSend}
+          disabled={sendBroadcast.isPending}
+          className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 disabled:opacity-50 text-sm"
+        >
+          <Bell className="w-4 h-4 inline mr-1" />
+          {sendBroadcast.isPending ? "Sending..." : "Send to all players"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function Admin() {
   const { data: me, isLoading: meLoading } = useGetMe();
   const [selectedGameId, setSelectedGameId] = useState<number | null>(null);
@@ -1450,6 +1520,10 @@ export default function Admin() {
           )}
 
           {selectedGameId && <WeeksSection gameId={selectedGameId} />}
+
+          <div className="grid lg:grid-cols-2 gap-6 mt-6">
+            <SendNotificationSection />
+          </div>
         </div>
       </div>
     </Show>

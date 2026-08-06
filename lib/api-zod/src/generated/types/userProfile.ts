@@ -21,5 +21,6 @@ export interface UserProfile {
   tribeName?: string | null;
   /** @nullable */
   tribeCode?: string | null;
+  notifyChat?: boolean;
   createdAt: string;
 }

@@ -529,12 +529,14 @@ function PickSlot({
         {chosen ? (
           <>
             <Avatar headshotPath={contestant!.headshotPath} size={64} />
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, minWidth: 0 }}>
               <Body
                 style={{
                   fontFamily: "Oswald_700Bold",
-                  fontSize: 22,
+                  fontSize: 20,
+                  lineHeight: 26,
                   color: colors.foreground,
+                  flexShrink: 1,
                 }}
               >
                 {contestant!.name}
@@ -565,12 +567,14 @@ function PickSlot({
             >
               <Feather name="plus" size={28} color={colors.mutedForeground} />
             </View>
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, minWidth: 0 }}>
               <Body
                 style={{
                   fontFamily: "Oswald_700Bold",
-                  fontSize: 20,
+                  fontSize: 18,
+                  lineHeight: 24,
                   color: colors.mutedForeground,
+                  flexShrink: 1,
                 }}
               >
                 Choose {label}
@@ -658,12 +662,13 @@ function CastPickerModal({
                   >
                     <Avatar headshotPath={c.headshotPath} size={64} />
                     <Body
-                      numberOfLines={1}
+                      numberOfLines={2}
                       style={{
                         marginTop: 8,
                         fontFamily: "WorkSans_600SemiBold",
                         fontSize: 12,
                         textAlign: "center",
+                        lineHeight: 16,
                       }}
                     >
                       {c.name}

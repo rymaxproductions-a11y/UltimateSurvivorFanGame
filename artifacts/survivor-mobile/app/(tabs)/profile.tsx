@@ -1,7 +1,7 @@
 import { useAuth, useUser } from "@/lib/auth";
 import { useRouter } from "expo-router";
-import { useState } from "react";
-import { Alert, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Alert, Platform, Switch, View } from "react-native";
 
 import { Button } from "@/components/Button";
 import { Body, Heading } from "@/components/Heading";
@@ -14,10 +14,21 @@ import {
   useUpdateMyProfile,
   useUpdateMyAvatar,
   useDeleteMyAccount,
+  useRegisterPushToken,
+  useUnregisterPushToken,
+  useUpdateNotificationSettings,
   getGetMeQueryKey,
 } from "@workspace/api-client-react";
 import { AvatarPicker } from "@/components/AvatarPicker";
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  clearStoredPushToken,
+  getStoredPushToken,
+  hasNotificationPermission,
+  markPrompted,
+  persistPushToken,
+  registerForPush,
+} from "@/lib/notifications";
 
 export default function Profile() {
   const colors = useColors();
@@ -29,8 +40,104 @@ export default function Profile() {
   const update = useUpdateMyProfile();
   const updateAvatar = useUpdateMyAvatar();
   const deleteAccount = useDeleteMyAccount();
+  const registerToken = useRegisterPushToken();
+  const unregisterToken = useUnregisterPushToken();
+  const updateNotifSettings = useUpdateNotificationSettings();
   const [name, setName] = useState("");
   const [editing, setEditing] = useState(false);
+
+  const isWeb = Platform.OS === "web";
+  const ownerId = me ? String(me.id) : null;
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
+  const notifyChat = me?.notifyChat ?? false;
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadPushState() {
+      if (isWeb) return;
+      const [stored, granted] = await Promise.all([
+        getStoredPushToken(),
+        hasNotificationPermission(),
+      ]);
+      // Only reflect ON when a token is stored for THIS user and permission holds.
+      const ownedByUser = !!stored && (stored.ownerId === null || stored.ownerId === ownerId);
+      if (!cancelled) setPushEnabled(ownedByUser && granted);
+    }
+    loadPushState();
+    return () => {
+      cancelled = true;
+    };
+  }, [isWeb, ownerId]);
+
+  async function handleTogglePush(next: boolean) {
+    setPushBusy(true);
+    // Explicit user choice — don't nag with the one-time prompt afterwards.
+    await markPrompted();
+    try {
+      if (next) {
+        const result = await registerForPush();
+        if (!result.ok) {
+          // Never leave the UI claiming notifications are on after a failure.
+          await clearStoredPushToken();
+          setPushEnabled(false);
+          if (result.reason === "denied") {
+            Alert.alert(
+              "Notifications are off",
+              "Enable notifications for this app in your device Settings, then try again.",
+            );
+          } else if (result.reason === "unsupported") {
+            Alert.alert(
+              "Not supported",
+              "Push notifications aren't available on this device.",
+            );
+          } else {
+            Alert.alert("Could not enable", "Please try again.");
+          }
+          return;
+        }
+        try {
+          // Server-confirmed: only persist + flip ON after the PUT succeeds.
+          await registerToken.mutateAsync({ data: { token: result.token } });
+          await persistPushToken(result.token, ownerId);
+          setPushEnabled(true);
+        } catch {
+          await clearStoredPushToken();
+          setPushEnabled(false);
+          Alert.alert("Could not enable", "Please try again.");
+        }
+      } else {
+        const stored = await getStoredPushToken();
+        if (!stored) {
+          await clearStoredPushToken();
+          setPushEnabled(false);
+          return;
+        }
+        try {
+          // Server-confirmed disable: DELETE first, then clear local + flip OFF.
+          await unregisterToken.mutateAsync({ data: { token: stored.token } });
+          await clearStoredPushToken();
+          setPushEnabled(false);
+        } catch {
+          // Keep the token + switch ON so the user can retry.
+          setPushEnabled(true);
+          Alert.alert("Could not turn off", "Please try again.");
+        }
+      }
+    } finally {
+      setPushBusy(false);
+    }
+  }
+
+  function handleToggleChat(next: boolean) {
+    updateNotifSettings.mutate(
+      { data: { notifyChat: next } },
+      {
+        onSuccess: () => qc.invalidateQueries({ queryKey: getGetMeQueryKey() }),
+        onError: () => Alert.alert("Could not save", "Please try again."),
+      },
+    );
+  }
 
   if (isLoading) return <LoadingScreen />;
 
@@ -52,6 +159,17 @@ export default function Profile() {
   }
 
   async function handleSignOut() {
+    // Best-effort: unregister this device's token BEFORE the session is gone,
+    // so the next account on a shared device doesn't inherit these pushes.
+    const stored = await getStoredPushToken();
+    if (stored) {
+      try {
+        await unregisterToken.mutateAsync({ data: { token: stored.token } });
+      } catch {
+        // best-effort — proceed with sign-out regardless
+      }
+      await clearStoredPushToken();
+    }
     await signOut();
     router.replace("/sign-in");
   }
@@ -77,6 +195,7 @@ export default function Profile() {
                   onPress: () => {
                     deleteAccount.mutate(undefined, {
                       onSuccess: async () => {
+                        await clearStoredPushToken();
                         qc.clear();
                         await signOut();
                         router.replace("/sign-in");
@@ -212,6 +331,74 @@ export default function Profile() {
           </Body>
         </View>
       </View>
+
+      {!isWeb && (
+        <>
+          <Body muted style={{ fontSize: 12, letterSpacing: 1.5, marginTop: 28 }}>
+            NOTIFICATIONS
+          </Body>
+          <View
+            style={{
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+              borderWidth: 1,
+              borderRadius: colors.radius,
+              padding: 18,
+              gap: 16,
+              marginTop: 8,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 12,
+              }}
+            >
+              <View style={{ flex: 1 }}>
+                <Body style={{ fontFamily: "WorkSans_600SemiBold" }}>Push notifications</Body>
+                <Body muted style={{ fontSize: 12, marginTop: 2 }}>
+                  Allow this device to receive alerts.
+                </Body>
+              </View>
+              <Switch
+                value={pushEnabled}
+                onValueChange={handleTogglePush}
+                disabled={pushBusy}
+                trackColor={{ true: colors.primary, false: colors.border }}
+                thumbColor={colors.card}
+              />
+            </View>
+
+            <View style={{ height: 1, backgroundColor: colors.border }} />
+
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 12,
+                opacity: pushEnabled ? 1 : 0.4,
+              }}
+            >
+              <View style={{ flex: 1 }}>
+                <Body style={{ fontFamily: "WorkSans_600SemiBold" }}>Chat messages</Body>
+                <Body muted style={{ fontSize: 12, marginTop: 2 }}>
+                  Get notified when your tribe chats.
+                </Body>
+              </View>
+              <Switch
+                value={notifyChat}
+                onValueChange={handleToggleChat}
+                disabled={!pushEnabled || updateNotifSettings.isPending}
+                trackColor={{ true: colors.primary, false: colors.border }}
+                thumbColor={colors.card}
+              />
+            </View>
+          </View>
+        </>
+      )}
 
       <View style={{ marginTop: 24, gap: 12 }}>
         <Button label="Sign Out" variant="outline" onPress={handleSignOut} fullWidth />

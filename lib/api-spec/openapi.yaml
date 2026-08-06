@@ -40,6 +40,8 @@ tags:
     description: Object storage upload and serving endpoints
   - name: tribes
     description: Player tribes (groups joined by 5-character code)
+  - name: notifications
+    description: Push notification tokens and admin broadcasts
 paths:
   /healthz:
     get:
@@ -233,6 +235,82 @@ paths:
           description: Account deleted
         "401":
           description: Unauthorized
+
+  /users/me/push-token:
+    put:
+      operationId: registerPushToken
+      tags: [notifications]
+      summary: Register (or re-register) an Expo push token for the current user's device
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PushTokenBody"
+      responses:
+        "204":
+          description: Token registered
+        "401":
+          description: Unauthorized
+    delete:
+      operationId: unregisterPushToken
+      tags: [notifications]
+      summary: Remove an Expo push token (user turned notifications off on this device)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PushTokenBody"
+      responses:
+        "204":
+          description: Token removed
+        "401":
+          description: Unauthorized
+
+  /users/me/notification-settings:
+    patch:
+      operationId: updateNotificationSettings
+      tags: [notifications]
+      summary: Update the current user's notification preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateNotificationSettingsBody"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Unauthorized
+
+  /notifications/broadcast:
+    post:
+      operationId: sendBroadcast
+      tags: [notifications]
+      summary: "Admin: send a custom push notification to all players with notifications enabled"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BroadcastBody"
+      responses:
+        "200":
+          description: Broadcast queued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BroadcastResult"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Admin only
 
   /users/me/avatar:
     patch:
@@ -1263,6 +1341,8 @@ components:
           type: ["string", "null"]
         tribeCode:
           type: ["string", "null"]
+        notifyChat:
+          type: boolean
         createdAt:
           type: string
       required:
@@ -1425,6 +1505,42 @@ components:
           type: string
       required:
         - displayName
+
+    PushTokenBody:
+      type: object
+      properties:
+        token:
+          type: string
+          minLength: 1
+      required:
+        - token
+
+    UpdateNotificationSettingsBody:
+      type: object
+      properties:
+        notifyChat:
+          type: boolean
+      required:
+        - notifyChat
+
+    BroadcastBody:
+      type: object
+      properties:
+        title:
+          type: string
+        body:
+          type: string
+          minLength: 1
+      required:
+        - body
+
+    BroadcastResult:
+      type: object
+      properties:
+        recipients:
+          type: integer
+      required:
+        - recipients
 
     UpdateRoleBody:
       type: object

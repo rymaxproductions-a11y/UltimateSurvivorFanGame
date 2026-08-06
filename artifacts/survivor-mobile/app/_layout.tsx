@@ -24,7 +24,9 @@ import { tokenCache } from "@clerk/expo/token-cache";
 import { AuthBridge } from "@/components/AuthBridge";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LoadingScreen } from "@/components/LoadingScreen";
+import { NotificationTapHandler } from "@/components/NotificationTapHandler";
 import { configureApi } from "@/lib/api";
+import { configureNotificationHandler } from "@/lib/notifications";
 
 const clerkPublishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 const clerkProxyUrl = process.env.EXPO_PUBLIC_CLERK_PROXY_URL || undefined;
@@ -32,6 +34,7 @@ const clerkProxyUrl = process.env.EXPO_PUBLIC_CLERK_PROXY_URL || undefined;
 SplashScreen.preventAutoHideAsync();
 
 configureApi();
+configureNotificationHandler();
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -93,6 +96,7 @@ export default function RootLayout() {
               <AuthBridge>
                 <GestureHandlerRootView style={{ flex: 1 }}>
                   <KeyboardProvider>
+                    <NotificationTapHandler />
                     <RootLayoutNav />
                   </KeyboardProvider>
                 </GestureHandlerRootView>

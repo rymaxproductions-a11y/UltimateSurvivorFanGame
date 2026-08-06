@@ -31,6 +31,7 @@ export interface UserProfile {
   tribeName?: string | null;
   /** @nullable */
   tribeCode?: string | null;
+  notifyChat?: boolean;
   createdAt: string;
 }
 
@@ -122,6 +123,25 @@ export interface ResetPasswordBody {
 
 export interface UpdateProfileBody {
   displayName: string;
+}
+
+export interface PushTokenBody {
+  /** @minLength 1 */
+  token: string;
+}
+
+export interface UpdateNotificationSettingsBody {
+  notifyChat: boolean;
+}
+
+export interface BroadcastBody {
+  title?: string;
+  /** @minLength 1 */
+  body: string;
+}
+
+export interface BroadcastResult {
+  recipients: number;
 }
 
 export type UpdateRoleBodyRole =

@@ -7,6 +7,8 @@ import { Platform, StyleSheet, View, useColorScheme } from "react-native";
 
 import { useColors } from "@/hooks/useColors";
 import { useGetMe, getGetMeQueryKey } from "@workspace/api-client-react";
+import { NotificationOptInPrompt } from "@/components/NotificationOptInPrompt";
+import { PushTokenReconciler } from "@/components/PushTokenReconciler";
 
 export default function TabLayout() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -24,8 +26,13 @@ export default function TabLayout() {
   if (meLoading) return null;
   if (me && me.role === "player" && !me.tribeId) return <Redirect href="/onboarding" />;
 
+  const ownerId = me ? String(me.id) : null;
+
   return (
-    <Tabs
+    <>
+      <PushTokenReconciler ownerId={ownerId} />
+      <NotificationOptInPrompt enabled={!!me} ownerId={ownerId} />
+      <Tabs
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.mutedForeground,
@@ -90,6 +97,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <Feather name="user" size={22} color={color} />,
         }}
       />
-    </Tabs>
+      </Tabs>
+    </>
   );
 }

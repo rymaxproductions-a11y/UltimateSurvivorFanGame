@@ -499,7 +499,7 @@ export default function Onboarding() {
                                 }`}
                               >
                                 <Headshot contestant={c} size={56} />
-                                <span className="text-xs font-semibold text-foreground text-center leading-tight truncate w-full">
+                                <span className="text-xs font-semibold text-foreground text-center leading-tight break-words w-full">
                                   {c.name}
                                 </span>
                               </button>
@@ -605,10 +605,10 @@ function PickSlot({
       {contestant ? (
         <>
           <Headshot contestant={contestant} size={72} />
-          <span className="font-bold text-foreground text-sm text-center leading-tight">
+          <span className="font-bold text-foreground text-sm text-center leading-tight break-words w-full">
             {contestant.name}
           </span>
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-center leading-snug w-full">
             {label} · Tap to change
           </span>
         </>

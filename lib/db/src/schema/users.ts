@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, pgEnum, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -22,6 +22,9 @@ export const usersTable = pgTable("users", {
   // Tribe membership. Nullable: admin and brand-new users have no tribe yet.
   // Plain integer (no FK) to avoid a circular reference with tribes.created_by_user_id.
   tribeId: integer("tribe_id"),
+  // Whether the user wants push notifications for tribe chat messages
+  // (only takes effect on devices where they registered a push token).
+  notifyChat: boolean("notify_chat").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

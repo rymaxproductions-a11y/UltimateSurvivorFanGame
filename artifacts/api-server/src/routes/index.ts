@@ -13,6 +13,7 @@ import leaderboardRouter from "./leaderboard";
 import storageRouter from "./storage";
 import tribesRouter from "./tribes";
 import chatRouter from "./chat";
+import notificationsRouter from "./notifications";
 
 const router: IRouter = Router();
 
@@ -30,5 +31,6 @@ router.use(leaderboardRouter);
 router.use(storageRouter);
 router.use(tribesRouter);
 router.use(chatRouter);
+router.use(notificationsRouter);
 
 export default router;

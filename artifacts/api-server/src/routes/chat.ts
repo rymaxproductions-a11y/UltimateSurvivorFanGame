@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
-import { and, asc, desc, eq, gt } from "drizzle-orm";
+import { and, asc, desc, eq, gt, ne } from "drizzle-orm";
 import { db, usersTable, chatMessagesTable } from "@workspace/db";
+import { sendPush, tokensForUsers } from "../lib/push";
 import { ListTribeMessagesResponseItem as ChatMessageSchema, SendTribeMessageBody } from "@workspace/api-zod";
 import { serialize } from "../lib/serialize";
 import { getAuthClerkId } from "../lib/localAuth";
@@ -128,6 +129,30 @@ router.post("/tribes/me/messages", requireAuth, async (req: any, res: any): Prom
     .insert(chatMessagesTable)
     .values({ tribeId: user.tribeId, userId: user.id, body })
     .returning();
+
+  // Notify other tribe members who opted into chat notifications.
+  // Fire-and-forget: never block or fail the message send on push delivery.
+  void (async () => {
+    try {
+      const members = await db
+        .select({ id: usersTable.id })
+        .from(usersTable)
+        .where(and(
+          eq(usersTable.tribeId, user.tribeId!),
+          ne(usersTable.id, user.id),
+          eq(usersTable.notifyChat, true),
+        ));
+      const tokens = await tokensForUsers(members.map((m) => m.id));
+      const senderName = user.displayName ?? user.username;
+      await sendPush(tokens, {
+        title: senderName,
+        body: body.length > 180 ? `${body.slice(0, 177)}...` : body,
+        data: { type: "chat", tribeId: user.tribeId },
+      });
+    } catch (err) {
+      console.error("Chat push notification failed:", err);
+    }
+  })();
 
   res.status(201).json(
     ChatMessageSchema.parse(

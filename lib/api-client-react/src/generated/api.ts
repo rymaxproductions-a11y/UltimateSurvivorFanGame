@@ -19,6 +19,8 @@ import type {
 import type {
   AdminUser,
   AuthResponse,
+  BroadcastBody,
+  BroadcastResult,
   ChatMessage,
   Choice,
   Contestant,
@@ -44,6 +46,7 @@ import type {
   ListTribeMessagesParams,
   MyTribeResponse,
   PlayerAnswer,
+  PushTokenBody,
   QuestionWithChoices,
   ResetPasswordBody,
   SaveAnswersBody,
@@ -60,6 +63,7 @@ import type {
   UpdateContestantBody,
   UpdateGameBody,
   UpdateMyAvatarBody,
+  UpdateNotificationSettingsBody,
   UpdateProfileBody,
   UpdateQuestionBody,
   UpdateRoleBody,
@@ -969,6 +973,351 @@ export const useDeleteMyAccount = <
   TContext
 > => {
   return useMutation(getDeleteMyAccountMutationOptions(options));
+};
+
+/**
+ * @summary Register (or re-register) an Expo push token for the current user's device
+ */
+export const getRegisterPushTokenUrl = () => {
+  return `/api/users/me/push-token`;
+};
+
+export const registerPushToken = async (
+  pushTokenBody: PushTokenBody,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getRegisterPushTokenUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(pushTokenBody),
+  });
+};
+
+export const getRegisterPushTokenMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof registerPushToken>>,
+    TError,
+    { data: BodyType<PushTokenBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof registerPushToken>>,
+  TError,
+  { data: BodyType<PushTokenBody> },
+  TContext
+> => {
+  const mutationKey = ["registerPushToken"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof registerPushToken>>,
+    { data: BodyType<PushTokenBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return registerPushToken(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RegisterPushTokenMutationResult = NonNullable<
+  Awaited<ReturnType<typeof registerPushToken>>
+>;
+export type RegisterPushTokenMutationBody = BodyType<PushTokenBody>;
+export type RegisterPushTokenMutationError = ErrorType<void>;
+
+/**
+ * @summary Register (or re-register) an Expo push token for the current user's device
+ */
+export const useRegisterPushToken = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof registerPushToken>>,
+    TError,
+    { data: BodyType<PushTokenBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof registerPushToken>>,
+  TError,
+  { data: BodyType<PushTokenBody> },
+  TContext
+> => {
+  return useMutation(getRegisterPushTokenMutationOptions(options));
+};
+
+/**
+ * @summary Remove an Expo push token (user turned notifications off on this device)
+ */
+export const getUnregisterPushTokenUrl = () => {
+  return `/api/users/me/push-token`;
+};
+
+export const unregisterPushToken = async (
+  pushTokenBody: PushTokenBody,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getUnregisterPushTokenUrl(), {
+    ...options,
+    method: "DELETE",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(pushTokenBody),
+  });
+};
+
+export const getUnregisterPushTokenMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof unregisterPushToken>>,
+    TError,
+    { data: BodyType<PushTokenBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof unregisterPushToken>>,
+  TError,
+  { data: BodyType<PushTokenBody> },
+  TContext
+> => {
+  const mutationKey = ["unregisterPushToken"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof unregisterPushToken>>,
+    { data: BodyType<PushTokenBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return unregisterPushToken(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UnregisterPushTokenMutationResult = NonNullable<
+  Awaited<ReturnType<typeof unregisterPushToken>>
+>;
+export type UnregisterPushTokenMutationBody = BodyType<PushTokenBody>;
+export type UnregisterPushTokenMutationError = ErrorType<void>;
+
+/**
+ * @summary Remove an Expo push token (user turned notifications off on this device)
+ */
+export const useUnregisterPushToken = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof unregisterPushToken>>,
+    TError,
+    { data: BodyType<PushTokenBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof unregisterPushToken>>,
+  TError,
+  { data: BodyType<PushTokenBody> },
+  TContext
+> => {
+  return useMutation(getUnregisterPushTokenMutationOptions(options));
+};
+
+/**
+ * @summary Update the current user's notification preferences
+ */
+export const getUpdateNotificationSettingsUrl = () => {
+  return `/api/users/me/notification-settings`;
+};
+
+export const updateNotificationSettings = async (
+  updateNotificationSettingsBody: UpdateNotificationSettingsBody,
+  options?: RequestInit,
+): Promise<UserProfile> => {
+  return customFetch<UserProfile>(getUpdateNotificationSettingsUrl(), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateNotificationSettingsBody),
+  });
+};
+
+export const getUpdateNotificationSettingsMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateNotificationSettings>>,
+    TError,
+    { data: BodyType<UpdateNotificationSettingsBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateNotificationSettings>>,
+  TError,
+  { data: BodyType<UpdateNotificationSettingsBody> },
+  TContext
+> => {
+  const mutationKey = ["updateNotificationSettings"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateNotificationSettings>>,
+    { data: BodyType<UpdateNotificationSettingsBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return updateNotificationSettings(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateNotificationSettingsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateNotificationSettings>>
+>;
+export type UpdateNotificationSettingsMutationBody =
+  BodyType<UpdateNotificationSettingsBody>;
+export type UpdateNotificationSettingsMutationError = ErrorType<void>;
+
+/**
+ * @summary Update the current user's notification preferences
+ */
+export const useUpdateNotificationSettings = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateNotificationSettings>>,
+    TError,
+    { data: BodyType<UpdateNotificationSettingsBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateNotificationSettings>>,
+  TError,
+  { data: BodyType<UpdateNotificationSettingsBody> },
+  TContext
+> => {
+  return useMutation(getUpdateNotificationSettingsMutationOptions(options));
+};
+
+/**
+ * @summary Admin: send a custom push notification to all players with notifications enabled
+ */
+export const getSendBroadcastUrl = () => {
+  return `/api/notifications/broadcast`;
+};
+
+export const sendBroadcast = async (
+  broadcastBody: BroadcastBody,
+  options?: RequestInit,
+): Promise<BroadcastResult> => {
+  return customFetch<BroadcastResult>(getSendBroadcastUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(broadcastBody),
+  });
+};
+
+export const getSendBroadcastMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sendBroadcast>>,
+    TError,
+    { data: BodyType<BroadcastBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof sendBroadcast>>,
+  TError,
+  { data: BodyType<BroadcastBody> },
+  TContext
+> => {
+  const mutationKey = ["sendBroadcast"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof sendBroadcast>>,
+    { data: BodyType<BroadcastBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return sendBroadcast(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SendBroadcastMutationResult = NonNullable<
+  Awaited<ReturnType<typeof sendBroadcast>>
+>;
+export type SendBroadcastMutationBody = BodyType<BroadcastBody>;
+export type SendBroadcastMutationError = ErrorType<void>;
+
+/**
+ * @summary Admin: send a custom push notification to all players with notifications enabled
+ */
+export const useSendBroadcast = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sendBroadcast>>,
+    TError,
+    { data: BodyType<BroadcastBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof sendBroadcast>>,
+  TError,
+  { data: BodyType<BroadcastBody> },
+  TContext
+> => {
+  return useMutation(getSendBroadcastMutationOptions(options));
 };
 
 /**
