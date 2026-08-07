@@ -20,7 +20,7 @@
       },
       "env": {
         "EXPO_PUBLIC_DOMAIN": "ultimate-survivor-fan-game.replit.app"
-      }
+      },
       "android": {
         "buildType": "apk"
       }
