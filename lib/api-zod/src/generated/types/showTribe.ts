@@ -10,5 +10,10 @@ export interface ShowTribe {
   id: number;
   gameId: number;
   name: string;
+  /**
+   * Optional display hex color (e.g. "#e11d48") shown wherever the tribe appears.
+   * @nullable
+   */
+  color: string | null;
   createdAt: string;
 }

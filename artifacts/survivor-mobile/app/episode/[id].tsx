@@ -9,6 +9,7 @@ import { Body, Heading } from "@/components/Heading";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { Screen } from "@/components/Screen";
 import { useColors } from "@/hooks/useColors";
+import { tribeTextColor } from "@/lib/tribeColor";
 import {
   useGetCorrectAnswers,
   useGetMyAnswers,
@@ -110,10 +111,10 @@ export default function EpisodeScreen() {
     [myAnswers],
   );
   const correctById = useMemo(() => {
-    const map = new Map<number, string[]>();
+    const map = new Map<number, { name: string; color: string | null }[]>();
     for (const a of correctAnswers ?? []) {
       const list = map.get(a.questionId) ?? [];
-      list.push(a.answerName);
+      list.push({ name: a.answerName, color: a.showTribeColor ?? null });
       map.set(a.questionId, list);
     }
     return map;
@@ -297,7 +298,21 @@ export default function EpisodeScreen() {
                   }}
                 >
                   {isTribe ? (
-                    <TribeGlyph active={!!myPickTribe} />
+                    (myPickTribe?.color ?? savedAnswer?.showTribeColor) ? (
+                      <View
+                        style={{
+                          width: 22,
+                          height: 22,
+                          borderRadius: 999,
+                          backgroundColor:
+                            myPickTribe?.color ?? savedAnswer?.showTribeColor ?? undefined,
+                          borderWidth: 1,
+                          borderColor: colors.border,
+                        }}
+                      />
+                    ) : (
+                      <TribeGlyph active={!!myPickTribe} />
+                    )
                   ) : (
                     <Avatar headshotPath={myPickContestant?.headshotPath ?? null} size={40} />
                   )}
@@ -334,9 +349,36 @@ export default function EpisodeScreen() {
                     <Body muted style={{ fontSize: 12, letterSpacing: 1 }}>
                       {correctNames.length > 1 ? "CORRECT (ANY):" : "CORRECT:"}
                     </Body>
-                    <Body style={{ fontFamily: "WorkSans_600SemiBold", flexShrink: 1 }}>
-                      {correctNames.join(", ")}
-                    </Body>
+                    {correctNames.map((cn, i) =>
+                      cn.color ? (
+                        <View
+                          key={`${cn.name}-${i}`}
+                          style={{
+                            backgroundColor: cn.color,
+                            paddingHorizontal: 8,
+                            paddingVertical: 2,
+                            borderRadius: 999,
+                          }}
+                        >
+                          <Body
+                            style={{
+                              fontFamily: "WorkSans_600SemiBold",
+                              fontSize: 12,
+                              color: tribeTextColor(cn.color),
+                            }}
+                          >
+                            {cn.name}
+                          </Body>
+                        </View>
+                      ) : (
+                        <Body
+                          key={`${cn.name}-${i}`}
+                          style={{ fontFamily: "WorkSans_600SemiBold", flexShrink: 1 }}
+                        >
+                          {cn.name}
+                        </Body>
+                      ),
+                    )}
                   </View>
                 )}
               </View>
@@ -414,7 +456,7 @@ function AnswerPickerModal({
   visible: boolean;
   isTribe: boolean;
   contestants: { id: number; name: string; headshotPath: string | null }[];
-  tribes: { id: number; name: string }[];
+  tribes: { id: number; name: string; color?: string | null }[];
   selectedId: number | null;
   onClose: () => void;
   onSelect: (id: number) => void;
@@ -462,7 +504,20 @@ function AnswerPickerModal({
                     backgroundColor: selected ? colors.accent : colors.card,
                   }}
                 >
-                  <TribeGlyph active={selected} />
+                  {t.color ? (
+                    <View
+                      style={{
+                        width: 22,
+                        height: 22,
+                        borderRadius: 999,
+                        backgroundColor: t.color,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                      }}
+                    />
+                  ) : (
+                    <TribeGlyph active={selected} />
+                  )}
                   <Body
                     style={{
                       flex: 1,

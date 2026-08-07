@@ -10,6 +10,8 @@ export const showTribesTable = pgTable("show_tribes", {
   id: serial("id").primaryKey(),
   gameId: integer("game_id").notNull().references(() => gamesTable.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
+  // Optional display color (hex, e.g. "#e11d48") shown wherever the tribe name appears.
+  color: text("color"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

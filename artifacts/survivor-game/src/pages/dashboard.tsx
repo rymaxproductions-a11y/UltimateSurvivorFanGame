@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Redirect } from "wouter";
 import { useAuth, Show } from "@clerk/react";
+import { tribeBadgeStyle } from "@/lib/tribeColor";
 import {
   useGetMe,
   useUpdateMyProfile,
@@ -115,11 +116,14 @@ function EpisodeTab({
         const isCorrect = isLocked && savedAnswer?.isCorrect;
         const isWrong = isLocked && savedAnswer && !savedAnswer.isCorrect;
         const isTribe = q.answerType === "tribe";
-        const options: { id: number; name: string }[] = isTribe
-          ? (showTribes ?? []).map((t) => ({ id: t.id, name: t.name }))
+        const options: { id: number; name: string; color?: string | null }[] = isTribe
+          ? (showTribes ?? []).map((t) => ({ id: t.id, name: t.name, color: t.color }))
           : (contestants ?? [])
               .filter((c) => c.isActive || c.id === currentSelection)
               .map((c) => ({ id: c.id, name: c.name }));
+        const selectedTribe = isTribe
+          ? options.find((o) => o.id === currentSelection)
+          : undefined;
 
         return (
           <div
@@ -147,9 +151,34 @@ function EpisodeTab({
                 <option key={o.id} value={o.id}>{o.name}</option>
               ))}
             </select>
+            {selectedTribe?.color && (
+              <span
+                data-testid={`chip-tribe-selected-${q.id}`}
+                className="inline-block mt-2 text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                style={tribeBadgeStyle(selectedTribe.color)}
+              >
+                {selectedTribe.name}
+              </span>
+            )}
             {isLocked && savedAnswer && (
               <div className={`mt-2 text-sm font-medium ${isCorrect ? "text-green-600" : "text-red-600"}`}>
-                {isCorrect ? "Correct! +" + q.pointValue + " pts" : `Incorrect — you picked ${savedAnswer.answerName}`}
+                {isCorrect ? (
+                  "Correct! +" + q.pointValue + " pts"
+                ) : (
+                  <>
+                    Incorrect — you picked{" "}
+                    {savedAnswer.showTribeColor ? (
+                      <span
+                        className="inline-block text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full align-middle"
+                        style={tribeBadgeStyle(savedAnswer.showTribeColor)}
+                      >
+                        {savedAnswer.answerName}
+                      </span>
+                    ) : (
+                      savedAnswer.answerName
+                    )}
+                  </>
+                )}
               </div>
             )}
           </div>

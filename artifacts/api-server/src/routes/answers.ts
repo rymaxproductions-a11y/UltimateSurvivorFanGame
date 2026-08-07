@@ -46,6 +46,7 @@ async function selectPlayerAnswers(userId: number, weekId: number) {
     contestantName: contestantsTable.name,
     showTribeId: playerAnswersTable.showTribeId,
     showTribeName: showTribesTable.name,
+    showTribeColor: showTribesTable.color,
     isCorrect: playerAnswersTable.isCorrect,
   })
     .from(playerAnswersTable)
@@ -197,6 +198,7 @@ router.get("/weeks/:weekId/correct-answers", async (req, res): Promise<void> => 
     contestantName: contestantsTable.name,
     showTribeId: correctAnswersTable.showTribeId,
     showTribeName: showTribesTable.name,
+    showTribeColor: showTribesTable.color,
     questionText: questionsTable.text,
     pointValue: questionsTable.pointValue,
   })

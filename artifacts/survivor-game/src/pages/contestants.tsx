@@ -2,6 +2,7 @@ import { Redirect } from "wouter";
 import { useGetMe, useListGames, useListContestants, getListContestantsQueryKey } from "@workspace/api-client-react";
 import { Nav } from "@/components/nav";
 import { User } from "lucide-react";
+import { tribeBadgeStyle } from "@/lib/tribeColor";
 
 export default function Contestants() {
   const { data: me, isLoading: meLoading } = useGetMe();
@@ -87,6 +88,7 @@ export default function Contestants() {
                     <span
                       data-testid={`contestant-tribe-${c.id}`}
                       className="inline-block mt-1.5 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary"
+                      style={tribeBadgeStyle(c.showTribeColor)}
                     >
                       {c.showTribeName}
                     </span>

@@ -6,6 +6,7 @@ import { Body, Heading } from "@/components/Heading";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { Screen } from "@/components/Screen";
 import { useColors } from "@/hooks/useColors";
+import { tribeTextColor } from "@/lib/tribeColor";
 import {
   useListContestants,
   useListGames,
@@ -112,9 +113,9 @@ export default function Contestants() {
                       paddingHorizontal: 10,
                       paddingVertical: 3,
                       borderRadius: 999,
-                      backgroundColor: colors.accent,
+                      backgroundColor: c.showTribeColor ?? colors.accent,
                       borderWidth: 1,
-                      borderColor: colors.primary,
+                      borderColor: c.showTribeColor ?? colors.primary,
                     }}
                   >
                     <Body
@@ -123,7 +124,9 @@ export default function Contestants() {
                         fontFamily: "WorkSans_600SemiBold",
                         fontSize: 11,
                         letterSpacing: 0.5,
-                        color: colors.primary,
+                        color: c.showTribeColor
+                          ? tribeTextColor(c.showTribeColor)
+                          : colors.primary,
                       }}
                     >
                       {c.showTribeName}

@@ -1683,6 +1683,8 @@ components:
           type: ["integer", "null"]
         showTribeName:
           type: ["string", "null"]
+        showTribeColor:
+          type: ["string", "null"]
         isActive:
           type: boolean
           description: When false, the contestant is archived and excluded from new picks but kept for historical scoring.
@@ -1695,6 +1697,7 @@ components:
         - headshotPath
         - showTribeId
         - showTribeName
+        - showTribeColor
         - isActive
         - createdAt
 
@@ -1707,12 +1710,16 @@ components:
           type: integer
         name:
           type: string
+        color:
+          type: ["string", "null"]
+          description: Optional display hex color (e.g. "#e11d48") shown wherever the tribe appears.
         createdAt:
           type: string
       required:
         - id
         - gameId
         - name
+        - color
         - createdAt
 
     CreateShowTribeBody:
@@ -1721,6 +1728,9 @@ components:
         name:
           type: string
           minLength: 1
+        color:
+          type: ["string", "null"]
+          pattern: "^#[0-9a-fA-F]{6}$"
       required:
         - name
 
@@ -1916,6 +1926,8 @@ components:
           type: ["integer", "null"]
         showTribeName:
           type: ["string", "null"]
+        showTribeColor:
+          type: ["string", "null"]
         answerName:
           type: string
           description: Display name of the correct answer (contestant or show tribe).
@@ -1930,6 +1942,7 @@ components:
         - contestantName
         - showTribeId
         - showTribeName
+        - showTribeColor
         - answerName
         - questionText
         - pointValue
@@ -1977,6 +1990,8 @@ components:
           type: ["integer", "null"]
         showTribeName:
           type: ["string", "null"]
+        showTribeColor:
+          type: ["string", "null"]
         answerName:
           type: string
           description: Display name of the chosen answer (contestant or show tribe).
@@ -1990,6 +2005,7 @@ components:
         - contestantName
         - showTribeId
         - showTribeName
+        - showTribeColor
         - answerName
         - isCorrect
 

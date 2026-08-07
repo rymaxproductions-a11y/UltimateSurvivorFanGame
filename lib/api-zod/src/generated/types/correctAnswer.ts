@@ -17,6 +17,8 @@ export interface CorrectAnswer {
   showTribeId: number | null;
   /** @nullable */
   showTribeName: string | null;
+  /** @nullable */
+  showTribeColor: string | null;
   /** Display name of the correct answer (contestant or show tribe). */
   answerName: string;
   questionText: string;

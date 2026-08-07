@@ -35,6 +35,7 @@ router.get("/games/:gameId/contestants", async (req, res): Promise<void> => {
     .select({
       ...getTableColumns(contestantsTable),
       showTribeName: showTribesTable.name,
+      showTribeColor: showTribesTable.color,
     })
     .from(contestantsTable)
     .leftJoin(showTribesTable, eq(contestantsTable.showTribeId, showTribesTable.id))
@@ -185,11 +186,13 @@ router.post("/contestants/:contestantId/restore", requireAuth, requireAdmin, asy
 
 async function withShowTribeName<T extends { showTribeId: number | null }>(contestant: T) {
   let showTribeName: string | null = null;
+  let showTribeColor: string | null = null;
   if (contestant.showTribeId != null) {
     const [tribe] = await db.select().from(showTribesTable).where(eq(showTribesTable.id, contestant.showTribeId));
     showTribeName = tribe?.name ?? null;
+    showTribeColor = tribe?.color ?? null;
   }
-  return { ...contestant, showTribeName };
+  return { ...contestant, showTribeName, showTribeColor };
 }
 
 export default router;

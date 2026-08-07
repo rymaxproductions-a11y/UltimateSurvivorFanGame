@@ -48,6 +48,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Nav } from "@/components/nav";
 import { Trash2, Plus, ChevronDown, ChevronUp, DatabaseZap, Eraser, PlayCircle, CheckCircle, RotateCcw, Upload, User as UserIcon, X, ArchiveRestore, Archive, Bell } from "lucide-react";
 import { useUpload } from "@workspace/object-storage-web";
+import { TRIBE_COLOR_PRESETS, tribeBadgeStyle } from "@/lib/tribeColor";
 
 function GameSetupSection({ onGameCreated, selectedGameId }: { onGameCreated: (id: number | null) => void; selectedGameId: number | null }) {
   const { toast } = useToast();
@@ -263,7 +264,46 @@ function GameSetupSection({ onGameCreated, selectedGameId }: { onGameCreated: (i
   );
 }
 
-type ShowTribeLite = { id: number; name: string };
+type ShowTribeLite = { id: number; name: string; color?: string | null };
+
+function ColorSwatchPicker({
+  value,
+  onChange,
+  testIdPrefix,
+}: {
+  value: string | null;
+  onChange: (color: string | null) => void;
+  testIdPrefix: string;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <button
+        type="button"
+        data-testid={`${testIdPrefix}-none`}
+        onClick={() => onChange(null)}
+        title="No color"
+        className={`w-6 h-6 rounded-full border text-[10px] leading-none text-muted-foreground flex items-center justify-center ${
+          value === null ? "border-foreground ring-2 ring-ring" : "border-border"
+        }`}
+      >
+        ✕
+      </button>
+      {TRIBE_COLOR_PRESETS.map((c) => (
+        <button
+          key={c}
+          type="button"
+          data-testid={`${testIdPrefix}-${c.slice(1)}`}
+          onClick={() => onChange(c)}
+          title={c}
+          style={{ backgroundColor: c }}
+          className={`w-6 h-6 rounded-full border ${
+            value === c ? "border-foreground ring-2 ring-ring" : "border-transparent"
+          }`}
+        />
+      ))}
+    </div>
+  );
+}
 
 function TribesSection({ gameId }: { gameId: number }) {
   const { toast } = useToast();
@@ -275,7 +315,8 @@ function TribesSection({ gameId }: { gameId: number }) {
   const updateTribe = useUpdateShowTribe();
   const deleteTribe = useDeleteShowTribe();
   const [name, setName] = useState("");
-  const [editing, setEditing] = useState<{ id: number; name: string } | null>(null);
+  const [newColor, setNewColor] = useState<string | null>(null);
+  const [editing, setEditing] = useState<{ id: number; name: string; color: string | null } | null>(null);
 
   function invalidate() {
     qc.invalidateQueries({ queryKey: getListShowTribesQueryKey(gameId) });
@@ -285,11 +326,12 @@ function TribesSection({ gameId }: { gameId: number }) {
   function handleAdd() {
     if (!name.trim()) return;
     createTribe.mutate(
-      { gameId, data: { name: name.trim() } },
+      { gameId, data: { name: name.trim(), color: newColor } },
       {
         onSuccess: () => {
           invalidate();
           setName("");
+          setNewColor(null);
         },
         onError: () => toast({ title: "Failed to add tribe", variant: "destructive" }),
       },
@@ -299,7 +341,7 @@ function TribesSection({ gameId }: { gameId: number }) {
   function handleRename() {
     if (!editing || !editing.name.trim()) return;
     updateTribe.mutate(
-      { showTribeId: editing.id, data: { name: editing.name.trim() } },
+      { showTribeId: editing.id, data: { name: editing.name.trim(), color: editing.color } },
       {
         onSuccess: () => {
           invalidate();
@@ -332,24 +374,27 @@ function TribesSection({ gameId }: { gameId: number }) {
       <p className="text-xs text-muted-foreground mb-3">
         The show's tribes (e.g. Tagi, Pagong). Assign contestants to a tribe in the Contestants section.
       </p>
-      <div className="flex gap-3 mb-4">
-        <input
-          data-testid="input-tribe-name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-          placeholder="Tribe name"
-          className="flex-1 border border-border rounded-lg px-3 py-2 bg-background text-foreground"
-        />
-        <button
-          data-testid="button-add-tribe"
-          onClick={handleAdd}
-          disabled={createTribe.isPending}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 disabled:opacity-50"
-        >
-          <Plus className="w-4 h-4 inline mr-1" />
-          Add
-        </button>
+      <div className="mb-4 space-y-2">
+        <div className="flex gap-3">
+          <input
+            data-testid="input-tribe-name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+            placeholder="Tribe name"
+            className="flex-1 border border-border rounded-lg px-3 py-2 bg-background text-foreground"
+          />
+          <button
+            data-testid="button-add-tribe"
+            onClick={handleAdd}
+            disabled={createTribe.isPending}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 disabled:opacity-50"
+          >
+            <Plus className="w-4 h-4 inline mr-1" />
+            Add
+          </button>
+        </div>
+        <ColorSwatchPicker value={newColor} onChange={setNewColor} testIdPrefix="swatch-new-tribe" />
       </div>
       <div className="space-y-2">
         {list.map((t) => (
@@ -359,39 +404,53 @@ function TribesSection({ gameId }: { gameId: number }) {
             className="flex items-center gap-3 px-3 py-2 rounded-lg bg-muted/40"
           >
             {editing?.id === t.id ? (
-              <>
-                <input
-                  data-testid={`input-rename-tribe-${t.id}`}
-                  value={editing.name}
-                  onChange={(e) => setEditing({ id: t.id, name: e.target.value })}
-                  onKeyDown={(e) => e.key === "Enter" && handleRename()}
-                  autoFocus
-                  className="flex-1 border border-border rounded-lg px-2 py-1 bg-background text-foreground text-sm"
+              <div className="flex-1 space-y-2">
+                <div className="flex items-center gap-3">
+                  <input
+                    data-testid={`input-rename-tribe-${t.id}`}
+                    value={editing.name}
+                    onChange={(e) => setEditing({ ...editing, name: e.target.value })}
+                    onKeyDown={(e) => e.key === "Enter" && handleRename()}
+                    autoFocus
+                    className="flex-1 border border-border rounded-lg px-2 py-1 bg-background text-foreground text-sm"
+                  />
+                  <button
+                    data-testid={`button-save-tribe-${t.id}`}
+                    onClick={handleRename}
+                    disabled={updateTribe.isPending}
+                    className="text-xs font-semibold text-primary hover:underline"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => setEditing(null)}
+                    className="text-xs font-semibold text-muted-foreground hover:underline"
+                  >
+                    Cancel
+                  </button>
+                </div>
+                <ColorSwatchPicker
+                  value={editing.color}
+                  onChange={(color) => setEditing({ ...editing, color })}
+                  testIdPrefix={`swatch-tribe-${t.id}`}
                 />
-                <button
-                  data-testid={`button-save-tribe-${t.id}`}
-                  onClick={handleRename}
-                  disabled={updateTribe.isPending}
-                  className="text-xs font-semibold text-primary hover:underline"
-                >
-                  Save
-                </button>
-                <button
-                  onClick={() => setEditing(null)}
-                  className="text-xs font-semibold text-muted-foreground hover:underline"
-                >
-                  Cancel
-                </button>
-              </>
+              </div>
             ) : (
               <>
-                <span className="text-foreground font-medium flex-1 truncate">{t.name}</span>
+                <span
+                  data-testid={`badge-tribe-color-${t.id}`}
+                  className="px-2 py-0.5 rounded-full text-xs font-semibold bg-muted text-foreground"
+                  style={tribeBadgeStyle(t.color)}
+                >
+                  {t.name}
+                </span>
+                <span className="flex-1" />
                 <button
                   data-testid={`button-rename-tribe-${t.id}`}
-                  onClick={() => setEditing({ id: t.id, name: t.name })}
+                  onClick={() => setEditing({ id: t.id, name: t.name, color: t.color ?? null })}
                   className="text-xs font-semibold text-primary hover:underline"
                 >
-                  Rename
+                  Edit
                 </button>
                 <button
                   data-testid={`button-delete-tribe-${t.id}`}
@@ -657,6 +716,17 @@ function ContestantRow({
           </span>
         )}
       </span>
+      {contestant.showTribeId != null && (
+        <span
+          data-testid={`dot-contestant-tribe-${contestant.id}`}
+          title={contestant.showTribeName ?? undefined}
+          className="w-3 h-3 rounded-full shrink-0 border border-border"
+          style={{
+            backgroundColor:
+              tribes.find((t) => t.id === contestant.showTribeId)?.color ?? "transparent",
+          }}
+        />
+      )}
       <select
         data-testid={`select-contestant-tribe-${contestant.id}`}
         value={contestant.showTribeId ?? ""}
@@ -1143,8 +1213,8 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
                     .filter((id: number | null): id is number => id != null);
                   const selected = correctAnswers[q.id] ?? existingForQ;
                   const selectedSet = new Set(selected);
-                  const options: { id: number; name: string }[] = isTribe
-                    ? (showTribes ?? []).map((t) => ({ id: t.id, name: t.name }))
+                  const options: { id: number; name: string; color?: string | null }[] = isTribe
+                    ? (showTribes ?? []).map((t) => ({ id: t.id, name: t.name, color: t.color }))
                     : (contestants ?? []).map((c: any) => ({ id: c.id, name: c.name }));
                   function toggle(cid: number) {
                     setCorrectAnswers((prev) => {
@@ -1188,6 +1258,12 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
                                   onChange={() => toggle(o.id)}
                                   className="accent-primary"
                                 />
+                                {o.color && (
+                                  <span
+                                    className="w-3 h-3 rounded-full shrink-0 border border-border"
+                                    style={{ backgroundColor: o.color }}
+                                  />
+                                )}
                                 <span className="truncate">{o.name}</span>
                               </label>
                             );

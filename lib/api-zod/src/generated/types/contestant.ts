@@ -16,6 +16,8 @@ export interface Contestant {
   showTribeId: number | null;
   /** @nullable */
   showTribeName: string | null;
+  /** @nullable */
+  showTribeColor: string | null;
   /** When false, the contestant is archived and excluded from new picks but kept for historical scoring. */
   isActive: boolean;
   createdAt: string;

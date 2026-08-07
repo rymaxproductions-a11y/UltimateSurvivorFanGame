@@ -418,6 +418,7 @@ export const ListContestantsResponseItem = zod.object({
   headshotPath: zod.string().nullable(),
   showTribeId: zod.number().nullable(),
   showTribeName: zod.string().nullable(),
+  showTribeColor: zod.string().nullable(),
   isActive: zod
     .boolean()
     .describe(
@@ -459,6 +460,7 @@ export const UpdateContestantResponse = zod.object({
   headshotPath: zod.string().nullable(),
   showTribeId: zod.number().nullable(),
   showTribeName: zod.string().nullable(),
+  showTribeColor: zod.string().nullable(),
   isActive: zod
     .boolean()
     .describe(
@@ -506,6 +508,7 @@ export const RestoreContestantResponse = zod.object({
   headshotPath: zod.string().nullable(),
   showTribeId: zod.number().nullable(),
   showTribeName: zod.string().nullable(),
+  showTribeColor: zod.string().nullable(),
   isActive: zod
     .boolean()
     .describe(
@@ -525,6 +528,12 @@ export const ListShowTribesResponseItem = zod.object({
   id: zod.number(),
   gameId: zod.number(),
   name: zod.string(),
+  color: zod
+    .string()
+    .nullable()
+    .describe(
+      'Optional display hex color (e.g. \"#e11d48\") shown wherever the tribe appears.',
+    ),
   createdAt: zod.string(),
 });
 export const ListShowTribesResponse = zod.array(ListShowTribesResponseItem);
@@ -536,8 +545,11 @@ export const CreateShowTribeParams = zod.object({
   gameId: zod.coerce.number(),
 });
 
+export const createShowTribeBodyColorRegExp = new RegExp("^#[0-9a-fA-F]{6}$");
+
 export const CreateShowTribeBody = zod.object({
   name: zod.string().min(1),
+  color: zod.string().regex(createShowTribeBodyColorRegExp).nullish(),
 });
 
 /**
@@ -547,14 +559,23 @@ export const UpdateShowTribeParams = zod.object({
   showTribeId: zod.coerce.number(),
 });
 
+export const updateShowTribeBodyColorRegExp = new RegExp("^#[0-9a-fA-F]{6}$");
+
 export const UpdateShowTribeBody = zod.object({
   name: zod.string().min(1),
+  color: zod.string().regex(updateShowTribeBodyColorRegExp).nullish(),
 });
 
 export const UpdateShowTribeResponse = zod.object({
   id: zod.number(),
   gameId: zod.number(),
   name: zod.string(),
+  color: zod
+    .string()
+    .nullable()
+    .describe(
+      'Optional display hex color (e.g. \"#e11d48\") shown wherever the tribe appears.',
+    ),
   createdAt: zod.string(),
 });
 
@@ -833,6 +854,7 @@ export const GetCorrectAnswersResponseItem = zod.object({
   contestantName: zod.string().nullable(),
   showTribeId: zod.number().nullable(),
   showTribeName: zod.string().nullable(),
+  showTribeColor: zod.string().nullable(),
   answerName: zod
     .string()
     .describe("Display name of the correct answer (contestant or show tribe)."),
@@ -886,6 +908,7 @@ export const GetMyAnswersResponseItem = zod.object({
   contestantName: zod.string().nullable(),
   showTribeId: zod.number().nullable(),
   showTribeName: zod.string().nullable(),
+  showTribeColor: zod.string().nullable(),
   answerName: zod
     .string()
     .describe("Display name of the chosen answer (contestant or show tribe)."),
@@ -918,6 +941,7 @@ export const SaveMyAnswersResponseItem = zod.object({
   contestantName: zod.string().nullable(),
   showTribeId: zod.number().nullable(),
   showTribeName: zod.string().nullable(),
+  showTribeColor: zod.string().nullable(),
   answerName: zod
     .string()
     .describe("Display name of the chosen answer (contestant or show tribe)."),

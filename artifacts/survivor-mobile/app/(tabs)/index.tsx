@@ -395,7 +395,7 @@ function RankCard({
             fontFamily: "Oswald_700Bold",
             fontSize: 48,
             color: colors.primary,
-            lineHeight: 52,
+            lineHeight: 62,
           }}
         >
           #{entry.rank}
@@ -417,7 +417,7 @@ function RankCard({
               fontFamily: "Oswald_700Bold",
               fontSize: 32,
               color: colors.secondaryForeground,
-              lineHeight: 34,
+              lineHeight: 42,
             }}
           >
             {entry.totalPoints}

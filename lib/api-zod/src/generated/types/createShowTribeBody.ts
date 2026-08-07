@@ -9,4 +9,9 @@
 export interface CreateShowTribeBody {
   /** @minLength 1 */
   name: string;
+  /**
+   * @nullable
+   * @pattern ^#[0-9a-fA-F]{6}$
+   */
+  color?: string | null;
 }

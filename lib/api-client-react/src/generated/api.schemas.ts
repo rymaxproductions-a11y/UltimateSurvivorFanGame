@@ -226,6 +226,8 @@ export interface Contestant {
   showTribeId: number | null;
   /** @nullable */
   showTribeName: string | null;
+  /** @nullable */
+  showTribeColor: string | null;
   /** When false, the contestant is archived and excluded from new picks but kept for historical scoring. */
   isActive: boolean;
   createdAt: string;
@@ -235,12 +237,22 @@ export interface ShowTribe {
   id: number;
   gameId: number;
   name: string;
+  /**
+   * Optional display hex color (e.g. "#e11d48") shown wherever the tribe appears.
+   * @nullable
+   */
+  color: string | null;
   createdAt: string;
 }
 
 export interface CreateShowTribeBody {
   /** @minLength 1 */
   name: string;
+  /**
+   * @nullable
+   * @pattern ^#[0-9a-fA-F]{6}$
+   */
+  color?: string | null;
 }
 
 export interface DeleteContestantResponse {
@@ -374,6 +386,8 @@ export interface CorrectAnswer {
   showTribeId: number | null;
   /** @nullable */
   showTribeName: string | null;
+  /** @nullable */
+  showTribeColor: string | null;
   /** Display name of the correct answer (contestant or show tribe). */
   answerName: string;
   questionText: string;
@@ -402,6 +416,8 @@ export interface PlayerAnswer {
   showTribeId: number | null;
   /** @nullable */
   showTribeName: string | null;
+  /** @nullable */
+  showTribeColor: string | null;
   /** Display name of the chosen answer (contestant or show tribe). */
   answerName: string;
   /** @nullable */

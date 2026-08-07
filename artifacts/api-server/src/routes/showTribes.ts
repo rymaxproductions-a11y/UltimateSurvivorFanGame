@@ -46,7 +46,11 @@ router.post("/games/:gameId/show-tribes", requireAuth, requireAdmin, async (req:
 
   const [tribe] = await db
     .insert(showTribesTable)
-    .values({ gameId: params.data.gameId, name: parsed.data.name.trim() })
+    .values({
+      gameId: params.data.gameId,
+      name: parsed.data.name.trim(),
+      color: parsed.data.color ?? null,
+    })
     .returning();
 
   res.status(201).json(serialize(tribe));
@@ -67,7 +71,10 @@ router.patch("/show-tribes/:showTribeId", requireAuth, requireAdmin, async (req:
 
   const [updated] = await db
     .update(showTribesTable)
-    .set({ name: parsed.data.name.trim() })
+    .set({
+      name: parsed.data.name.trim(),
+      ...(parsed.data.color !== undefined ? { color: parsed.data.color } : {}),
+    })
     .where(eq(showTribesTable.id, params.data.showTribeId))
     .returning();
 

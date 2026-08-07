@@ -2,7 +2,7 @@
   "expo": {
     "name": "Ultimate Survivor Fan Game",
     "slug": "survivor-guessing-game",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "survivor-mobile",
@@ -16,7 +16,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "app.replit.ultimatesurvivorfangame",
-      "buildNumber": "13",
+      "buildNumber": "1",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Allow Ultimate Survivor Fan Game to access your photos so you can set a profile avatar.",
         "ITSAppUsesNonExemptEncryption": false
