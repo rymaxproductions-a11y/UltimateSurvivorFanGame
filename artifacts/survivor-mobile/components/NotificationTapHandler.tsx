@@ -1,7 +1,7 @@
-import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
 import { useEffect } from "react";
-import { Platform } from "react-native";
+
+import { pushSupported } from "@/lib/notifications";
 
 /**
  * Routes the user to the relevant screen when they tap a push notification.
@@ -11,7 +11,11 @@ export function NotificationTapHandler() {
   const router = useRouter();
 
   useEffect(() => {
-    if (Platform.OS === "web") return;
+    if (!pushSupported()) return;
+    // Lazy-load: importing expo-notifications inside Expo Go on Android
+    // logs a fatal red-box error (remote push removed in SDK 53+).
+    const Notifications =
+      require("expo-notifications") as typeof import("expo-notifications");
 
     function handleData(data: unknown) {
       if (data && typeof data === "object" && (data as { type?: string }).type === "chat") {

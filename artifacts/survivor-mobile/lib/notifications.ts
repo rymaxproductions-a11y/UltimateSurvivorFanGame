@@ -1,7 +1,29 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
-import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
+
+/** True when running inside the Expo Go client (not a standalone/dev build). */
+export function isExpoGo(): boolean {
+  return Constants.executionEnvironment === "storeClient";
+}
+
+/** Whether push notifications can work at all in this runtime. */
+export function pushSupported(): boolean {
+  if (Platform.OS === "web") return false;
+  // Remote push was removed from Expo Go on Android in SDK 53+; even loading
+  // the module there logs a red-box error, so never load it in that runtime.
+  if (Platform.OS === "android" && isExpoGo()) return false;
+  return true;
+}
+
+type NotificationsModule = typeof import("expo-notifications");
+
+/** Lazily load expo-notifications only where it is supported. */
+function getNotifications(): NotificationsModule | null {
+  if (!pushSupported()) return null;
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  return require("expo-notifications") as NotificationsModule;
+}
 
 /**
  * Push notification helpers.
@@ -28,6 +50,8 @@ export interface StoredPushToken {
 
 /** Show alerts (with sound/badge) even when the app is foregrounded. */
 export function configureNotificationHandler(): void {
+  const Notifications = getNotifications();
+  if (!Notifications) return;
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
       shouldShowBanner: true,
@@ -41,6 +65,8 @@ export function configureNotificationHandler(): void {
 /** Create the default Android notification channel (no-op elsewhere). */
 export async function ensureAndroidChannel(): Promise<void> {
   if (Platform.OS !== "android") return;
+  const Notifications = getNotifications();
+  if (!Notifications) return;
   try {
     await Notifications.setNotificationChannelAsync("default", {
       name: "Default",
@@ -66,8 +92,8 @@ function getProjectId(): string | undefined {
  * The caller persists it via persistPushToken() on success.
  */
 export async function registerForPush(): Promise<RegisterResult> {
-  // Push notifications are not supported on simulators/web.
-  if (Platform.OS === "web") {
+  const Notifications = getNotifications();
+  if (!Notifications) {
     return { ok: false, reason: "unsupported" };
   }
 
@@ -130,7 +156,8 @@ export async function clearStoredPushToken(): Promise<void> {
 
 /** Current OS-level permission status (true when granted). */
 export async function hasNotificationPermission(): Promise<boolean> {
-  if (Platform.OS === "web") return false;
+  const Notifications = getNotifications();
+  if (!Notifications) return false;
   try {
     const { status } = await Notifications.getPermissionsAsync();
     return status === "granted";

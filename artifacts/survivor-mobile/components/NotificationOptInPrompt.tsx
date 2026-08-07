@@ -7,6 +7,7 @@ import { useColors } from "@/hooks/useColors";
 import {
   clearStoredPushToken,
   hasBeenPrompted,
+  isExpoGo,
   markPrompted,
   persistPushToken,
   registerForPush,
@@ -32,7 +33,8 @@ export function NotificationOptInPrompt({
 
   useEffect(() => {
     let cancelled = false;
-    if (!enabled || Platform.OS === "web") return;
+    // No prompt where push can't work: web, or Android inside Expo Go (SDK 53+).
+    if (!enabled || Platform.OS === "web" || (Platform.OS === "android" && isExpoGo())) return;
     hasBeenPrompted().then((prompted) => {
       if (!cancelled && !prompted) setVisible(true);
     });

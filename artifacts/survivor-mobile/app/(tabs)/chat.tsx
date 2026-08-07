@@ -84,7 +84,7 @@ export default function ChatTab() {
     <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: colors.background }}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior="padding"
         keyboardVerticalOffset={0}
       >
         <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8 }}>

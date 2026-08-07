@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "996546949429",
+    "project_id": "ultimate-survivor-fan-game",
+    "storage_bucket": "ultimate-survivor-fan-game.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:996546949429:android:606ffd4e1c1f66dd1c9c7c",
+        "android_client_info": {
+          "package_name": "app.replit.ultimatesurvivorfangame"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD5NVwA2mlGli4yDXvn5nouihItEKX06Mw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
