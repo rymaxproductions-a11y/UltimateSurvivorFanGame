@@ -1,3 +1,4 @@
 - [pnpm override compatibility](pnpm-override-compat.md) — scope transitive-dep security overrides with parent@major selectors; global overrides across incompatible majors break runtime.
 - [Clerk Expo futures API](clerk-expo-futures-api.md) — custom auth UIs must use Core v3 futures methods; check @clerk/shared dist types instead of guessing v2 patterns.
-- [EXPO_UNAUTHORIZED fix](expo-unauthorized-fix.md) — recurring stale Expo dev-server session; restart the expo workflow and verify manifest returns 200.
+- [EXPO_UNAUTHORIZED fix](expo-unauthorized-fix.md) — two causes: stale dev-server session (restart workflow) vs. Replit publishing flow (platform-side, support).
+- [Manual EAS publish](eas-manual-publish.md) — eas-cli builds need Clerk env vars in the EAS production environment and ascAppId in eas.json, or the app crashes on device.

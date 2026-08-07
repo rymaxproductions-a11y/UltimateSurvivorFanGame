@@ -16,7 +16,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "app.replit.ultimatesurvivorfangame",
-      "buildNumber": "12",
+      "buildNumber": "13",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Allow Ultimate Survivor Fan Game to access your photos so you can set a profile avatar.",
         "ITSAppUsesNonExemptEncryption": false
