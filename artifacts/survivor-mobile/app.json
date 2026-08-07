@@ -24,6 +24,7 @@
     },
     "android": {
       "package": "app.replit.ultimatesurvivorfangame",
+      "googleServicesFile": "./google-services.json",
       "versionCode": 1
     },
     "web": {
