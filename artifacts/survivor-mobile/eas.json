@@ -9,7 +9,18 @@
       "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "environment": "production",
+      "pnpm": "10.26.1",
+      "cache": {
+        "disabled": true
+      },
+      "env": {
+        "EXPO_PUBLIC_DOMAIN": "ultimate-survivor-fan-game.replit.app"
+      },
+      "android": {
+        "buildType": "apk"
+      }
     },
     "production": {
       "pnpm": "10.26.1",
