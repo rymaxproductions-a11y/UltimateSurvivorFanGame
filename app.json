@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "5fc607b8-460c-4d42-94c8-f678d61dad43"
+      }
+    },
+    "android": {
+      "package": "com.rymax.ultimatesurvivorfangame"
+    }
+  }
+}
