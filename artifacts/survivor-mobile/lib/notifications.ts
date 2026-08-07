@@ -65,9 +65,18 @@ function getProjectId(): string | undefined {
  * must only be stored after the server confirms registration (PUT succeeds).
  * The caller persists it via persistPushToken() on success.
  */
+/** True when running inside the Expo Go client (not a standalone/dev build). */
+export function isExpoGo(): boolean {
+  return Constants.executionEnvironment === "storeClient";
+}
+
 export async function registerForPush(): Promise<RegisterResult> {
   // Push notifications are not supported on simulators/web.
   if (Platform.OS === "web") {
+    return { ok: false, reason: "unsupported" };
+  }
+  // Remote push was removed from Expo Go on Android in SDK 53+.
+  if (Platform.OS === "android" && isExpoGo()) {
     return { ok: false, reason: "unsupported" };
   }
 

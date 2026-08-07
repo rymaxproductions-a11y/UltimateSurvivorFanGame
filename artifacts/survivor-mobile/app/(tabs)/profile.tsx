@@ -88,8 +88,8 @@ export default function Profile() {
             );
           } else if (result.reason === "unsupported") {
             Alert.alert(
-              "Not supported",
-              "Push notifications aren't available on this device.",
+              "Not supported here",
+              "Push notifications aren't available in this preview app. Install the app from TestFlight or the Play Store to receive notifications.",
             );
           } else {
             Alert.alert("Could not enable", "Please try again.");
