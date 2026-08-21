@@ -7,13 +7,19 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "node": "22.14.0",
+      "pnpm": "10.26.1",
       "android": {
         "buildType": "apk"
+      },
+      "ios": {
+        "image": "latest"
       }
     },
     "preview": {
       "distribution": "internal",
       "environment": "production",
+      "node": "22.14.0",
       "pnpm": "10.26.1",
       "cache": {
         "disabled": true
@@ -23,9 +29,13 @@
       },
       "android": {
         "buildType": "apk"
+      },
+      "ios": {
+        "image": "latest"
       }
     },
     "production": {
+      "node": "22.14.0",
       "pnpm": "10.26.1",
       "cache": {
         "disabled": true
@@ -35,6 +45,9 @@
       },
       "android": {
         "buildType": "apk"
+      },
+      "ios": {
+        "image": "latest"
       }
     }
   },
