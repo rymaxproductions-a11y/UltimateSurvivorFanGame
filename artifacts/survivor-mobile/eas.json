@@ -10,6 +10,7 @@
       "node": "22.14.0",
       "pnpm": "10.26.1",
       "android": {
+        "image": "sdk-54",
         "buildType": "apk"
       },
       "ios": {
@@ -28,6 +29,7 @@
         "EXPO_PUBLIC_DOMAIN": "ultimate-survivor-fan-game.replit.app"
       },
       "android": {
+        "image": "sdk-54",
         "buildType": "apk"
       },
       "ios": {
@@ -44,6 +46,7 @@
         "EXPO_PUBLIC_DOMAIN": "ultimate-survivor-fan-game.replit.app"
       },
       "android": {
+        "image": "sdk-54",
         "buildType": "apk"
       },
       "ios": {
