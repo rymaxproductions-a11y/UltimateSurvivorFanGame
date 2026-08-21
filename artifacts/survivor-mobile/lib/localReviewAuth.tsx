@@ -109,6 +109,7 @@ export function LocalReviewAuthProvider({
         try {
           const profile = await getMe({
             headers: { Authorization: `Bearer ${storedToken}` },
+            cache: "no-store",
           });
           if (profile.role !== "player") {
             await clearSession();
