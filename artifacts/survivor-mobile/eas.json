@@ -7,13 +7,20 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "node": "22.14.0",
+      "pnpm": "10.26.1",
       "android": {
+        "image": "sdk-54",
         "buildType": "apk"
+      },
+      "ios": {
+        "image": "latest"
       }
     },
     "preview": {
       "distribution": "internal",
       "environment": "production",
+      "node": "22.14.0",
       "pnpm": "10.26.1",
       "cache": {
         "disabled": true
@@ -22,10 +29,15 @@
         "EXPO_PUBLIC_DOMAIN": "ultimate-survivor-fan-game.replit.app"
       },
       "android": {
+        "image": "sdk-54",
         "buildType": "apk"
+      },
+      "ios": {
+        "image": "latest"
       }
     },
     "production": {
+      "node": "22.14.0",
       "pnpm": "10.26.1",
       "cache": {
         "disabled": true
@@ -34,7 +46,11 @@
         "EXPO_PUBLIC_DOMAIN": "ultimate-survivor-fan-game.replit.app"
       },
       "android": {
+        "image": "sdk-54",
         "buildType": "apk"
+      },
+      "ios": {
+        "image": "latest"
       }
     }
   },

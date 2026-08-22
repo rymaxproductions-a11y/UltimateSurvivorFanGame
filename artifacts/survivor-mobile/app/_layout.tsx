@@ -27,6 +27,7 @@ import { LoadingScreen } from "@/components/LoadingScreen";
 import { NotificationTapHandler } from "@/components/NotificationTapHandler";
 import { configureApi } from "@/lib/api";
 import { configureNotificationHandler } from "@/lib/notifications";
+import { LocalReviewAuthProvider } from "@/lib/localReviewAuth";
 
 const clerkPublishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 const clerkProxyUrl = process.env.EXPO_PUBLIC_CLERK_PROXY_URL || undefined;
@@ -93,14 +94,16 @@ export default function RootLayout() {
         >
           <ClerkLoaded>
             <QueryClientProvider client={queryClient}>
-              <AuthBridge>
-                <GestureHandlerRootView style={{ flex: 1 }}>
-                  <KeyboardProvider>
-                    <NotificationTapHandler />
-                    <RootLayoutNav />
-                  </KeyboardProvider>
-                </GestureHandlerRootView>
-              </AuthBridge>
+              <LocalReviewAuthProvider>
+                <AuthBridge>
+                  <GestureHandlerRootView style={{ flex: 1 }}>
+                    <KeyboardProvider>
+                      <NotificationTapHandler />
+                      <RootLayoutNav />
+                    </KeyboardProvider>
+                  </GestureHandlerRootView>
+                </AuthBridge>
+              </LocalReviewAuthProvider>
             </QueryClientProvider>
           </ClerkLoaded>
         </ClerkProvider>

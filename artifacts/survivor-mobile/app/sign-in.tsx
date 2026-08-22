@@ -15,6 +15,11 @@ import { Body, Heading } from "@/components/Heading";
 import { Input } from "@/components/Input";
 import { Logo } from "@/components/Logo";
 import { useColors } from "@/hooks/useColors";
+import { useAuth as useAppAuth } from "@/lib/auth";
+import {
+  APPLE_REVIEW_EMAIL,
+  useLocalReviewAuth,
+} from "@/lib/localReviewAuth";
 import { getMe, updateMyProfile } from "@workspace/api-client-react";
 
 type Mode = "landing" | "sign-in" | "sign-up" | "verify" | "signin-code" | "mfa";
@@ -23,7 +28,9 @@ type MfaStrategy = "totp" | "phone_code" | "email_code" | "backup_code";
 export default function SignInScreen() {
   const colors = useColors();
   const router = useRouter();
-  const { isLoaded, isSignedIn } = useClerkAuth();
+  const clerkAuth = useClerkAuth();
+  const { isLoaded, isSignedIn } = useAppAuth();
+  const { signIn: signInReviewAccount } = useLocalReviewAuth();
   const { signIn, errors: signInErrors, fetchStatus: signInFetchStatus } = useSignIn();
   const { signUp, errors: signUpErrors, fetchStatus: signUpFetchStatus } = useSignUp();
 
@@ -56,8 +63,16 @@ export default function SignInScreen() {
     setBusy(true);
     setError(null);
     try {
+      const normalizedEmail = email.trim().toLowerCase();
+      if (normalizedEmail === APPLE_REVIEW_EMAIL) {
+        if (clerkAuth.isSignedIn) await clerkAuth.signOut();
+        await signInReviewAccount(normalizedEmail, password);
+        router.replace("/");
+        return;
+      }
+
       const { error: err } = await signIn.password({
-        emailAddress: email.trim().toLowerCase(),
+        emailAddress: normalizedEmail,
         password,
       });
       if (err) {
@@ -82,7 +97,11 @@ export default function SignInScreen() {
         setError("Additional verification is required. Please sign in on the web app.");
       }
     } catch (err: any) {
-      setError(clerkErrorMessage(err) ?? "Sign-in failed.");
+      setError(
+        clerkErrorMessage(err) ??
+          (typeof err?.message === "string" ? err.message : null) ??
+          "Sign-in failed.",
+      );
     } finally {
       setBusy(false);
     }

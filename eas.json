@@ -1,6 +1,6 @@
 {
   "cli": {
-    "version": ">= 21.7.0",
+    "version": ">= 21.5.0",
     "appVersionSource": "remote"
   },
   "build": {
@@ -12,7 +12,14 @@
       "distribution": "internal"
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "node": "22.14.0",
+      "android": {
+        "image": "latest"
+      },
+      "ios": {
+        "image": "latest"
+      }
     }
   },
   "submit": {
