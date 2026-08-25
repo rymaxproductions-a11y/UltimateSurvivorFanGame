@@ -18,7 +18,8 @@
       "bundleIdentifier": "app.replit.ultimatesurvivorfangame",
       "buildNumber": "1",
       "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "Allow Ultimate Survivor Fan Game to access your photos so you can set a profile avatar.",
+        "NSCameraUsageDescription": "Ultimate Survivor Fan Game uses the camera only when you choose Take Photo to create an in-game profile avatar. For example, you can take a selfie to use as your player picture.",
+        "NSPhotoLibraryUsageDescription": "Ultimate Survivor Fan Game accesses your photo library only when you choose Choose Photo to set an in-game profile avatar.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },

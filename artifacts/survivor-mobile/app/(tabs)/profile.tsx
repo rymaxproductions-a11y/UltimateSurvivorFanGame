@@ -1,7 +1,7 @@
 import { useAuth, useUser } from "@/lib/auth";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, Platform, Switch, View } from "react-native";
+import { Alert, Linking, Platform, Switch, View } from "react-native";
 
 import { Button } from "@/components/Button";
 import { Body, Heading } from "@/components/Heading";
@@ -29,6 +29,7 @@ import {
   persistPushToken,
   registerForPush,
 } from "@/lib/notifications";
+import { getPrivacyPolicyUrl } from "@/lib/leaderboardConsent";
 
 export default function Profile() {
   const colors = useColors();
@@ -172,6 +173,19 @@ export default function Profile() {
     }
     await signOut();
     router.replace("/sign-in");
+  }
+
+  async function handleOpenPrivacyPolicy() {
+    const url = getPrivacyPolicyUrl();
+    if (!url) {
+      Alert.alert("Privacy policy unavailable", "Please try again later.");
+      return;
+    }
+    try {
+      await Linking.openURL(url);
+    } catch {
+      Alert.alert("Could not open privacy policy", "Please try again later.");
+    }
   }
 
   function handleDeleteAccount() {
@@ -401,6 +415,12 @@ export default function Profile() {
       )}
 
       <View style={{ marginTop: 24, gap: 12 }}>
+        <Button
+          label="Privacy Policy"
+          variant="outline"
+          onPress={handleOpenPrivacyPolicy}
+          fullWidth
+        />
         <Button label="Sign Out" variant="outline" onPress={handleSignOut} fullWidth />
         <Button
           label={deleteAccount.isPending ? "Deleting…" : "Delete Account"}
