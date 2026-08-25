@@ -10,6 +10,7 @@ import { Body, Heading } from "@/components/Heading";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { Screen } from "@/components/Screen";
 import { useColors } from "@/hooks/useColors";
+import { useLeaderboardConsent } from "@/lib/leaderboardConsent";
 import {
   useCreateTribe,
   useJoinTribe,
@@ -37,6 +38,7 @@ export default function Onboarding() {
   const colors = useColors();
   const router = useRouter();
   const qc = useQueryClient();
+  const { requestLeaderboardConsent } = useLeaderboardConsent();
 
   const { data: me, isLoading: meLoading } = useGetMe();
   const { data: games, isLoading: gamesLoading } = useListGames();
@@ -159,7 +161,14 @@ export default function Onboarding() {
         {
           text: "Yes",
           style: "destructive",
-          onPress: () => {
+          onPress: async () => {
+            if (!me) {
+              Alert.alert("Could not verify your account", "Your picks were not submitted.");
+              return;
+            }
+            const consented = await requestLeaderboardConsent(String(me.id));
+            if (!consented) return;
+
             savePicks.mutate(
               {
                 gameId,

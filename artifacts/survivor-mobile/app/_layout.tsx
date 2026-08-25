@@ -26,6 +26,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { NotificationTapHandler } from "@/components/NotificationTapHandler";
 import { configureApi } from "@/lib/api";
+import { LeaderboardConsentProvider } from "@/lib/leaderboardConsent";
 import { configureNotificationHandler } from "@/lib/notifications";
 import { LocalReviewAuthProvider } from "@/lib/localReviewAuth";
 
@@ -95,14 +96,16 @@ export default function RootLayout() {
           <ClerkLoaded>
             <QueryClientProvider client={queryClient}>
               <LocalReviewAuthProvider>
-                <AuthBridge>
-                  <GestureHandlerRootView style={{ flex: 1 }}>
-                    <KeyboardProvider>
-                      <NotificationTapHandler />
-                      <RootLayoutNav />
-                    </KeyboardProvider>
-                  </GestureHandlerRootView>
-                </AuthBridge>
+                <LeaderboardConsentProvider>
+                  <AuthBridge>
+                    <GestureHandlerRootView style={{ flex: 1 }}>
+                      <KeyboardProvider>
+                        <NotificationTapHandler />
+                        <RootLayoutNav />
+                      </KeyboardProvider>
+                    </GestureHandlerRootView>
+                  </AuthBridge>
+                </LeaderboardConsentProvider>
               </LocalReviewAuthProvider>
             </QueryClientProvider>
           </ClerkLoaded>

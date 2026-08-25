@@ -9,9 +9,11 @@ import { Body, Heading } from "@/components/Heading";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { Screen } from "@/components/Screen";
 import { useColors } from "@/hooks/useColors";
+import { useLeaderboardConsent } from "@/lib/leaderboardConsent";
 import { tribeTextColor } from "@/lib/tribeColor";
 import {
   useGetCorrectAnswers,
+  useGetMe,
   useGetMyAnswers,
   useListContestants,
   useListQuestions,
@@ -32,6 +34,7 @@ export default function EpisodeScreen() {
   const colors = useColors();
   const router = useRouter();
   const qc = useQueryClient();
+  const { requestLeaderboardConsent } = useLeaderboardConsent();
   const params = useLocalSearchParams<{
     id: string;
     gameId?: string;
@@ -61,6 +64,7 @@ export default function EpisodeScreen() {
   const { data: myAnswers, isLoading: aLoading } = useGetMyAnswers(weekId, {
     query: { enabled: !!weekId, queryKey: getGetMyAnswersQueryKey(weekId) },
   });
+  const { data: me, isLoading: meLoading } = useGetMe();
   const { data: correctAnswers } = useGetCorrectAnswers(weekId, {
     query: { enabled: !!weekId && isLocked, queryKey: getGetCorrectAnswersQueryKey(weekId) },
   });
@@ -132,13 +136,13 @@ export default function EpisodeScreen() {
     return map;
   }, [correctAnswers]);
 
-  if (qLoading || aLoading) return <LoadingScreen />;
+  if (qLoading || aLoading || meLoading) return <LoadingScreen />;
 
   const sortedQuestions = (questions ?? []).slice().sort((a, b) => a.id - b.id);
   const totalQuestions = sortedQuestions.length;
   const answeredCount = sortedQuestions.filter((q) => draft[q.id]).length;
 
-  function handleSave() {
+  async function handleSave() {
     const answers: PlayerAnswerInput[] = Object.entries(draft)
       .filter(([, answerId]) => !!answerId)
       .map(([qid, answerId]) => {
@@ -153,6 +157,13 @@ export default function EpisodeScreen() {
       Alert.alert("Nothing to save", "Pick at least one answer first.");
       return;
     }
+    if (!me) {
+      Alert.alert("Could not verify your account", "Your picks were not submitted.");
+      return;
+    }
+    const consented = await requestLeaderboardConsent(String(me.id));
+    if (!consented) return;
+
     save.mutate(
       { weekId, data: { answers } },
       {

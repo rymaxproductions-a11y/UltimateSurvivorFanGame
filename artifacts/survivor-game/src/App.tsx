@@ -16,6 +16,7 @@ const AdminUsers = lazy(() => import("@/pages/admin-users"));
 const Leaderboard = lazy(() => import("@/pages/leaderboard"));
 const Chat = lazy(() => import("@/pages/chat"));
 const Contestants = lazy(() => import("@/pages/contestants"));
+const PrivacyPolicy = lazy(() => import("@/pages/privacy-policy"));
 
 const clerkPubKey = publishableKeyFromHost(
   window.location.hostname,
@@ -189,6 +190,7 @@ function RouterContent() {
         <Route path="/" component={HomeRedirect} />
         <Route path="/sign-in/*?" component={SignInPage} />
         <Route path="/sign-up/*?" component={SignUpPage} />
+        <Route path="/privacy" component={PrivacyPolicy} />
         <Route path="/onboarding" component={Onboarding} />
         <Route path="/dashboard" component={Dashboard} />
         <Route path="/admin" component={Admin} />
