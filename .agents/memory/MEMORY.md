@@ -4,3 +4,4 @@
 - [Manual EAS publish](eas-manual-publish.md) — eas-cli builds need Clerk env vars in the EAS production environment and ascAppId in eas.json, or the app crashes on device.
 - [Apple review sign-in](apple-review-sign-in.md) — iOS Expo Go must submit the exact review email; autofill or a mismatch falls through to Clerk.
 - [Cross-platform consent prompts](cross-platform-consent-prompts.md) — use an in-app modal for multi-step consent; nested React Native alerts are unreliable on web.
+- [Production database cleanup](production-db-cleanup.md) — agent SQL access to production is read-only; destructive launch resets need a supported admin or database-pane path.
