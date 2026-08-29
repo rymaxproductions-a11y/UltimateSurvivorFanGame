@@ -10,4 +10,5 @@ export interface CorrectAnswerInput {
   questionId: number;
   contestantIds?: number[];
   showTribeIds?: number[];
+  booleanAnswer?: boolean;
 }

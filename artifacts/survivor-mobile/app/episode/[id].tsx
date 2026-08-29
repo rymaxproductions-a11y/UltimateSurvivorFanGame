@@ -70,17 +70,17 @@ export default function EpisodeScreen() {
   });
   const save = useSaveMyAnswers();
 
-  const [draft, setDraft] = useState<Record<number, number>>({});
+  const [draft, setDraft] = useState<Record<number, number | boolean>>({});
   const [pickerForQuestion, setPickerForQuestion] = useState<number | null>(null);
   const hasSavedAnswers = (myAnswers?.length ?? 0) > 0;
-  const canEdit = isOpen && !isLocked && !hasSavedAnswers;
+  const canEdit = isOpen && !isLocked;
 
   useEffect(() => {
     if (myAnswers) {
-      const next: Record<number, number> = {};
+      const next: Record<number, number | boolean> = {};
       for (const a of myAnswers) {
-        const id = a.contestantId ?? a.showTribeId;
-        if (id != null) next[a.questionId] = id;
+        const value = a.booleanAnswer ?? a.contestantId ?? a.showTribeId;
+        if (value != null) next[a.questionId] = value;
       }
       setDraft(next);
     }
@@ -124,10 +124,10 @@ export default function EpisodeScreen() {
     return map;
   }, [correctAnswers]);
   // Track the selected answer ids per question for correctness comparison.
-  const correctIdsById = useMemo(() => {
-    const map = new Map<number, number[]>();
+  const correctValuesById = useMemo(() => {
+    const map = new Map<number, (number | boolean)[]>();
     for (const a of correctAnswers ?? []) {
-      const id = a.contestantId ?? a.showTribeId;
+      const id = a.booleanAnswer ?? a.contestantId ?? a.showTribeId;
       if (id == null) continue;
       const list = map.get(a.questionId) ?? [];
       list.push(id);
@@ -140,18 +140,21 @@ export default function EpisodeScreen() {
 
   const sortedQuestions = (questions ?? []).slice().sort((a, b) => a.id - b.id);
   const totalQuestions = sortedQuestions.length;
-  const answeredCount = sortedQuestions.filter((q) => draft[q.id]).length;
+  const answeredCount = sortedQuestions.filter((q) => draft[q.id] !== undefined).length;
 
   async function handleSave() {
     const answers: PlayerAnswerInput[] = Object.entries(draft)
-      .filter(([, answerId]) => !!answerId)
+      .filter(([, answerId]) => answerId !== undefined)
       .map(([qid, answerId]) => {
         const questionId = Number(qid);
         const q = (questions ?? []).find((x) => x.id === questionId);
-        if (q?.answerType === "tribe") {
-          return { questionId, showTribeId: answerId };
+        if (q?.answerType === "boolean") {
+          return { questionId, booleanAnswer: answerId as boolean };
         }
-        return { questionId, contestantId: answerId };
+        if (q?.answerType === "tribe") {
+          return { questionId, showTribeId: answerId as number };
+        }
+        return { questionId, contestantId: answerId as number };
       });
     if (answers.length === 0) {
       Alert.alert("Nothing to save", "Pick at least one answer first.");
@@ -169,7 +172,7 @@ export default function EpisodeScreen() {
       {
         onSuccess: () => {
           qc.invalidateQueries();
-          Alert.alert("Saved", "Your picks for this episode are locked in.");
+          Alert.alert("Saved", "You can update these answers until the admin locks the episode.");
         },
         onError: () => Alert.alert("Could not save", "Please try again."),
       },
@@ -184,15 +187,11 @@ export default function EpisodeScreen() {
       <Heading style={{ marginTop: 4 }}>Episode Questions</Heading>
       {canEdit ? (
         <Body muted style={{ marginTop: 8 }}>
-          Tap a question to pick a contestant. {answeredCount}/{totalQuestions} answered.
+          Choose an answer for each question. You can update answers until the episode locks. {answeredCount}/{totalQuestions} answered.
         </Body>
       ) : isLocked ? (
         <Body muted style={{ marginTop: 8 }}>
           This episode has been scored. Green = correct.
-        </Body>
-      ) : hasSavedAnswers ? (
-        <Body muted style={{ marginTop: 8 }}>
-          Your picks are locked in. You'll see your score once the episode is scored.
         </Body>
       ) : (
         <Body muted style={{ marginTop: 8 }}>
@@ -222,20 +221,22 @@ export default function EpisodeScreen() {
         ) : (
           sortedQuestions.map((q) => {
             const isTribe = q.answerType === "tribe";
+            const isBoolean = q.answerType === "boolean";
             const myPickId = draft[q.id];
             const myPickContestant =
-              !isTribe && myPickId ? contestantsById.get(myPickId) : null;
+              !isTribe && !isBoolean && typeof myPickId === "number" ? contestantsById.get(myPickId) : null;
             const myPickTribe =
-              isTribe && myPickId ? tribesById.get(myPickId) : null;
+              isTribe && typeof myPickId === "number" ? tribesById.get(myPickId) : null;
             const savedAnswer = myAnswerByQuestion.get(q.id);
             // Prefer the server-provided display name when available.
             const myPickName =
+              (isBoolean && typeof myPickId === "boolean" ? myPickId ? "True" : "False" : null) ??
               savedAnswer?.answerName ??
               myPickContestant?.name ??
               myPickTribe?.name ??
               null;
             const correctNames = correctById.get(q.id) ?? [];
-            const correctIds = correctIdsById.get(q.id) ?? [];
+            const correctIds = correctValuesById.get(q.id) ?? [];
             const isCorrect = isLocked && myPickId != null && correctIds.includes(myPickId);
             const isWrong = isLocked && myPickId != null && correctIds.length > 0 && !correctIds.includes(myPickId);
 
@@ -293,7 +294,35 @@ export default function EpisodeScreen() {
                   </View>
                 </View>
 
-                <Pressable
+                {isBoolean ? (
+                  <View style={{ flexDirection: "row", gap: 10 }}>
+                    {[true, false].map((value) => {
+                      const selected = myPickId === value;
+                      return (
+                        <Pressable
+                          key={String(value)}
+                          disabled={!canEdit}
+                          onPress={() => setDraft((d) => ({ ...d, [q.id]: value }))}
+                          style={{
+                            flex: 1,
+                            alignItems: "center",
+                            padding: 12,
+                            borderWidth: 2,
+                            borderColor: selected ? colors.primary : colors.border,
+                            borderRadius: colors.radius,
+                            backgroundColor: selected ? colors.accent : colors.background,
+                            opacity: !canEdit ? 0.7 : 1,
+                          }}
+                        >
+                          <Body style={{ fontFamily: "Oswald_700Bold", fontSize: 16 }}>
+                            {value ? "True" : "False"}
+                          </Body>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                ) : (
+                  <Pressable
                   disabled={!canEdit}
                   onPress={() => setPickerForQuestion(q.id)}
                   style={{
@@ -307,7 +336,7 @@ export default function EpisodeScreen() {
                     backgroundColor: colors.background,
                     opacity: !canEdit ? 0.7 : 1,
                   }}
-                >
+                  >
                   {isTribe ? (
                     (myPickTribe?.color ?? savedAnswer?.showTribeColor) ? (
                       <View
@@ -346,7 +375,8 @@ export default function EpisodeScreen() {
                       Change
                     </Body>
                   ) : null}
-                </Pressable>
+                  </Pressable>
+                )}
 
                 {isLocked && correctNames.length > 0 && (
                   <View
@@ -401,7 +431,7 @@ export default function EpisodeScreen() {
       {canEdit && sortedQuestions.length > 0 && (
         <View style={{ marginTop: 20 }}>
           <Button
-            label="Lock in my picks — you cannot change this later"
+            label={hasSavedAnswers ? "Update my answers" : "Save my answers"}
             loading={save.isPending}
             onPress={handleSave}
             fullWidth
@@ -418,7 +448,11 @@ export default function EpisodeScreen() {
         }
         contestants={sortedContestants}
         tribes={sortedTribes}
-        selectedId={pickerForQuestion ? draft[pickerForQuestion] ?? null : null}
+        selectedId={
+          pickerForQuestion && typeof draft[pickerForQuestion] === "number"
+            ? draft[pickerForQuestion] as number
+            : null
+        }
         onClose={() => setPickerForQuestion(null)}
         onSelect={(id) => {
           if (pickerForQuestion != null) {

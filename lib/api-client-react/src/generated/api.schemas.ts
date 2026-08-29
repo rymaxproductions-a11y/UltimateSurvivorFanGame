@@ -323,7 +323,7 @@ export interface Choice {
 }
 
 /**
- * Which answer bank this question uses — contestants (cast) or show tribes.
+ * Which answer input this question uses — contestants, show tribes, or true/false.
  */
 export type QuestionWithChoicesAnswerType =
   (typeof QuestionWithChoicesAnswerType)[keyof typeof QuestionWithChoicesAnswerType];
@@ -331,6 +331,7 @@ export type QuestionWithChoicesAnswerType =
 export const QuestionWithChoicesAnswerType = {
   cast: "cast",
   tribe: "tribe",
+  boolean: "boolean",
 } as const;
 
 export interface QuestionWithChoices {
@@ -338,7 +339,7 @@ export interface QuestionWithChoices {
   weekId: number;
   text: string;
   pointValue: number;
-  /** Which answer bank this question uses — contestants (cast) or show tribes. */
+  /** Which answer input this question uses — contestants, show tribes, or true/false. */
   answerType: QuestionWithChoicesAnswerType;
 }
 
@@ -348,6 +349,7 @@ export type CreateQuestionBodyAnswerType =
 export const CreateQuestionBodyAnswerType = {
   cast: "cast",
   tribe: "tribe",
+  boolean: "boolean",
 } as const;
 
 export interface CreateQuestionBody {
@@ -363,6 +365,7 @@ export type UpdateQuestionBodyAnswerType =
 export const UpdateQuestionBodyAnswerType = {
   cast: "cast",
   tribe: "tribe",
+  boolean: "boolean",
 } as const;
 
 export interface UpdateQuestionBody {
@@ -388,7 +391,9 @@ export interface CorrectAnswer {
   showTribeName: string | null;
   /** @nullable */
   showTribeColor: string | null;
-  /** Display name of the correct answer (contestant or show tribe). */
+  /** @nullable */
+  booleanAnswer?: boolean | null;
+  /** Display name of the correct answer (contestant, show tribe, True, or False). */
   answerName: string;
   questionText: string;
   pointValue: number;
@@ -398,6 +403,7 @@ export interface CorrectAnswerInput {
   questionId: number;
   contestantIds?: number[];
   showTribeIds?: number[];
+  booleanAnswer?: boolean;
 }
 
 export interface SubmitCorrectAnswersBody {
@@ -418,7 +424,9 @@ export interface PlayerAnswer {
   showTribeName: string | null;
   /** @nullable */
   showTribeColor: string | null;
-  /** Display name of the chosen answer (contestant or show tribe). */
+  /** @nullable */
+  booleanAnswer: boolean | null;
+  /** Display name of the chosen answer (contestant, show tribe, True, or False). */
   answerName: string;
   /** @nullable */
   isCorrect: boolean | null;
@@ -428,6 +436,7 @@ export interface PlayerAnswerInput {
   questionId: number;
   contestantId?: number;
   showTribeId?: number;
+  booleanAnswer?: boolean;
 }
 
 export interface SaveAnswersBody {

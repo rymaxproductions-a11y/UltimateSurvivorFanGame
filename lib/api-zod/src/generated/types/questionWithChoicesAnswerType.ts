@@ -7,7 +7,7 @@
  */
 
 /**
- * Which answer bank this question uses — contestants (cast) or show tribes.
+ * Which answer input this question uses — contestants, show tribes, or true/false.
  */
 export type QuestionWithChoicesAnswerType =
   (typeof QuestionWithChoicesAnswerType)[keyof typeof QuestionWithChoicesAnswerType];
@@ -15,4 +15,5 @@ export type QuestionWithChoicesAnswerType =
 export const QuestionWithChoicesAnswerType = {
   cast: "cast",
   tribe: "tribe",
+  boolean: "boolean",
 } as const;

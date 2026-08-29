@@ -1,4 +1,4 @@
-import { pgTable, serial, timestamp, integer, boolean, index } from "drizzle-orm/pg-core";
+import { pgTable, serial, timestamp, integer, boolean, index, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./users";
@@ -13,6 +13,7 @@ export const correctAnswersTable = pgTable("correct_answers", {
   // Exactly one of contestantId / showTribeId is set, depending on the question's answerType.
   contestantId: integer("contestant_id").references(() => contestantsTable.id, { onDelete: "cascade" }),
   showTribeId: integer("show_tribe_id").references(() => showTribesTable.id, { onDelete: "cascade" }),
+  booleanAnswer: boolean("boolean_answer"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -25,6 +26,7 @@ export const playerAnswersTable = pgTable(
     // Exactly one of contestantId / showTribeId is set, depending on the question's answerType.
     contestantId: integer("contestant_id").references(() => contestantsTable.id, { onDelete: "cascade" }),
     showTribeId: integer("show_tribe_id").references(() => showTribesTable.id, { onDelete: "cascade" }),
+    booleanAnswer: boolean("boolean_answer"),
     isCorrect: boolean("is_correct"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
@@ -32,6 +34,7 @@ export const playerAnswersTable = pgTable(
   (t) => [
     index("player_answers_user_id_idx").on(t.userId),
     index("player_answers_question_id_idx").on(t.questionId),
+    uniqueIndex("player_answers_user_question_unique").on(t.userId, t.questionId),
   ],
 );
 

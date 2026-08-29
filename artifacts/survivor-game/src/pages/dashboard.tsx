@@ -52,18 +52,22 @@ function EpisodeTab({
   });
   const saveAnswers = useSaveMyAnswers();
 
-  // selections: keyed by questionId -> selected option id (contestant id or show tribe id)
-  const [selections, setSelections] = useState<Record<number, number>>({});
-  const lockedAnswers = !!myAnswers && myAnswers.length > 0;
+  // selections: keyed by questionId -> selected option id or boolean answer
+  const [selections, setSelections] = useState<Record<number, number | boolean>>({});
 
-  function getAnswerForQuestion(questionId: number, answerType: string): number | undefined {
+  function getAnswerForQuestion(questionId: number, answerType: string): number | boolean | undefined {
     const saved = myAnswers?.find((a) => a.questionId === questionId);
-    const savedId = answerType === "tribe" ? saved?.showTribeId : saved?.contestantId;
-    return selections[questionId] ?? savedId ?? undefined;
+    const savedValue =
+      answerType === "boolean"
+        ? saved?.booleanAnswer
+        : answerType === "tribe"
+          ? saved?.showTribeId
+          : saved?.contestantId;
+    return selections[questionId] ?? savedValue ?? undefined;
   }
 
-  function handleSelect(questionId: number, optionId: number) {
-    if (!isOpen || isLocked || lockedAnswers) return;
+  function handleSelect(questionId: number, optionId: number | boolean) {
+    if (!isOpen || isLocked) return;
     setSelections((prev) => ({ ...prev, [questionId]: optionId }));
   }
 
@@ -71,6 +75,9 @@ function EpisodeTab({
     const answersToSave = Object.entries(selections).map(([qId, optionId]) => {
       const q = questions?.find((x) => x.id === Number(qId));
       const questionId = Number(qId);
+      if (q?.answerType === "boolean") {
+        return { questionId, booleanAnswer: optionId as boolean };
+      }
       if (q?.answerType === "tribe") {
         return { questionId, showTribeId: Number(optionId) };
       }
@@ -86,7 +93,7 @@ function EpisodeTab({
         onSuccess: () => {
           qc.invalidateQueries({ queryKey: getGetMyAnswersQueryKey(episodeId) });
           setSelections({});
-          toast({ title: "Answers locked in!" });
+          toast({ title: "Answers saved. You can update them until the episode locks." });
         },
         onError: () => toast({ title: "Failed to save answers", variant: "destructive" }),
       }
@@ -115,6 +122,7 @@ function EpisodeTab({
         const currentSelection = getAnswerForQuestion(q.id, q.answerType);
         const isCorrect = isLocked && savedAnswer?.isCorrect;
         const isWrong = isLocked && savedAnswer && !savedAnswer.isCorrect;
+        const isBoolean = q.answerType === "boolean";
         const isTribe = q.answerType === "tribe";
         const options: { id: number; name: string; color?: string | null }[] = isTribe
           ? (showTribes ?? []).map((t) => ({ id: t.id, name: t.name, color: t.color }))
@@ -139,18 +147,39 @@ function EpisodeTab({
                 {q.pointValue} pt{q.pointValue !== 1 ? "s" : ""}
               </span>
             </div>
-            <select
-              data-testid={`select-answer-${q.id}`}
-              value={currentSelection ?? ""}
-              onChange={(e) => handleSelect(q.id, Number(e.target.value))}
-              disabled={!isOpen || isLocked || lockedAnswers}
-              className="w-full border border-border rounded-lg px-3 py-2 bg-background text-foreground disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              <option value="">{isTribe ? "Select a tribe..." : "Select a contestant..."}</option>
-              {options.map((o) => (
-                <option key={o.id} value={o.id}>{o.name}</option>
-              ))}
-            </select>
+            {isBoolean ? (
+              <div className="grid grid-cols-2 gap-2">
+                {[true, false].map((value) => (
+                  <button
+                    key={String(value)}
+                    type="button"
+                    data-testid={`button-answer-${q.id}-${value}`}
+                    onClick={() => handleSelect(q.id, value)}
+                    disabled={!isOpen || isLocked}
+                    className={`rounded-lg border px-3 py-2 font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
+                      currentSelection === value
+                        ? "border-primary bg-primary/10 text-foreground"
+                        : "border-border bg-background hover:bg-muted"
+                    }`}
+                  >
+                    {value ? "True" : "False"}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <select
+                data-testid={`select-answer-${q.id}`}
+                value={typeof currentSelection === "number" ? currentSelection : ""}
+                onChange={(e) => handleSelect(q.id, Number(e.target.value))}
+                disabled={!isOpen || isLocked}
+                className="w-full border border-border rounded-lg px-3 py-2 bg-background text-foreground disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <option value="">{isTribe ? "Select a tribe..." : "Select a contestant..."}</option>
+                {options.map((o) => (
+                  <option key={o.id} value={o.id}>{o.name}</option>
+                ))}
+              </select>
+            )}
             {selectedTribe?.color && (
               <span
                 data-testid={`chip-tribe-selected-${q.id}`}
@@ -184,19 +213,19 @@ function EpisodeTab({
           </div>
         );
       })}
-      {isOpen && !isLocked && !lockedAnswers && (
+      {isOpen && !isLocked && (
         <button
           data-testid="button-save-answers"
           onClick={handleSave}
           disabled={saveAnswers.isPending}
           className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-colors disabled:opacity-50"
         >
-          {saveAnswers.isPending ? "Saving..." : "Submit Answers — you cannot change this later"}
+          {saveAnswers.isPending ? "Saving..." : myAnswers?.length ? "Update Answers" : "Save Answers"}
         </button>
       )}
-      {lockedAnswers && !isLocked && (
+      {!!myAnswers?.length && !isLocked && (
         <div className="text-sm text-muted-foreground text-center">
-          Your answers are locked in and cannot be changed.
+          You can change your answers as often as you want until the admin locks this episode.
         </div>
       )}
     </div>

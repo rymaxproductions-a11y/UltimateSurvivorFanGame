@@ -12,4 +12,5 @@ export type UpdateQuestionBodyAnswerType =
 export const UpdateQuestionBodyAnswerType = {
   cast: "cast",
   tribe: "tribe",
+  boolean: "boolean",
 } as const;

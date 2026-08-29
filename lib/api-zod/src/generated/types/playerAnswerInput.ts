@@ -10,4 +10,5 @@ export interface PlayerAnswerInput {
   questionId: number;
   contestantId?: number;
   showTribeId?: number;
+  booleanAnswer?: boolean;
 }

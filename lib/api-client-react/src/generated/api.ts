@@ -4392,7 +4392,7 @@ export function useGetMyAnswers<
 }
 
 /**
- * @summary Save current player's answers for a week
+ * @summary Save or update current player's answers until the week is locked
  */
 export const getSaveMyAnswersUrl = (weekId: number) => {
   return `/api/weeks/${weekId}/my-answers`;
@@ -4456,7 +4456,7 @@ export type SaveMyAnswersMutationBody = BodyType<SaveAnswersBody>;
 export type SaveMyAnswersMutationError = ErrorType<unknown>;
 
 /**
- * @summary Save current player's answers for a week
+ * @summary Save or update current player's answers until the week is locked
  */
 export const useSaveMyAnswers = <
   TError = ErrorType<unknown>,

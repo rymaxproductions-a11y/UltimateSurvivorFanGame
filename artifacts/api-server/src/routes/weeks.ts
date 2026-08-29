@@ -113,7 +113,7 @@ router.patch("/weeks/:weekId", requireAuth, requireAdmin, async (req: any, res: 
   res.json(serialize(week));
 });
 
-router.post("/weeks/:weekId/open", requireAuth, async (req: any, res: any): Promise<void> => {
+router.post("/weeks/:weekId/open", requireAuth, requireAdmin, async (req: any, res: any): Promise<void> => {
   const params = GetWeekParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -155,7 +155,7 @@ router.post("/weeks/:weekId/unlock", requireAuth, requireAdmin, async (req: any,
   res.json(serialize(week));
 });
 
-router.post("/weeks/:weekId/close", requireAuth, async (req: any, res: any): Promise<void> => {
+router.post("/weeks/:weekId/close", requireAuth, requireAdmin, async (req: any, res: any): Promise<void> => {
   const params = GetWeekParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });

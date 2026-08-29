@@ -8,7 +8,7 @@ export const questionsTable = pgTable("questions", {
   weekId: integer("week_id").notNull().references(() => weeksTable.id, { onDelete: "cascade" }),
   text: text("text").notNull(),
   pointValue: integer("point_value").notNull().default(1),
-  // Which bank the answers come from: "cast" (contestants) or "tribe" (show tribes).
+  // Which answer input the question uses: "cast", "tribe", or "boolean".
   answerType: text("answer_type").notNull().default("cast"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

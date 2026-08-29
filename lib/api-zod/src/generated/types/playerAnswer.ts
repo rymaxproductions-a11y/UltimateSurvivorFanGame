@@ -20,7 +20,9 @@ export interface PlayerAnswer {
   showTribeName: string | null;
   /** @nullable */
   showTribeColor: string | null;
-  /** Display name of the chosen answer (contestant or show tribe). */
+  /** @nullable */
+  booleanAnswer: boolean | null;
+  /** Display name of the chosen answer (contestant, show tribe, True, or False). */
   answerName: string;
   /** @nullable */
   isCorrect: boolean | null;

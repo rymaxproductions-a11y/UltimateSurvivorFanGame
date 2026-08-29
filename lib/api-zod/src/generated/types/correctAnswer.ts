@@ -19,7 +19,9 @@ export interface CorrectAnswer {
   showTribeName: string | null;
   /** @nullable */
   showTribeColor: string | null;
-  /** Display name of the correct answer (contestant or show tribe). */
+  /** @nullable */
+  booleanAnswer?: boolean | null;
+  /** Display name of the correct answer (contestant, show tribe, True, or False). */
   answerName: string;
   questionText: string;
   pointValue: number;

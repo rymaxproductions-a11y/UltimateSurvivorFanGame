@@ -1059,7 +1059,7 @@ paths:
     post:
       operationId: saveMyAnswers
       tags: [answers]
-      summary: Save current player's answers for a week
+      summary: Save or update current player's answers until the week is locked
       parameters:
         - name: weekId
           in: path
@@ -1864,8 +1864,8 @@ components:
           type: integer
         answerType:
           type: string
-          enum: [cast, tribe]
-          description: Which answer bank this question uses — contestants (cast) or show tribes.
+          enum: [cast, tribe, boolean]
+          description: Which answer input this question uses — contestants, show tribes, or true/false.
       required:
         - id
         - weekId
@@ -1882,7 +1882,7 @@ components:
           type: integer
         answerType:
           type: string
-          enum: [cast, tribe]
+          enum: [cast, tribe, boolean]
           default: cast
         choices:
           type: array
@@ -1901,7 +1901,7 @@ components:
           type: integer
         answerType:
           type: string
-          enum: [cast, tribe]
+          enum: [cast, tribe, boolean]
 
     CreateChoiceBody:
       type: object
@@ -1928,9 +1928,11 @@ components:
           type: ["string", "null"]
         showTribeColor:
           type: ["string", "null"]
+        booleanAnswer:
+          type: ["boolean", "null"]
         answerName:
           type: string
-          description: Display name of the correct answer (contestant or show tribe).
+          description: Display name of the correct answer (contestant, show tribe, True, or False).
         questionText:
           type: string
         pointValue:
@@ -1970,6 +1972,8 @@ components:
           type: array
           items:
             type: integer
+        booleanAnswer:
+          type: boolean
       required:
         - questionId
 
@@ -1992,9 +1996,11 @@ components:
           type: ["string", "null"]
         showTribeColor:
           type: ["string", "null"]
+        booleanAnswer:
+          type: ["boolean", "null"]
         answerName:
           type: string
-          description: Display name of the chosen answer (contestant or show tribe).
+          description: Display name of the chosen answer (contestant, show tribe, True, or False).
         isCorrect:
           type: ["boolean", "null"]
       required:
@@ -2006,6 +2012,7 @@ components:
         - showTribeId
         - showTribeName
         - showTribeColor
+        - booleanAnswer
         - answerName
         - isCorrect
 
@@ -2028,6 +2035,8 @@ components:
           type: integer
         showTribeId:
           type: integer
+        booleanAnswer:
+          type: boolean
       required:
         - questionId
 

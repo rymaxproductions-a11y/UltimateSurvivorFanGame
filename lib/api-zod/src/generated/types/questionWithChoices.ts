@@ -12,6 +12,6 @@ export interface QuestionWithChoices {
   weekId: number;
   text: string;
   pointValue: number;
-  /** Which answer bank this question uses — contestants (cast) or show tribes. */
+  /** Which answer input this question uses — contestants, show tribes, or true/false. */
   answerType: QuestionWithChoicesAnswerType;
 }

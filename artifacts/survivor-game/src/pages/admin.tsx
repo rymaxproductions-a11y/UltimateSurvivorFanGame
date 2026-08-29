@@ -819,7 +819,7 @@ function QuestionCard({ question, weekId, weekLocked }: { question: any; weekId:
           <div className="flex items-center gap-2 mt-0.5">
             <span className="text-xs text-primary font-bold">{question.pointValue} pt{question.pointValue !== 1 ? "s" : ""}</span>
             <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-              {question.answerType === "tribe" ? "Tribes" : "Cast"}
+              {question.answerType === "boolean" ? "True / False" : question.answerType === "tribe" ? "Tribes" : "Cast"}
             </span>
           </div>
         </div>
@@ -916,8 +916,9 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
   const [expanded, setExpanded] = useState(false);
   const [questionText, setQuestionText] = useState("");
   const [pointValue, setPointValue] = useState(1);
-  const [answerType, setAnswerType] = useState<"cast" | "tribe">("cast");
+  const [answerType, setAnswerType] = useState<"cast" | "tribe" | "boolean">("cast");
   const [correctAnswers, setCorrectAnswers] = useState<Record<number, number[]>>({});
+  const [booleanCorrectAnswers, setBooleanCorrectAnswers] = useState<Record<number, boolean>>({});
 
   const { data: showTribes } = useListShowTribes(gameId, {
     query: { queryKey: getListShowTribesQueryKey(gameId) },
@@ -1031,13 +1032,23 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
     }
     const entries = (questions ?? [])
       .map((q) => {
+        if (q.answerType === "boolean") {
+          const existing = (existingCorrect ?? []).find((ca: any) => ca.questionId === q.id)?.booleanAnswer;
+          const selected = Object.prototype.hasOwnProperty.call(booleanCorrectAnswers, q.id)
+            ? booleanCorrectAnswers[q.id]
+            : existing;
+          return typeof selected === "boolean"
+            ? { questionId: q.id, booleanAnswer: selected }
+            : null;
+        }
         const ids = Array.from(new Set(correctAnswers[q.id] ?? existingByQ.get(q.id) ?? []));
         if (q.answerType === "tribe") {
           return { questionId: q.id, showTribeIds: ids };
         }
         return { questionId: q.id, contestantIds: ids };
       })
-      .filter((e) => ("showTribeIds" in e ? (e.showTribeIds?.length ?? 0) > 0 : (e.contestantIds?.length ?? 0) > 0));
+      .filter((e): e is NonNullable<typeof e> => e !== null)
+      .filter((e) => "booleanAnswer" in e || ("showTribeIds" in e ? (e.showTribeIds?.length ?? 0) > 0 : (e.contestantIds?.length ?? 0) > 0));
     if (entries.length === 0) {
       toast({ title: "Select at least one correct answer", variant: "destructive" });
       return;
@@ -1160,12 +1171,13 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
                 <select
                   data-testid={`select-answer-type-week-${week.weekNumber}`}
                   value={answerType}
-                  onChange={(e) => setAnswerType(e.target.value as "cast" | "tribe")}
+                  onChange={(e) => setAnswerType(e.target.value as "cast" | "tribe" | "boolean")}
                   className="border border-border rounded-lg px-3 py-2 bg-card text-foreground text-sm"
                   title="Which answer bank this question uses"
                 >
                   <option value="cast">Cast</option>
                   <option value="tribe">Tribes</option>
+                  <option value="boolean">True / False</option>
                 </select>
               </div>
               <input
@@ -1206,6 +1218,7 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
               </p>
               <div className="space-y-4 mb-4">
                 {questions.map((q) => {
+                  const isBoolean = q.answerType === "boolean";
                   const isTribe = q.answerType === "tribe";
                   const existingForQ = (existingCorrect ?? [])
                     .filter((ca: any) => ca.questionId === q.id)
@@ -1229,14 +1242,42 @@ function WeekSection({ gameId, week, contestants }: { gameId: number; week: any;
                         <span className="text-sm font-semibold text-foreground flex-1">
                           {q.text}
                           <span className="ml-2 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-                            {isTribe ? "Tribes" : "Cast"}
+                            {isBoolean ? "True / False" : isTribe ? "Tribes" : "Cast"}
                           </span>
                         </span>
                         <span className="text-xs text-muted-foreground whitespace-nowrap">
-                          {selectedSet.size} selected
+                          {isBoolean ? (
+                            Object.prototype.hasOwnProperty.call(booleanCorrectAnswers, q.id) ||
+                            typeof (existingCorrect ?? []).find((ca: any) => ca.questionId === q.id)?.booleanAnswer === "boolean"
+                              ? "1 selected"
+                              : "0 selected"
+                          ) : `${selectedSet.size} selected`}
                         </span>
                       </div>
-                      {options.length === 0 ? (
+                      {isBoolean ? (
+                        <div className="grid grid-cols-2 gap-2">
+                          {[true, false].map((value) => {
+                            const existing = (existingCorrect ?? []).find((ca: any) => ca.questionId === q.id)?.booleanAnswer;
+                            const current = Object.prototype.hasOwnProperty.call(booleanCorrectAnswers, q.id)
+                              ? booleanCorrectAnswers[q.id]
+                              : existing;
+                            const checked = current === value;
+                            return (
+                              <button
+                                key={String(value)}
+                                type="button"
+                                data-testid={`button-correct-boolean-${q.id}-${value}`}
+                                onClick={() => setBooleanCorrectAnswers((prev) => ({ ...prev, [q.id]: value }))}
+                                className={`px-3 py-2 rounded-lg border text-sm font-semibold transition-colors ${
+                                  checked ? "border-primary bg-primary/10 text-foreground" : "border-border hover:bg-muted"
+                                }`}
+                              >
+                                {value ? "True" : "False"}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : options.length === 0 ? (
                         <p className="text-xs text-muted-foreground">
                           {isTribe ? "No tribes yet — add them in the Tribes section." : "No contestants yet."}
                         </p>

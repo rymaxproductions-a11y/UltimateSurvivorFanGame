@@ -765,9 +765,9 @@ export const ListQuestionsResponseItem = zod.object({
   text: zod.string(),
   pointValue: zod.number(),
   answerType: zod
-    .enum(["cast", "tribe"])
+    .enum(["cast", "tribe", "boolean"])
     .describe(
-      "Which answer bank this question uses — contestants (cast) or show tribes.",
+      "Which answer input this question uses — contestants, show tribes, or true\/false.",
     ),
 });
 export const ListQuestionsResponse = zod.array(ListQuestionsResponseItem);
@@ -785,7 +785,7 @@ export const CreateQuestionBody = zod.object({
   text: zod.string(),
   pointValue: zod.number(),
   answerType: zod
-    .enum(["cast", "tribe"])
+    .enum(["cast", "tribe", "boolean"])
     .default(createQuestionBodyAnswerTypeDefault),
   choices: zod.array(zod.string()).optional(),
 });
@@ -800,7 +800,7 @@ export const UpdateQuestionParams = zod.object({
 export const UpdateQuestionBody = zod.object({
   text: zod.string().optional(),
   pointValue: zod.number().optional(),
-  answerType: zod.enum(["cast", "tribe"]).optional(),
+  answerType: zod.enum(["cast", "tribe", "boolean"]).optional(),
 });
 
 export const UpdateQuestionResponse = zod.object({
@@ -809,9 +809,9 @@ export const UpdateQuestionResponse = zod.object({
   text: zod.string(),
   pointValue: zod.number(),
   answerType: zod
-    .enum(["cast", "tribe"])
+    .enum(["cast", "tribe", "boolean"])
     .describe(
-      "Which answer bank this question uses — contestants (cast) or show tribes.",
+      "Which answer input this question uses — contestants, show tribes, or true\/false.",
     ),
 });
 
@@ -855,9 +855,12 @@ export const GetCorrectAnswersResponseItem = zod.object({
   showTribeId: zod.number().nullable(),
   showTribeName: zod.string().nullable(),
   showTribeColor: zod.string().nullable(),
+  booleanAnswer: zod.boolean().nullish(),
   answerName: zod
     .string()
-    .describe("Display name of the correct answer (contestant or show tribe)."),
+    .describe(
+      "Display name of the correct answer (contestant, show tribe, True, or False).",
+    ),
   questionText: zod.string(),
   pointValue: zod.number(),
 });
@@ -878,6 +881,7 @@ export const SubmitCorrectAnswersBody = zod.object({
       questionId: zod.number(),
       contestantIds: zod.array(zod.number()).optional(),
       showTribeIds: zod.array(zod.number()).optional(),
+      booleanAnswer: zod.boolean().optional(),
     }),
   ),
 });
@@ -909,15 +913,18 @@ export const GetMyAnswersResponseItem = zod.object({
   showTribeId: zod.number().nullable(),
   showTribeName: zod.string().nullable(),
   showTribeColor: zod.string().nullable(),
+  booleanAnswer: zod.boolean().nullable(),
   answerName: zod
     .string()
-    .describe("Display name of the chosen answer (contestant or show tribe)."),
+    .describe(
+      "Display name of the chosen answer (contestant, show tribe, True, or False).",
+    ),
   isCorrect: zod.boolean().nullable(),
 });
 export const GetMyAnswersResponse = zod.array(GetMyAnswersResponseItem);
 
 /**
- * @summary Save current player's answers for a week
+ * @summary Save or update current player's answers until the week is locked
  */
 export const SaveMyAnswersParams = zod.object({
   weekId: zod.coerce.number(),
@@ -929,6 +936,7 @@ export const SaveMyAnswersBody = zod.object({
       questionId: zod.number(),
       contestantId: zod.number().optional(),
       showTribeId: zod.number().optional(),
+      booleanAnswer: zod.boolean().optional(),
     }),
   ),
 });
@@ -942,9 +950,12 @@ export const SaveMyAnswersResponseItem = zod.object({
   showTribeId: zod.number().nullable(),
   showTribeName: zod.string().nullable(),
   showTribeColor: zod.string().nullable(),
+  booleanAnswer: zod.boolean().nullable(),
   answerName: zod
     .string()
-    .describe("Display name of the chosen answer (contestant or show tribe)."),
+    .describe(
+      "Display name of the chosen answer (contestant, show tribe, True, or False).",
+    ),
   isCorrect: zod.boolean().nullable(),
 });
 export const SaveMyAnswersResponse = zod.array(SaveMyAnswersResponseItem);
