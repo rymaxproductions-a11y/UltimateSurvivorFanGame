@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./users";
@@ -8,6 +8,10 @@ export const tribesTable = pgTable("tribes", {
   name: text("name").notNull(),
   code: text("code").notNull().unique(),
   createdByUserId: integer("created_by_user_id").references(() => usersTable.id, { onDelete: "set null" }),
+  // System-managed tribes are filled automatically for players who choose solo play.
+  isSolo: boolean("is_solo").notNull().default(false),
+  // Solo tribes close at the 10-player capacity; named tribes are not affected.
+  isClosed: boolean("is_closed").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

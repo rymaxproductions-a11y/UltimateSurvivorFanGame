@@ -1111,6 +1111,8 @@ export const JoinTribeResponse = zod.object({
   code: zod.string(),
   createdByUserId: zod.number().nullable(),
   memberCount: zod.number(),
+  isSolo: zod.boolean(),
+  isClosed: zod.boolean(),
   createdAt: zod.string(),
 });
 
@@ -1125,6 +1127,8 @@ export const GetMyTribeResponse = zod.object({
       code: zod.string(),
       createdByUserId: zod.number().nullable(),
       memberCount: zod.number(),
+      isSolo: zod.boolean(),
+      isClosed: zod.boolean(),
       createdAt: zod.string(),
     }),
     zod.null(),

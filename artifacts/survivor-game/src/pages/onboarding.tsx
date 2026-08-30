@@ -10,6 +10,7 @@ import {
   useGetMySurvivorPicks,
   useCreateTribe,
   useJoinTribe,
+  useJoinSoloTribe,
   useUpdateMyAvatar,
   getListContestantsQueryKey,
   getGetMeQueryKey,
@@ -20,8 +21,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { AvatarUploader } from "@/components/avatar-uploader";
 import { User } from "lucide-react";
+import { markOnboardingComplete } from "@/components/review-prompt";
 
-type Step = "nickname" | "tribe" | "code-shown" | "avatar" | "picks";
+type Step = "nickname" | "tribe" | "code-shown" | "solo-info" | "avatar" | "picks";
 
 export default function Onboarding() {
   const { user } = useUser();
@@ -47,13 +49,14 @@ export default function Onboarding() {
 
   const createTribe = useCreateTribe();
   const joinTribe = useJoinTribe();
+  const joinSoloTribe = useJoinSoloTribe();
   const savePicks = useSaveSurvivorPicks();
   const updateAvatar = useUpdateMyAvatar();
   const updateProfile = useUpdateMyProfile();
 
   const [step, setStep] = useState<Step | null>(null);
   const [nickname, setNickname] = useState("");
-  const [tribeChoice, setTribeChoice] = useState<"create" | "join" | null>(null);
+  const [tribeChoice, setTribeChoice] = useState<"create" | "join" | "solo" | null>(null);
   const [tribeName, setTribeName] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [createdCode, setCreatedCode] = useState<string | null>(null);
@@ -167,6 +170,20 @@ export default function Onboarding() {
     );
   }
 
+  function handleJoinSoloTribe() {
+    joinSoloTribe.mutate(undefined, {
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: getGetMeQueryKey() });
+        setStep("solo-info");
+      },
+      onError: (err: any) =>
+        toast({
+          title: extractError(err) ?? "Could not join a solo tribe",
+          variant: "destructive",
+        }),
+    });
+  }
+
   function handlePicksSubmit() {
     if (!gameId || !firstPickId || !secondPickId) {
       toast({ title: "Pick a winner and a runner-up", variant: "destructive" });
@@ -184,6 +201,7 @@ export default function Onboarding() {
       {
         onSuccess: () => {
           toast({ title: "Picks saved! Good luck!" });
+          if (user?.id) markOnboardingComplete(user.id);
           qc.invalidateQueries();
           setLocation("/dashboard");
         },
@@ -258,7 +276,7 @@ export default function Onboarding() {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <button
                 data-testid="button-choose-create"
                 onClick={() => setTribeChoice("create")}
@@ -268,7 +286,7 @@ export default function Onboarding() {
                     : "border-border bg-background text-muted-foreground hover:bg-muted"
                 }`}
               >
-                Create Tribe
+                Create a Tribe (Or Solo Player)
               </button>
               <button
                 data-testid="button-choose-join"
@@ -280,6 +298,17 @@ export default function Onboarding() {
                 }`}
               >
                 Join Tribe
+              </button>
+              <button
+                data-testid="button-choose-solo"
+                onClick={() => setTribeChoice("solo")}
+                className={`px-4 py-3 rounded-xl font-semibold border transition-colors ${
+                  tribeChoice === "solo"
+                    ? "border-primary bg-primary/10 text-foreground"
+                    : "border-border bg-background text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                Join A Solo Player Tribe
               </button>
             </div>
 
@@ -334,6 +363,22 @@ export default function Onboarding() {
                 </button>
               </div>
             )}
+
+            {tribeChoice === "solo" && (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Join a system-created tribe and meet other solo players.
+                </p>
+                <button
+                  data-testid="button-join-solo-tribe"
+                  onClick={handleJoinSoloTribe}
+                  disabled={joinSoloTribe.isPending}
+                  className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-colors disabled:opacity-50"
+                >
+                  {joinSoloTribe.isPending ? "Finding your tribe..." : "Join A Solo Player Tribe"}
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -369,6 +414,32 @@ export default function Onboarding() {
             <button
               data-testid="button-continue-to-avatar"
               onClick={() => setStep("avatar")}
+              className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-colors"
+            >
+              Continue
+            </button>
+          </div>
+        )}
+
+        {step === "solo-info" && (
+          <div
+            className="bg-card border border-border rounded-2xl p-8 text-center space-y-5"
+            data-testid="solo-tribe-info-popup"
+          >
+            <div>
+              <h2
+                className="text-xl font-bold text-foreground"
+                style={{ fontFamily: "'Oswald', sans-serif" }}
+              >
+                YOU&apos;RE IN A SOLO TRIBE
+              </h2>
+              <p className="text-sm text-muted-foreground mt-3">
+                Solo tribes consist of 10 players. If you are the first one in your tribe, don&apos;t worry, more will join soon!
+              </p>
+            </div>
+            <button
+              data-testid="button-continue-from-solo-info"
+              onClick={() => setStep(me?.avatarPath ? "picks" : "avatar")}
               className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-colors"
             >
               Continue

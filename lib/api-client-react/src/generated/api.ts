@@ -5026,6 +5026,86 @@ export const useJoinTribe = <
 };
 
 /**
+ * Assigns the player to an open solo tribe, creating one when needed. Solo tribes close at 10 players.
+ * @summary Join the next available system-created solo tribe
+ */
+export const getJoinSoloTribeUrl = () => {
+  return `/api/tribes/join-solo`;
+};
+
+export const joinSoloTribe = async (options?: RequestInit): Promise<Tribe> => {
+  return customFetch<Tribe>(getJoinSoloTribeUrl(), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getJoinSoloTribeMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof joinSoloTribe>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof joinSoloTribe>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["joinSoloTribe"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof joinSoloTribe>>,
+    void
+  > = () => {
+    return joinSoloTribe(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type JoinSoloTribeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof joinSoloTribe>>
+>;
+
+export type JoinSoloTribeMutationError = ErrorType<void>;
+
+/**
+ * @summary Join the next available system-created solo tribe
+ */
+export const useJoinSoloTribe = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof joinSoloTribe>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof joinSoloTribe>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(getJoinSoloTribeMutationOptions(options));
+};
+
+/**
  * @summary Get the current user's tribe (or null if not in one)
  */
 export const getGetMyTribeUrl = () => {

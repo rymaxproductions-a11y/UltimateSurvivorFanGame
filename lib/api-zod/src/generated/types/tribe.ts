@@ -13,5 +13,7 @@ export interface Tribe {
   /** @nullable */
   createdByUserId: number | null;
   memberCount: number;
+  isSolo: boolean;
+  isClosed: boolean;
   createdAt: string;
 }

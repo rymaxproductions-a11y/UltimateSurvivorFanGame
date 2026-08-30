@@ -6,6 +6,7 @@ import { Switch, Route, useLocation, Redirect, Router as WouterRouter } from "wo
 import { QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ReviewPromptGate } from "@/components/review-prompt";
 import { queryClient } from "@/lib/queryClient";
 import NotFound from "@/pages/not-found";
 
@@ -184,23 +185,29 @@ function LandingPage() {
 }
 
 function RouterContent() {
+  const [location] = useLocation();
+  const { user } = useUser();
+
   return (
-    <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">Loading...</div>}>
-      <Switch>
-        <Route path="/" component={HomeRedirect} />
-        <Route path="/sign-in/*?" component={SignInPage} />
-        <Route path="/sign-up/*?" component={SignUpPage} />
-        <Route path="/privacy" component={PrivacyPolicy} />
-        <Route path="/onboarding" component={Onboarding} />
-        <Route path="/dashboard" component={Dashboard} />
-        <Route path="/admin" component={Admin} />
-        <Route path="/admin/users" component={AdminUsers} />
-        <Route path="/leaderboard" component={Leaderboard} />
-        <Route path="/chat" component={Chat} />
-        <Route path="/contestants" component={Contestants} />
-        <Route component={NotFound} />
-      </Switch>
-    </Suspense>
+    <>
+      <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">Loading...</div>}>
+        <Switch>
+          <Route path="/" component={HomeRedirect} />
+          <Route path="/sign-in/*?" component={SignInPage} />
+          <Route path="/sign-up/*?" component={SignUpPage} />
+          <Route path="/privacy" component={PrivacyPolicy} />
+          <Route path="/onboarding" component={Onboarding} />
+          <Route path="/dashboard" component={Dashboard} />
+          <Route path="/admin" component={Admin} />
+          <Route path="/admin/users" component={AdminUsers} />
+          <Route path="/leaderboard" component={Leaderboard} />
+          <Route path="/chat" component={Chat} />
+          <Route path="/contestants" component={Contestants} />
+          <Route component={NotFound} />
+        </Switch>
+      </Suspense>
+      {user?.id && <ReviewPromptGate userId={user.id} route={location} />}
+    </>
   );
 }
 
