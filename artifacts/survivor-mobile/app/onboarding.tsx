@@ -205,7 +205,7 @@ export default function Onboarding() {
         </Body>
 
         <View style={{ marginTop: 24, gap: 12 }}>
-          <Button label="Create a Tribe" onPress={() => setStep("tribe-create")} fullWidth />
+          <Button label="Create A Tribe (Or Solo)" onPress={() => setStep("tribe-create")} fullWidth />
           <Button
             label="Join with Code"
             onPress={() => setStep("tribe-join")}
