@@ -4,6 +4,7 @@ import {
   db,
   usersTable,
   tribesTable,
+  tribeMembershipsTable,
   playerAnswersTable,
   questionsTable,
   weeksTable,
@@ -68,15 +69,33 @@ async function computeRankedLeaderboard(
     .where(eq(gamesTable.id, gameId));
   if (!game) return null;
 
+  const memberUserIds =
+    tribeFilterId === null
+      ? null
+      : Array.from(
+          new Set([
+            ...(
+              await db
+                .select({ userId: tribeMembershipsTable.userId })
+                .from(tribeMembershipsTable)
+                .where(eq(tribeMembershipsTable.tribeId, tribeFilterId))
+            ).map((row) => row.userId),
+            ...(
+              await db
+                .select({ userId: usersTable.id })
+                .from(usersTable)
+                .where(eq(usersTable.tribeId, tribeFilterId))
+            ).map((row) => row.userId),
+          ]),
+        );
+  if (memberUserIds?.length === 0) return [];
+
   const players = await db
     .select()
     .from(usersTable)
     .where(
-      tribeFilterId !== null
-        ? and(
-            eq(usersTable.role, "player"),
-            eq(usersTable.tribeId, tribeFilterId),
-          )
+      memberUserIds
+        ? and(eq(usersTable.role, "player"), inArray(usersTable.id, memberUserIds))
         : eq(usersTable.role, "player"),
     );
   if (players.length === 0) return [];
@@ -200,7 +219,11 @@ async function computeRankedLeaderboard(
       displayName: user.displayName ?? null,
       avatarPath: user.avatarPath ?? null,
       tribeName:
-        user.tribeId != null ? tribeNameById.get(user.tribeId) ?? null : null,
+        tribeFilterId !== null
+          ? tribeNameById.get(tribeFilterId) ?? null
+          : user.tribeId != null
+            ? tribeNameById.get(user.tribeId) ?? null
+            : null,
       totalPoints: totalAnswers + survivorPickPoints,
       weeklyPoints,
       survivorPickPoints,
@@ -242,13 +265,20 @@ router.get(
       res.status(401).json({ error: "Unauthorized" });
       return;
     }
-    if (
-      tribeFilterId !== null &&
-      me.role !== "admin" &&
-      me.tribeId !== tribeFilterId
-    ) {
-      res.status(403).json({ error: "You are not a member of this tribe." });
-      return;
+    if (tribeFilterId !== null && me.role !== "admin") {
+      const [membership] = await db
+        .select({ id: tribeMembershipsTable.id })
+        .from(tribeMembershipsTable)
+        .where(
+          and(
+            eq(tribeMembershipsTable.userId, me.id),
+            eq(tribeMembershipsTable.tribeId, tribeFilterId),
+          ),
+        );
+      if (!membership && me.tribeId !== tribeFilterId) {
+        res.status(403).json({ error: "You are not a member of this tribe." });
+        return;
+      }
     }
 
     const key = cacheKey(gameId, tribeFilterId);

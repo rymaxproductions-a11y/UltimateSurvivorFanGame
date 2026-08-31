@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "hello": "tsx ./src/hello.ts",
+    "backfill-tribe-memberships": "tsx ./src/backfill-tribe-memberships.ts",
     "seed-dev": "tsx ./src/seed-dev.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

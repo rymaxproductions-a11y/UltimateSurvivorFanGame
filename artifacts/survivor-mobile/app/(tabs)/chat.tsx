@@ -46,7 +46,7 @@ export default function ChatTab() {
     };
   }, []);
 
-  const queryKey = getListTribeMessagesQueryKey();
+  const queryKey = [...getListTribeMessagesQueryKey(), me?.tribeId ?? null] as const;
   const { data: messages, isLoading: msgsLoading } = useListTribeMessages(undefined, {
     query: {
       queryKey,

@@ -37,6 +37,7 @@ export function Nav() {
     { label: "Dashboard", href: "/dashboard", testId: "nav-dashboard" },
     { label: "Contestants", href: "/contestants", testId: "nav-contestants" },
     { label: "Leaderboard", href: "/leaderboard", testId: "nav-leaderboard" },
+    { label: "Tribes", href: "/tribes", testId: "nav-tribes" },
     ...(me?.tribeId ? [{ label: "Chat", href: "/chat", testId: "nav-chat" }] : []),
     ...(me?.role === "admin"
       ? [

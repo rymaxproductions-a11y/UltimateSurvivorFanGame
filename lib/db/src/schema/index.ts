@@ -1,6 +1,7 @@
 export * from "./users";
 export * from "./passwordResetTokens";
 export * from "./tribes";
+export * from "./tribeMemberships";
 export * from "./games";
 export * from "./showTribes";
 export * from "./contestants";

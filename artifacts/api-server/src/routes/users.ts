@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
-import { db, usersTable, tribesTable } from "@workspace/db";
+import { db, usersTable, tribesTable, tribeMembershipsTable } from "@workspace/db";
 import { GetMeResponse, UpdateMyProfileBody, UpdateMyProfileResponse, UpdateMyRoleBody, UpdateMyAvatarBody } from "@workspace/api-zod";
 import { serialize } from "../lib/serialize";
 import { getAuthClerkId } from "../lib/localAuth";
@@ -24,6 +24,10 @@ async function withTribe(user: any) {
   if (!user.tribeId) {
     return { ...user, tribeName: null, tribeCode: null };
   }
+  await db
+    .insert(tribeMembershipsTable)
+    .values({ userId: user.id, tribeId: user.tribeId })
+    .onConflictDoNothing();
   const [tribe] = await db.select().from(tribesTable).where(eq(tribesTable.id, user.tribeId));
   return {
     ...user,

@@ -17,7 +17,7 @@ export default function ChatPage() {
   const [draft, setDraft] = useState("");
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  const queryKey = getListTribeMessagesQueryKey();
+  const queryKey = [...getListTribeMessagesQueryKey(), me?.tribeId ?? null] as const;
   const { data: messages, isLoading: msgsLoading } = useListTribeMessages(undefined, {
     query: {
       queryKey,

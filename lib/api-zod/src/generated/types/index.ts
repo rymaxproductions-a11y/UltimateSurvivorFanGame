@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./activeTribeBody";
 export * from "./adminUser";
 export * from "./adminUserAuthProvider";
 export * from "./adminUserRole";
@@ -55,6 +56,7 @@ export * from "./submitCorrectAnswersBody";
 export * from "./submitSurvivorWinnerBody";
 export * from "./survivorPicks";
 export * from "./tribe";
+export * from "./tribeMembership";
 export * from "./updateAdminUserRoleBody";
 export * from "./updateAdminUserRoleBodyRole";
 export * from "./updateContestantBody";

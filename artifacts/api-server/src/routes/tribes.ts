@@ -1,10 +1,20 @@
 import { Router, type IRouter } from "express";
 import { and, asc, eq, sql } from "drizzle-orm";
-import { db, usersTable, tribesTable } from "@workspace/db";
-import { CreateTribeBody, JoinTribeBody, JoinTribeResponse as TribeSchema, GetMyTribeResponse as MyTribeResponse } from "@workspace/api-zod";
+import { db, usersTable, tribesTable, tribeMembershipsTable } from "@workspace/db";
+import {
+  CreateTribeBody,
+  GetMyTribeResponse as MyTribeResponse,
+  JoinTribeBody,
+  JoinTribeResponse as TribeSchema,
+  LinkTribeBody,
+  ListMyTribesResponse,
+  SwitchActiveTribeBody,
+  SwitchActiveTribeResponse,
+} from "@workspace/api-zod";
 import { serialize } from "../lib/serialize";
 import { getAuthClerkId } from "../lib/localAuth";
 import { requireAuth } from "./users";
+import { invalidateLeaderboardCache } from "./leaderboard";
 
 const router: IRouter = Router();
 
@@ -28,11 +38,21 @@ async function getCurrentUser(req: any) {
 async function tribeWithMemberCount(tribeId: number) {
   const [tribe] = await db.select().from(tribesTable).where(eq(tribesTable.id, tribeId));
   if (!tribe) return null;
-  const [{ count }] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(usersTable)
-    .where(eq(usersTable.tribeId, tribeId));
-  return { ...tribe, memberCount: Number(count) };
+  return { ...tribe, memberCount: await countTribeMembers(db, tribeId) };
+}
+
+async function countTribeMembers(executor: any, tribeId: number): Promise<number> {
+  const result = await executor.execute(sql`
+    select count(*)::int as count
+    from (
+      select user_id from ${tribeMembershipsTable}
+      where ${tribeMembershipsTable.tribeId} = ${tribeId}
+      union
+      select id as user_id from ${usersTable}
+      where ${usersTable.tribeId} = ${tribeId}
+    ) members
+  `);
+  return Number(result.rows[0]?.count ?? 0);
 }
 
 router.post("/tribes", requireAuth, async (req: any, res: any): Promise<void> => {
@@ -84,6 +104,10 @@ router.post("/tribes", requireAuth, async (req: any, res: any): Promise<void> =>
       .insert(tribesTable)
       .values({ name, code, createdByUserId: lockedUser.id })
       .returning();
+    await tx.insert(tribeMembershipsTable).values({
+      userId: lockedUser.id,
+      tribeId: tribe.id,
+    });
     await tx.update(usersTable).set({ tribeId: tribe.id }).where(eq(usersTable.id, lockedUser.id));
     return { tribe } as const;
   });
@@ -92,6 +116,7 @@ router.post("/tribes", requireAuth, async (req: any, res: any): Promise<void> =>
     res.status(result.status).json({ error: result.error });
     return;
   }
+  invalidateLeaderboardCache();
   res.status(201).json(TribeSchema.parse(serialize({ ...result.tribe, memberCount: 1 })));
 });
 
@@ -128,17 +153,19 @@ router.post("/tribes/join", requireAuth, async (req: any, res: any): Promise<voi
       return { error: "Solo tribes can only be joined through the solo player option.", status: 409 } as const;
     }
 
+    await tx.insert(tribeMembershipsTable).values({
+      userId: lockedUser.id,
+      tribeId: tribe.id,
+    });
     await tx.update(usersTable).set({ tribeId: tribe.id }).where(eq(usersTable.id, lockedUser.id));
-    const [{ count }] = await tx.select({ count: sql<number>`count(*)::int` })
-      .from(usersTable)
-      .where(eq(usersTable.tribeId, tribe.id));
-    return { tribe, memberCount: Number(count) } as const;
+    return { tribe, memberCount: await countTribeMembers(tx, tribe.id) } as const;
   });
 
   if ("error" in result) {
     res.status(result.status).json({ error: result.error });
     return;
   }
+  invalidateLeaderboardCache();
   res.json(TribeSchema.parse(serialize({ ...result.tribe, memberCount: result.memberCount })));
 });
 
@@ -174,10 +201,7 @@ router.post("/tribes/join-solo", requireAuth, async (req: any, res: any): Promis
     let selectedTribe = null as typeof tribesTable.$inferSelect | null;
     let memberCount = 0;
     for (const tribe of soloTribes) {
-      const [{ count }] = await tx.select({ count: sql<number>`count(*)::int` })
-        .from(usersTable)
-        .where(eq(usersTable.tribeId, tribe.id));
-      const countNumber = Number(count);
+      const countNumber = await countTribeMembers(tx, tribe.id);
       if (countNumber >= 10) {
         await tx.update(tribesTable)
           .set({ isClosed: true })
@@ -213,6 +237,10 @@ router.post("/tribes/join-solo", requireAuth, async (req: any, res: any): Promis
       memberCount = 0;
     }
 
+    await tx.insert(tribeMembershipsTable).values({
+      userId: lockedUser.id,
+      tribeId: selectedTribe.id,
+    });
     await tx.update(usersTable)
       .set({ tribeId: selectedTribe.id })
       .where(eq(usersTable.id, lockedUser.id));
@@ -232,6 +260,7 @@ router.post("/tribes/join-solo", requireAuth, async (req: any, res: any): Promis
     res.status(result.status).json({ error: result.error });
     return;
   }
+  invalidateLeaderboardCache();
   res.status(201).json(TribeSchema.parse(serialize(result.tribe
     ? { ...result.tribe, memberCount: result.memberCount }
     : result)));
@@ -249,6 +278,158 @@ router.get("/tribes/me", requireAuth, async (req: any, res: any): Promise<void> 
   }
   const result = await tribeWithMemberCount(user.tribeId);
   res.json(MyTribeResponse.parse(serialize({ tribe: result })));
+});
+
+router.get("/tribes/memberships", requireAuth, async (req: any, res: any): Promise<void> => {
+  const user = await getCurrentUser(req);
+  if (!user) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  if (user.tribeId) {
+    await db
+      .insert(tribeMembershipsTable)
+      .values({ userId: user.id, tribeId: user.tribeId })
+      .onConflictDoNothing();
+  }
+
+  const rows = await db
+    .select({ tribe: tribesTable })
+    .from(tribeMembershipsTable)
+    .innerJoin(tribesTable, eq(tribesTable.id, tribeMembershipsTable.tribeId))
+    .where(eq(tribeMembershipsTable.userId, user.id))
+    .orderBy(asc(tribeMembershipsTable.createdAt));
+
+  const memberships = await Promise.all(
+    rows.map(async ({ tribe }) => {
+      const [{ count }] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(tribeMembershipsTable)
+        .where(eq(tribeMembershipsTable.tribeId, tribe.id));
+      return {
+        ...tribe,
+        memberCount: Number(count),
+        isActive: tribe.id === user.tribeId,
+      };
+    }),
+  );
+
+  res.json(ListMyTribesResponse.parse(serialize(memberships)));
+});
+
+router.post("/tribes/link", requireAuth, async (req: any, res: any): Promise<void> => {
+  const parsed = LinkTribeBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const user = await getCurrentUser(req);
+  if (!user) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const code = parsed.data.code.trim().toUpperCase();
+  const result = await db.transaction(async (tx) => {
+    const [lockedUser] = await tx
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.id, user.id))
+      .for("update");
+    if (!lockedUser) return { error: "Unauthorized", status: 401 } as const;
+
+    const [tribe] = await tx
+      .select()
+      .from(tribesTable)
+      .where(eq(tribesTable.code, code))
+      .for("update");
+    if (!tribe) return { error: "No tribe with that code.", status: 404 } as const;
+    if (tribe.isSolo) {
+      return {
+        error: "Solo tribes can only be joined through the solo player option.",
+        status: 409,
+      } as const;
+    }
+
+    const [existing] = await tx
+      .select({ id: tribeMembershipsTable.id })
+      .from(tribeMembershipsTable)
+      .where(
+        and(
+          eq(tribeMembershipsTable.userId, lockedUser.id),
+          eq(tribeMembershipsTable.tribeId, tribe.id),
+        ),
+      );
+    if (existing) {
+      return { error: "You already belong to this tribe.", status: 409 } as const;
+    }
+
+    await tx.insert(tribeMembershipsTable).values({
+      userId: lockedUser.id,
+      tribeId: tribe.id,
+    });
+    return { tribe, memberCount: await countTribeMembers(tx, tribe.id) } as const;
+  });
+
+  if ("error" in result) {
+    res.status(result.status).json({ error: result.error });
+    return;
+  }
+  invalidateLeaderboardCache();
+  res.status(201).json(
+    TribeSchema.parse(serialize({ ...result.tribe, memberCount: result.memberCount })),
+  );
+});
+
+router.patch("/tribes/active", requireAuth, async (req: any, res: any): Promise<void> => {
+  const parsed = SwitchActiveTribeBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const user = await getCurrentUser(req);
+  if (!user) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const [tribe] = await db
+    .select()
+    .from(tribesTable)
+    .where(eq(tribesTable.id, parsed.data.tribeId));
+  if (!tribe) {
+    res.status(404).json({ error: "Tribe not found." });
+    return;
+  }
+
+  const [membership] = await db
+    .select({ id: tribeMembershipsTable.id })
+    .from(tribeMembershipsTable)
+    .where(
+      and(
+        eq(tribeMembershipsTable.userId, user.id),
+        eq(tribeMembershipsTable.tribeId, tribe.id),
+      ),
+    );
+  if (!membership) {
+    res.status(403).json({ error: "You are not a member of this tribe." });
+    return;
+  }
+
+  const [updated] = await db
+    .update(usersTable)
+    .set({ tribeId: tribe.id })
+    .where(eq(usersTable.id, user.id))
+    .returning();
+
+  invalidateLeaderboardCache();
+  res.json(
+    SwitchActiveTribeResponse.parse(
+      serialize({ ...updated, tribeName: tribe.name, tribeCode: tribe.code }),
+    ),
+  );
 });
 
 export default router;

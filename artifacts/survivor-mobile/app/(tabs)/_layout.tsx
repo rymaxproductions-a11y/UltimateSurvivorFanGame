@@ -91,6 +91,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="tribes"
+        options={{
+          title: "Tribes",
+          tabBarIcon: ({ color }) => <Feather name="shuffle" size={22} color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",

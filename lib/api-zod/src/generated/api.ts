@@ -1136,6 +1136,58 @@ export const GetMyTribeResponse = zod.object({
 });
 
 /**
+ * @summary List tribes the current user belongs to
+ */
+export const ListMyTribesResponseItem = zod
+  .object({
+    id: zod.number(),
+    name: zod.string(),
+    code: zod.string(),
+    createdByUserId: zod.number().nullable(),
+    memberCount: zod.number(),
+    isSolo: zod.boolean(),
+    isClosed: zod.boolean(),
+    createdAt: zod.string(),
+  })
+  .and(
+    zod.object({
+      isActive: zod.boolean(),
+    }),
+  );
+export const ListMyTribesResponse = zod.array(ListMyTribesResponseItem);
+
+/**
+ * @summary Link an additional existing tribe by code without changing the active tribe
+ */
+export const linkTribeBodyCodeMin = 5;
+export const linkTribeBodyCodeMax = 5;
+
+export const LinkTribeBody = zod.object({
+  code: zod.string().min(linkTribeBodyCodeMin).max(linkTribeBodyCodeMax),
+});
+
+/**
+ * @summary Change the current user's active tribe
+ */
+export const SwitchActiveTribeBody = zod.object({
+  tribeId: zod.number(),
+});
+
+export const SwitchActiveTribeResponse = zod.object({
+  id: zod.number(),
+  clerkId: zod.string(),
+  username: zod.string(),
+  displayName: zod.string().nullish(),
+  avatarPath: zod.string().nullable(),
+  role: zod.enum(["admin", "player"]),
+  tribeId: zod.number().nullish(),
+  tribeName: zod.string().nullish(),
+  tribeCode: zod.string().nullish(),
+  notifyChat: zod.boolean().optional(),
+  createdAt: zod.string(),
+});
+
+/**
  * @summary List chat messages for the current user's tribe
  */
 export const listTribeMessagesQueryLimitMax = 200;

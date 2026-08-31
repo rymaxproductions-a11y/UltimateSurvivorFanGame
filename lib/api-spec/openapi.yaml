@@ -1273,6 +1273,75 @@ paths:
         "401":
           description: Unauthorized
 
+  /tribes/memberships:
+    get:
+      operationId: listMyTribes
+      tags: [tribes]
+      summary: List tribes the current user belongs to
+      responses:
+        "200":
+          description: Current user's tribes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TribeMembership"
+        "401":
+          description: Unauthorized
+
+  /tribes/link:
+    post:
+      operationId: linkTribe
+      tags: [tribes]
+      summary: Link an additional existing tribe by code without changing the active tribe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinTribeBody"
+      responses:
+        "201":
+          description: Tribe linked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tribe"
+        "400":
+          description: Validation error
+        "401":
+          description: Unauthorized
+        "404":
+          description: No tribe with that code
+        "409":
+          description: Already a member or solo tribe
+
+  /tribes/active:
+    patch:
+      operationId: switchActiveTribe
+      tags: [tribes]
+      summary: Change the current user's active tribe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActiveTribeBody"
+      responses:
+        "200":
+          description: Updated user profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Unauthorized
+        "403":
+          description: User is not a member of this tribe
+        "404":
+          description: Tribe not found
+
   /tribes/me/messages:
     get:
       operationId: listTribeMessages
@@ -2188,6 +2257,24 @@ components:
             - type: "null"
       required:
         - tribe
+
+    TribeMembership:
+      allOf:
+        - $ref: "#/components/schemas/Tribe"
+        - type: object
+          properties:
+            isActive:
+              type: boolean
+          required:
+            - isActive
+
+    ActiveTribeBody:
+      type: object
+      properties:
+        tribeId:
+          type: integer
+      required:
+        - tribeId
 
     CreateTribeBody:
       type: object

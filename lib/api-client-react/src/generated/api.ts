@@ -17,6 +17,7 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  ActiveTribeBody,
   AdminUser,
   AuthResponse,
   BroadcastBody,
@@ -59,6 +60,7 @@ import type {
   SubmitSurvivorWinnerBody,
   SurvivorPicks,
   Tribe,
+  TribeMembership,
   UpdateAdminUserRoleBody,
   UpdateContestantBody,
   UpdateGameBody,
@@ -5179,6 +5181,253 @@ export function useGetMyTribe<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary List tribes the current user belongs to
+ */
+export const getListMyTribesUrl = () => {
+  return `/api/tribes/memberships`;
+};
+
+export const listMyTribes = async (
+  options?: RequestInit,
+): Promise<TribeMembership[]> => {
+  return customFetch<TribeMembership[]>(getListMyTribesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListMyTribesQueryKey = () => {
+  return [`/api/tribes/memberships`] as const;
+};
+
+export const getListMyTribesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listMyTribes>>,
+  TError = ErrorType<void>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listMyTribes>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListMyTribesQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listMyTribes>>> = ({
+    signal,
+  }) => listMyTribes({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listMyTribes>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListMyTribesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listMyTribes>>
+>;
+export type ListMyTribesQueryError = ErrorType<void>;
+
+/**
+ * @summary List tribes the current user belongs to
+ */
+
+export function useListMyTribes<
+  TData = Awaited<ReturnType<typeof listMyTribes>>,
+  TError = ErrorType<void>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listMyTribes>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListMyTribesQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Link an additional existing tribe by code without changing the active tribe
+ */
+export const getLinkTribeUrl = () => {
+  return `/api/tribes/link`;
+};
+
+export const linkTribe = async (
+  joinTribeBody: JoinTribeBody,
+  options?: RequestInit,
+): Promise<Tribe> => {
+  return customFetch<Tribe>(getLinkTribeUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(joinTribeBody),
+  });
+};
+
+export const getLinkTribeMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof linkTribe>>,
+    TError,
+    { data: BodyType<JoinTribeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof linkTribe>>,
+  TError,
+  { data: BodyType<JoinTribeBody> },
+  TContext
+> => {
+  const mutationKey = ["linkTribe"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof linkTribe>>,
+    { data: BodyType<JoinTribeBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return linkTribe(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type LinkTribeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof linkTribe>>
+>;
+export type LinkTribeMutationBody = BodyType<JoinTribeBody>;
+export type LinkTribeMutationError = ErrorType<void>;
+
+/**
+ * @summary Link an additional existing tribe by code without changing the active tribe
+ */
+export const useLinkTribe = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof linkTribe>>,
+    TError,
+    { data: BodyType<JoinTribeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof linkTribe>>,
+  TError,
+  { data: BodyType<JoinTribeBody> },
+  TContext
+> => {
+  return useMutation(getLinkTribeMutationOptions(options));
+};
+
+/**
+ * @summary Change the current user's active tribe
+ */
+export const getSwitchActiveTribeUrl = () => {
+  return `/api/tribes/active`;
+};
+
+export const switchActiveTribe = async (
+  activeTribeBody: ActiveTribeBody,
+  options?: RequestInit,
+): Promise<UserProfile> => {
+  return customFetch<UserProfile>(getSwitchActiveTribeUrl(), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(activeTribeBody),
+  });
+};
+
+export const getSwitchActiveTribeMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof switchActiveTribe>>,
+    TError,
+    { data: BodyType<ActiveTribeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof switchActiveTribe>>,
+  TError,
+  { data: BodyType<ActiveTribeBody> },
+  TContext
+> => {
+  const mutationKey = ["switchActiveTribe"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof switchActiveTribe>>,
+    { data: BodyType<ActiveTribeBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return switchActiveTribe(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SwitchActiveTribeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof switchActiveTribe>>
+>;
+export type SwitchActiveTribeMutationBody = BodyType<ActiveTribeBody>;
+export type SwitchActiveTribeMutationError = ErrorType<void>;
+
+/**
+ * @summary Change the current user's active tribe
+ */
+export const useSwitchActiveTribe = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof switchActiveTribe>>,
+    TError,
+    { data: BodyType<ActiveTribeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof switchActiveTribe>>,
+  TError,
+  { data: BodyType<ActiveTribeBody> },
+  TContext
+> => {
+  return useMutation(getSwitchActiveTribeMutationOptions(options));
+};
 
 /**
  * @summary List chat messages for the current user's tribe

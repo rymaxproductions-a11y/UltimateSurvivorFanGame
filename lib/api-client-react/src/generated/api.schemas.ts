@@ -511,6 +511,14 @@ export interface MyTribeResponse {
   tribe: Tribe | null;
 }
 
+export type TribeMembership = Tribe & {
+  isActive: boolean;
+};
+
+export interface ActiveTribeBody {
+  tribeId: number;
+}
+
 export interface CreateTribeBody {
   /**
    * @minLength 1

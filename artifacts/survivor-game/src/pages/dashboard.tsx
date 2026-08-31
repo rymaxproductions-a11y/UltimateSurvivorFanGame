@@ -327,11 +327,12 @@ function SeasonPicksGate({ gameId, onComplete }: { gameId: number; onComplete: (
   );
 }
 
-function GameView({ gameId }: { gameId: number }) {
+function GameView({ gameId, tribeId }: { gameId: number; tribeId: number }) {
   const { data: weeks } = useListWeeks(gameId);
   const { data: game } = useGetGame(gameId);
-  const { data: leaderboard } = useGetLeaderboard(gameId, undefined, {
-    query: { queryKey: getGetLeaderboardQueryKey(gameId) },
+  const leaderboardParams = { tribeId };
+  const { data: leaderboard } = useGetLeaderboard(gameId, leaderboardParams, {
+    query: { queryKey: getGetLeaderboardQueryKey(gameId, leaderboardParams) },
   });
   const { data: myPicks, isLoading: picksLoading } = useGetMySurvivorPicks(gameId);
   const [activeWeek, setActiveWeek] = useState<number | null>(null);
@@ -550,13 +551,15 @@ export default function Dashboard() {
               MY DASHBOARD
             </h1>
             {game && (
-              <p className="text-muted-foreground mt-1 text-sm">{game.name}</p>
+              <p className="text-muted-foreground mt-1 text-sm">
+                {game.name} · {me.tribeName} · {me.tribeCode}
+              </p>
             )}
           </div>
           {!game ? (
             <div className="py-12 text-center text-muted-foreground">No active games right now.</div>
           ) : (
-            <GameView gameId={game.id} />
+            <GameView gameId={game.id} tribeId={me.tribeId} />
           )}
         </div>
       </div>

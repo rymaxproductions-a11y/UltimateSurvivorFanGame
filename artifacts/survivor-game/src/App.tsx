@@ -16,6 +16,7 @@ const Admin = lazy(() => import("@/pages/admin"));
 const AdminUsers = lazy(() => import("@/pages/admin-users"));
 const Leaderboard = lazy(() => import("@/pages/leaderboard"));
 const Chat = lazy(() => import("@/pages/chat"));
+const Tribes = lazy(() => import("@/pages/tribes"));
 const Contestants = lazy(() => import("@/pages/contestants"));
 const PrivacyPolicy = lazy(() => import("@/pages/privacy-policy"));
 
@@ -202,6 +203,7 @@ function RouterContent() {
           <Route path="/admin/users" component={AdminUsers} />
           <Route path="/leaderboard" component={Leaderboard} />
           <Route path="/chat" component={Chat} />
+          <Route path="/tribes" component={Tribes} />
           <Route path="/contestants" component={Contestants} />
           <Route component={NotFound} />
         </Switch>
