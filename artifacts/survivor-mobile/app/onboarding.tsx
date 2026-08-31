@@ -25,6 +25,7 @@ import {
   getListContestantsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { markReviewOnboardingComplete } from "@/components/ReviewPrompt";
 
 type Step =
   | "tribe-choice"
@@ -179,7 +180,8 @@ export default function Onboarding() {
                 },
               },
               {
-                onSuccess: () => {
+                onSuccess: async () => {
+                  if (me?.id) await markReviewOnboardingComplete(String(me.id));
                   qc.invalidateQueries();
                   router.replace("/");
                 },

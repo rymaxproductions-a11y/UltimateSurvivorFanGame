@@ -25,6 +25,7 @@ import { AuthBridge } from "@/components/AuthBridge";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { NotificationTapHandler } from "@/components/NotificationTapHandler";
+import { ReviewPromptGate } from "@/components/ReviewPrompt";
 import { configureApi } from "@/lib/api";
 import { LeaderboardConsentProvider } from "@/lib/leaderboardConsent";
 import { configureNotificationHandler } from "@/lib/notifications";
@@ -102,6 +103,7 @@ export default function RootLayout() {
                       <KeyboardProvider>
                         <NotificationTapHandler />
                         <RootLayoutNav />
+                        <ReviewPromptGate />
                       </KeyboardProvider>
                     </GestureHandlerRootView>
                   </AuthBridge>
